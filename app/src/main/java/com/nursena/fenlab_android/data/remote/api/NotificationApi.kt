@@ -8,18 +8,30 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface NotificationApi {
+
     @GET("api/notifications")
-    suspend fun getUserNotifications(@Query("page") page: Int, @Query("size") size: Int): PaginatedResponse<NotificationResponse>
+    suspend fun getUserNotifications(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 10
+    ): PaginatedResponse<NotificationResponse>
 
     @GET("api/notifications/unread")
-    suspend fun getUnreadNotifications(@Query("page") page: Int, @Query("size") size: Int): PaginatedResponse<NotificationResponse>
+    suspend fun getUnreadNotifications(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 10
+    ): PaginatedResponse<NotificationResponse>
 
-    @PATCH("api/notifications/{id}/read")
-    suspend fun markAsRead(@Path("id") id: Long): Map<String, String>
+    // Dönen: {"message": "Bildirim okundu olarak işaretlendi."}
+    @PATCH("api/notifications/{notificationId}/read")
+    suspend fun markAsRead(
+        @Path("notificationId") notificationId: Long
+    ): Map<String, String>
 
+    // Dönen: {"message": "Tüm bildirimler okundu olarak işaretlendi."}
     @PATCH("api/notifications/read-all")
     suspend fun markAllAsRead(): Map<String, String>
 
+    // Dönen: {"unreadCount": 5}
     @GET("api/notifications/unread/count")
     suspend fun getUnreadCount(): Map<String, Long>
 }

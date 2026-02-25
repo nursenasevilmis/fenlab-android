@@ -6,10 +6,17 @@ import retrofit2.http.Path
 import retrofit2.http.Streaming
 
 interface PdfApi {
-    @GET("api/pdf/{experimentId}/generate")
-    suspend fun generatePdf(@Path("experimentId") id: Long): Map<String, String>
 
-    @GET("api/pdf/{experimentId}/download")
+    // PDF URL döner: {"pdfUrl": "https://..."}
+    @GET("api/pdf/{experimentId}/generate")
+    suspend fun generatePdf(
+        @Path("experimentId") experimentId: Long
+    ): Map<String, String>
+
+    // PDF binary döner — @Streaming ile büyük dosyalar için
     @Streaming
-    suspend fun downloadPdf(@Path("experimentId") id: Long): ResponseBody  // okhttp3.ResponseBody
+    @GET("api/pdf/{experimentId}/download")
+    suspend fun downloadPdf(
+        @Path("experimentId") experimentId: Long
+    ): ResponseBody
 }

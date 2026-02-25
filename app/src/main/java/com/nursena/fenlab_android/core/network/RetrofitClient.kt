@@ -1,54 +1,41 @@
 package com.nursena.fenlab_android.core.network
 
-import android.content.Context
-import com.nursena.fenlab_android.core.datastore.TokenManager
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
-import okhttp3.Interceptor
-import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
-private const val BASE_URL = "http://10.0.2.2:8080/api/"
-
-class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
-    override fun intercept(chain: Interceptor.Chain): Response {
-
-        val token = runBlocking {
-            tokenManager.getToken().first()
-        }
-
-        val request = chain.request().newBuilder()
-
-        token?.let {
-            request.addHeader("Authorization", "Bearer $it")
-        }
-
-        return chain.proceed(request.build())
-    }
-}
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    fun create(context: Context): Retrofit {
+    // Emülatör → 10.0.2.2 | Fiziksel cihaz → bilgisayarın yerel IP'si
+    const val BASE_URL = "http://10.0.2.2:8080/"
 
-        val tokenManager = TokenManager(context)
-
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
-        val client = OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor(tokenManager))
-            .addInterceptor(logging)
-            .build()
-
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
     }
+
+    // Backend Jackson LocalDateTime → "yyyy-MM-dd'T'HH:mm:ss" veya nanosecond'lı format gönderebilir.
+    // lenient() ile her ikisini de parse edebiliriz.
+    private val gson = GsonBuilder()
+        .setLenient()
+        .serializeNulls()
+        .create()
+
+    fun buildOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build()
+
+    fun buildRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
 }

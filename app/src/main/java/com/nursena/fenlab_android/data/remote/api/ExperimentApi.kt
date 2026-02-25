@@ -14,38 +14,45 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ExperimentApi {
+
     @GET("api/experiments")
     suspend fun getAllExperiments(
-        @Query("search") search: String? = null,
-        @Query("subject") subject: String? = null,
-        @Query("environment") environment: String? = null,
-        @Query("gradeLevel") gradeLevel: Int? = null,
-        @Query("difficulty") difficulty: String? = null,
-        @Query("sortType") sortType: String = "MOST_RECENT",
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 20
+        @Query("search")      search: String?      = null,
+        @Query("subject")     subject: String?     = null,   // "SCIENCE", "PHYSICS"...
+        @Query("environment") environment: String? = null,   // "HOME", "LABORATORY"...
+        @Query("gradeLevel")  gradeLevel: Int?     = null,
+        @Query("difficulty")  difficulty: String?  = null,   // "EASY", "MEDIUM", "HARD"
+        @Query("sortType")    sortType: String     = "MOST_RECENT",
+        @Query("page")        page: Int            = 0,
+        @Query("size")        size: Int            = 20
     ): PaginatedResponse<ExperimentSummaryResponse>
 
-    @GET("api/experiments/{id}")
-    suspend fun getExperimentById(@Path("id") id: Long): ExperimentDetailResponse
+    @GET("api/experiments/{experimentId}")
+    suspend fun getExperimentById(
+        @Path("experimentId") experimentId: Long
+    ): ExperimentDetailResponse
 
     @POST("api/experiments")
-    suspend fun createExperiment(@Body request: ExperimentCreateRequest): ExperimentDetailResponse
+    suspend fun createExperiment(
+        @Body request: ExperimentCreateRequest
+    ): ExperimentDetailResponse
 
-    @PUT("api/experiments/{id}")
+    @PUT("api/experiments/{experimentId}")
     suspend fun updateExperiment(
-        @Path("id") id: Long,
+        @Path("experimentId") experimentId: Long,
         @Body request: ExperimentUpdateRequest
     ): ExperimentDetailResponse
 
-    @DELETE("api/experiments/{id}")
-    suspend fun deleteExperiment(@Path("id") id: Long)
+    @DELETE("api/experiments/{experimentId}")
+    suspend fun deleteExperiment(
+        @Path("experimentId") experimentId: Long
+    )
 
     @GET("api/experiments/user/{userId}")
     suspend fun getUserExperiments(
         @Path("userId") userId: Long,
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 20
+        @Query("page")  page: Int = 0,
+        @Query("size")  size: Int = 20
     ): PaginatedResponse<ExperimentSummaryResponse>
 
     @GET("api/experiments/subjects")
