@@ -1,6 +1,8 @@
 package com.nursena.fenlab_android.core.di
 
 import com.nursena.fenlab_android.data.repository.*
+import com.nursena.fenlab_android.data.repository.fake.FakeExperimentRepository
+import com.nursena.fenlab_android.data.repository.fake.FakeFavoriteRepository
 import com.nursena.fenlab_android.domain.repository.*
 import dagger.Binds
 import dagger.Module
@@ -15,18 +17,20 @@ abstract class RepositoryModule {
     @Binds @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 
-    @Binds @Singleton
-    abstract fun bindExperimentRepository(impl: ExperimentRepositoryImpl): ExperimentRepository
-
+    //@Binds @Singleton
+   // abstract fun bindExperimentRepository(impl: ExperimentRepositoryImpl): ExperimentRepository
+    @Binds
+    abstract fun bindExperiment(impl: FakeExperimentRepository): ExperimentRepository
     @Binds @Singleton
     abstract fun bindCommentRepository(impl: CommentRepositoryImpl): CommentRepository
 
     @Binds @Singleton
     abstract fun bindQuestionRepository(impl: QuestionRepositoryImpl): QuestionRepository
 
-    @Binds @Singleton
-    abstract fun bindFavoriteRepository(impl: FavoriteRepositoryImpl): FavoriteRepository
-
+    //@Binds @Singleton
+   // abstract fun bindFavoriteRepository(impl: FavoriteRepositoryImpl): FavoriteRepository
+    @Binds
+    abstract fun bindFavorite(impl: FakeFavoriteRepository): FavoriteRepository
     @Binds @Singleton
     abstract fun bindRatingRepository(impl: RatingRepositoryImpl): RatingRepository
 

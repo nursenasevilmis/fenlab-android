@@ -1,5 +1,7 @@
 package com.nursena.fenlab_android.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,25 +22,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.nursena.fenlab_android.domain.model.enums.UserRole
 import com.nursena.fenlab_android.ui.screens.home.FenlabTeal
 
-// ── NavItem tanımı ────────────────────────────────────────────────────────────
 sealed class BottomNavItem(
     val route: String,
     val label: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    object Home      : BottomNavItem("home",      "Anasayfa", Icons.Filled.Home,        Icons.Outlined.Home)
-    object Search    : BottomNavItem("search",    "Ara",      Icons.Filled.Search,      Icons.Outlined.Search)
-    object Favorites : BottomNavItem("favorites", "Favoriler",Icons.Filled.Favorite,    Icons.Outlined.FavoriteBorder)
-    object Profile   : BottomNavItem("profile",   "Profil",   Icons.Filled.Person,      Icons.Outlined.Person)
+    object Home      : BottomNavItem("home",      "Anasayfa",  Icons.Filled.Home,     Icons.Outlined.Home)
+    object Search    : BottomNavItem("search",    "Ara",       Icons.Filled.Search,   Icons.Outlined.Search)
+    object Favorites : BottomNavItem("favorites", "Favoriler", Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder)
+    object Profile   : BottomNavItem("profile",   "Profil",    Icons.Filled.Person,   Icons.Outlined.Person)
 }
 
-private val navItems = listOf(
-    BottomNavItem.Home, BottomNavItem.Search,
-    BottomNavItem.Favorites, BottomNavItem.Profile
-)
-
-// ── FenlabBottomBar ───────────────────────────────────────────────────────────
 @Composable
 fun FenlabBottomBar(
     navController: NavController,
@@ -48,86 +43,116 @@ fun FenlabBottomBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    Box(modifier = Modifier.fillMaxWidth().height(72.dp)) {
+    fun goTo(route: String) {
+        navController.navigate(route) {
+            popUpTo("home") { saveState = true }
+            launchSingleTop = true
+            restoreState    = true
+        }
+    }
 
-        // Arka plan bar
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp)
+    ) {
+        // ── Bar ──────────────────────────────────────────────────────────────
         Surface(
-            modifier        = Modifier.fillMaxWidth().height(72.dp).align(Alignment.BottomCenter),
+            modifier        = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .align(Alignment.BottomCenter),
             color           = Color.White,
             shadowElevation = 12.dp,
             shape           = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
         ) {
             Row(
-                modifier              = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                modifier              = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                // Sol 2: Anasayfa + Ara
-                navItems.take(2).forEach { item ->
-                    NavItemView(item = item, isSelected = currentRoute == item.route) {
-                        navigateTo(navController, item.route)
-                    }
-                }
-                // FAB için boşluk
+                NavTabItem(
+                    label       = BottomNavItem.Home.label,
+                    icon        = if (currentRoute == BottomNavItem.Home.route) BottomNavItem.Home.selectedIcon else BottomNavItem.Home.unselectedIcon,
+                    isSelected  = currentRoute == BottomNavItem.Home.route,
+                    onClick     = { goTo(BottomNavItem.Home.route) }
+                )
+                NavTabItem(
+                    label      = BottomNavItem.Search.label,
+                    icon       = if (currentRoute == BottomNavItem.Search.route) BottomNavItem.Search.selectedIcon else BottomNavItem.Search.unselectedIcon,
+                    isSelected = currentRoute == BottomNavItem.Search.route,
+                    onClick    = { goTo(BottomNavItem.Search.route) }
+                )
+                // FAB boşluğu
                 Spacer(Modifier.width(56.dp))
-                // Sağ 2: Favoriler + Profil
-                navItems.drop(2).forEach { item ->
-                    NavItemView(item = item, isSelected = currentRoute == item.route) {
-                        navigateTo(navController, item.route)
-                    }
-                }
+                NavTabItem(
+                    label      = BottomNavItem.Favorites.label,
+                    icon       = if (currentRoute == BottomNavItem.Favorites.route) BottomNavItem.Favorites.selectedIcon else BottomNavItem.Favorites.unselectedIcon,
+                    isSelected = currentRoute == BottomNavItem.Favorites.route,
+                    onClick    = { goTo(BottomNavItem.Favorites.route) }
+                )
+                NavTabItem(
+                    label      = BottomNavItem.Profile.label,
+                    icon       = if (currentRoute == BottomNavItem.Profile.route) BottomNavItem.Profile.selectedIcon else BottomNavItem.Profile.unselectedIcon,
+                    isSelected = currentRoute == BottomNavItem.Profile.route,
+                    onClick    = { goTo(BottomNavItem.Profile.route) }
+                )
             }
         }
 
-        // FAB — sadece TEACHER rolü için
+        // ── FAB — sadece TEACHER ─────────────────────────────────────────────
         if (currentUserRole == UserRole.TEACHER) {
             FloatingActionButton(
-                onClick          = onAddClick,
-                containerColor   = FenlabTeal,
-                contentColor     = Color.White,
-                elevation        = FloatingActionButtonDefaults.elevation(8.dp),
-                shape            = CircleShape,
-                modifier         = Modifier
+                onClick        = onAddClick,
+                containerColor = FenlabTeal,
+                contentColor   = Color.White,
+                elevation      = FloatingActionButtonDefaults.elevation(8.dp),
+                shape          = CircleShape,
+                modifier       = Modifier
                     .align(Alignment.TopCenter)
                     .size(56.dp)
                     .offset(y = (-8).dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Deney Ekle", modifier = Modifier.size(28.dp))
+                Icon(
+                    imageVector        = Icons.Default.Add,
+                    contentDescription = "Deney Ekle",
+                    modifier           = Modifier.size(28.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun NavItemView(item: BottomNavItem, isSelected: Boolean, onClick: () -> Unit) {
-    val color = if (isSelected) FenlabTeal else Color(0xFFAAAAAA)
-    NavigationBarItem(
-        selected = isSelected,
-        onClick  = onClick,
-        icon = {
-            Icon(
-                imageVector        = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                contentDescription = item.label,
-                tint               = color,
-                modifier           = Modifier.size(24.dp)
-            )
-        },
-        label = {
-            Text(
-                text       = item.label,
-                fontSize   = 10.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                color      = color
-            )
-        },
-        colors = NavigationBarItemDefaults.colors(indicatorColor = FenlabTeal.copy(alpha = 0.1f))
-    )
-}
+private fun NavTabItem(
+    label: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val tint = if (isSelected) FenlabTeal else Color(0xFFAAAAAA)
 
-private fun navigateTo(navController: NavController, route: String) {
-    navController.navigate(route) {
-        popUpTo("home") { saveState = true }
-        launchSingleTop = true
-        restoreState    = true
+    Column(
+        modifier            = Modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector        = icon,
+            contentDescription = label,
+            tint               = tint,
+            modifier           = Modifier.size(24.dp)
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text       = label,
+            fontSize   = 10.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color      = tint
+        )
     }
 }
