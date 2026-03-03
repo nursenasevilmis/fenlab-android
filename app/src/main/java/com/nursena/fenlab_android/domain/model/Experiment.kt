@@ -27,4 +27,3 @@ data class Experiment(
     val displayEnvironment: String get() = environment?.toDisplayString() ?: ""
     val displayRating: String      get() = averageRating?.let { "%.1f".format(it) } ?: "-"
 }
-

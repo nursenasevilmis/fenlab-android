@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,146 +17,123 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-//import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.ui.components.EmptyState
 import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.components.ExperimentCard
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
-import com.nursena.fenlab_android.ui.preview.MockData
-
-val FenlabTeal     = Color(0xFF00897B)
-val FenlabTealDark = Color(0xFF00695C)
+import com.nursena.fenlab_android.ui.theme.*
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Entry point — ViewModel'lı gerçek ekran
+// HomeScreen  — gerçek ViewModel, backend bağlı
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-/*fun HomeScreen(
-    onExperimentClick: (Long) -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
-) */
 fun HomeScreen(
     onExperimentClick: (Long) -> Unit,
-    viewModel: HomeViewModel  // default yok artık
-)
-{
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val listState = rememberLazyListState()
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val uiState   by viewModel.uiState.collectAsStateWithLifecycle()
+    val listState  = rememberLazyListState()
 
+    // Sona yaklaşınca sonraki sayfayı yükle
     val shouldLoadMore by remember {
         derivedStateOf {
-            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            last >= listState.layoutInfo.totalItemsCount - 3
+            val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val total = listState.layoutInfo.totalItemsCount
+            last >= total - 3 && total > 0
         }
     }
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) viewModel.loadNextPage()
     }
 
-    HomeScreenContent(
-        experiments     = uiState.experiments,
-        isLoading       = uiState.isLoading,
-        isLoadingMore   = uiState.isLoadingMore,
-        error           = uiState.error,
-        listState       = listState,
-        onExperimentClick = onExperimentClick,
-        onFavoriteClick = { viewModel.toggleFavorite(it) },
-        onFilterClick   = { viewModel.showFilterSheet() },
-        onSortClick     = { viewModel.showSortSheet() },
-        onRetry         = { viewModel.loadExperiments() }
-    )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stateless içerik — hem gerçek hem mock preview'da kullanılır
-// ─────────────────────────────────────────────────────────────────────────────
-@Composable
-fun HomeScreenContent(
-    experiments: List<Experiment>,
-    isLoading: Boolean,
-    isLoadingMore: Boolean,
-    error: String?,
-    listState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
-    onExperimentClick: (Long) -> Unit = {},
-    onFavoriteClick: (Experiment) -> Unit = {},
-    onFilterClick: () -> Unit = {},
-    onSortClick: () -> Unit = {},
-    onRetry: () -> Unit = {}
-) {
     Scaffold(
-        containerColor = Color(0xFFF5F5F5),
-        topBar = {
-            FenlabTopBar(
-                onFilterClick = onFilterClick,
-                onSortClick   = onSortClick
-            )
-        }
+        containerColor = DarkBg,
+        topBar         = { FenlabTopBar(
+            onFilterClick = { viewModel.showFilterSheet() },
+            onSortClick   = { viewModel.showSortSheet() }
+        )}
     ) { padding ->
-        when {
-            isLoading && experiments.isEmpty() -> LoadingIndicator()
 
-            error != null && experiments.isEmpty() -> ErrorMessage(
-                message = error,
-                onRetry = onRetry
+        when {
+            uiState.isLoading && uiState.experiments.isEmpty() -> LoadingIndicator()
+
+            uiState.error != null && uiState.experiments.isEmpty() -> ErrorMessage(
+                message = uiState.error!!,
+                onRetry = { viewModel.loadExperiments() }
             )
 
-            experiments.isEmpty() -> EmptyState(
+            uiState.experiments.isEmpty() -> EmptyState(
                 emoji    = "🔬",
                 title    = "Henüz deney yok",
                 subtitle = "İlk deneyi eklemek için + butonuna tıkla"
             )
 
-            else -> {
-                LazyColumn(
-                    state          = listState,
-                    contentPadding = PaddingValues(
-                        top    = padding.calculateTopPadding() + 8.dp,
-                        bottom = padding.calculateBottomPadding() + 80.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    item {
-                        WelcomeBanner(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                    }
+            else -> LazyColumn(
+                state          = listState,
+                contentPadding = PaddingValues(
+                    top    = padding.calculateTopPadding() + 8.dp,
+                    bottom = padding.calculateBottomPadding() + 90.dp,
+                    start  = 16.dp,
+                    end    = 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
 
-                    item {
+                // ── Küçük hoş geldin banner ──────────────────────────────
+                item {
+                    SmallWelcomeBanner(
+                        fullName       = uiState.fullName,
+                        experimentCount = uiState.experiments.size
+                    )
+                }
+
+                // ── Bölüm başlığı ─────────────────────────────────────────
+                item {
+                    Row(
+                        modifier          = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(18.dp)
+                                .background(Teal400, RoundedCornerShape(2.dp))
+                        )
+                        Spacer(Modifier.width(8.dp))
                         Text(
                             text       = "Tüm Deneyler",
                             fontSize   = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color      = Color(0xFF1A1A1A),
-                            modifier   = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                            color      = TextPrimary
                         )
                     }
+                }
 
-                    items(items = experiments, key = { it.id }) { experiment ->
-                        ExperimentCard(
-                            experiment      = experiment,
-                            onCardClick     = { onExperimentClick(experiment.id) },
-                            onFavoriteClick = { onFavoriteClick(experiment) },
-                            modifier        = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-                        )
-                    }
+                // ── Deney kartları ────────────────────────────────────────
+                items(items = uiState.experiments, key = { it.id }) { exp ->
+                    ExperimentCard(
+                        experiment      = exp,
+                        onCardClick     = { onExperimentClick(exp.id) },
+                        onFavoriteClick = { viewModel.toggleFavorite(exp) }
+                    )
+                }
 
-                    if (isLoadingMore) {
-                        item {
-                            Box(
-                                modifier         = Modifier.fillMaxWidth().padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier    = Modifier.size(24.dp),
-                                    color       = FenlabTeal,
-                                    strokeWidth = 2.dp
-                                )
-                            }
+                // ── Sayfa yükleniyor ──────────────────────────────────────
+                if (uiState.isLoadingMore) {
+                    item {
+                        Box(
+                            modifier         = Modifier.fillMaxWidth().padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier    = Modifier.size(24.dp),
+                                color       = Teal400,
+                                strokeWidth = 2.dp
+                            )
                         }
                     }
                 }
@@ -172,134 +149,102 @@ fun HomeScreenContent(
 @Composable
 fun FenlabTopBar(onFilterClick: () -> Unit, onSortClick: () -> Unit) {
     TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBg),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier         = Modifier
-                        .size(28.dp)
-                        .background(FenlabTeal, CircleShape),
+                        .size(30.dp)
+                        .background(
+                            Brush.linearGradient(listOf(Teal400, Teal500)),
+                            CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("⚗", fontSize = 14.sp)
+                    Text("⚗", fontSize = 15.sp)
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("Fen", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF1A1A1A))
-                Text("lab", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = FenlabTeal)
+                Text("Fen",  fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
+                Text("lab",  fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Teal400)
             }
         },
         actions = {
+            // Filtrele
             OutlinedButton(
-                onClick        = onFilterClick,
-                shape          = RoundedCornerShape(20.dp),
-                colors         = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF444444)),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                modifier       = Modifier.height(32.dp)
+                onClick  = onFilterClick,
+                shape    = RoundedCornerShape(20.dp),
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, DarkSurface3),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                modifier = Modifier.height(32.dp)
             ) {
-                Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(14.dp))
+                Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(13.dp))
                 Spacer(Modifier.width(4.dp))
                 Text("Filtrele", fontSize = 12.sp)
             }
             Spacer(Modifier.width(6.dp))
+            // Sırala
             OutlinedButton(
-                onClick        = onSortClick,
-                shape          = RoundedCornerShape(20.dp),
-                colors         = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF444444)),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                modifier       = Modifier.height(32.dp)
+                onClick  = onSortClick,
+                shape    = RoundedCornerShape(20.dp),
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, DarkSurface3),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                modifier = Modifier.height(32.dp)
             ) {
-                Icon(Icons.Default.Sort, contentDescription = null, modifier = Modifier.size(14.dp))
+                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null, modifier = Modifier.size(13.dp))
                 Spacer(Modifier.width(4.dp))
                 Text("Sırala", fontSize = 12.sp)
             }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(12.dp))
         }
     )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WelcomeBanner
+// Küçük Hoş Geldin Banner  (ekranın tepesine sığan kompakt versiyon)
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-fun WelcomeBanner(modifier: Modifier = Modifier) {
+fun SmallWelcomeBanner(fullName: String, experimentCount: Int) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .height(90.dp)
             .background(
-                Brush.horizontalGradient(listOf(FenlabTeal, FenlabTealDark)),
+                Brush.horizontalGradient(listOf(Color(0xFF0D2D28), Color(0xFF0A1A2E))),
                 RoundedCornerShape(16.dp)
             )
+            .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Row(
-            modifier              = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-            verticalAlignment     = Alignment.CenterVertically,
+            modifier          = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
                 Text(
-                    text       = "Merhaba! 👋",
-                    color      = Color.White,
-                    fontSize   = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    text       = "Merhaba${if (fullName.isNotBlank()) ", ${fullName.split(" ").first()}" else ""}! 👋",
+                    color      = TextPrimary,
+                    fontSize   = 15.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text     = "Bugün ne keşfedeceksin?",
-                    color    = Color.White.copy(alpha = 0.85f),
-                    fontSize = 13.sp
-                )
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    StatBadge(icon = "🔬", label = "Deneyler", value = experimentCount.toString())
+                }
             }
-            Box(
-                modifier         = Modifier
-                    .size(56.dp)
-                    .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🔬", fontSize = 28.sp)
-            }
+            Text("🔬", fontSize = 32.sp)
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PREVIEW  — Backend'e gerek yok, mock data kullanır
-// ─────────────────────────────────────────────────────────────────────────────
-@Preview(showBackground = true, showSystemUi = true, name = "Home - Mock Data")
 @Composable
-fun HomeScreenPreview() {
-    MaterialTheme {
-        HomeScreenContent(
-            experiments   = MockData.mockExperiments,
-            isLoading     = false,
-            isLoadingMore = false,
-            error         = null
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Home - Loading")
-@Composable
-fun HomeScreenLoadingPreview() {
-    MaterialTheme {
-        HomeScreenContent(
-            experiments   = emptyList(),
-            isLoading     = true,
-            isLoadingMore = false,
-            error         = null
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Home - Empty")
-@Composable
-fun HomeScreenEmptyPreview() {
-    MaterialTheme {
-        HomeScreenContent(
-            experiments   = emptyList(),
-            isLoading     = false,
-            isLoadingMore = false,
-            error         = null
+private fun StatBadge(icon: String, label: String, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(icon, fontSize = 12.sp)
+        Text(
+            text     = "$label $value",
+            color    = TextSecondary,
+            fontSize = 12.sp
         )
     }
 }

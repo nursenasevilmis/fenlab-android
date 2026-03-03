@@ -3,48 +3,26 @@ package com.nursena.fenlab_android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import com.nursena.fenlab_android.domain.model.Experiment
-import com.nursena.fenlab_android.ui.screens.home.HomeScreenContent
+import androidx.activity.enableEdgeToEdge
+import com.nursena.fenlab_android.ui.screens.home.HomeScreen
 import com.nursena.fenlab_android.ui.theme.FenlabAndroidTheme
-import com.nursena.fenlab_android.ui.preview.MockData
+import dagger.hilt.android.AndroidEntryPoint
 
-// @AndroidEntryPoint YOK — Hilt kullanmıyoruz, mock modda çalışıyoruz
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             FenlabAndroidTheme {
-                MockHomeApp()
+                // Gerçek HomeScreen — ViewModel üzerinden backend'e bağlı
+                HomeScreen(
+                    onExperimentClick = { experimentId ->
+                        // TODO: detay sayfasına navigasyon
+                        // Örn: navController.navigate("detail/$experimentId")
+                    }
+                )
             }
         }
     }
-}
-
-@Composable
-fun MockHomeApp() {
-    var experiments by remember { mutableStateOf(MockData.mockExperiments) }
-
-    fun toggleFavorite(exp: Experiment) {
-        experiments = experiments.map {
-            if (it.id == exp.id)
-                it.copy(
-                    isFavoritedByCurrentUser = !it.isFavoritedByCurrentUser,
-                    favoriteCount = if (it.isFavoritedByCurrentUser)
-                        it.favoriteCount - 1 else it.favoriteCount + 1
-                )
-            else it
-        }
-    }
-
-    HomeScreenContent(
-        experiments       = experiments,
-        isLoading         = false,
-        isLoadingMore     = false,
-        error             = null,
-        onFavoriteClick   = { toggleFavorite(it) },
-        onExperimentClick = { _ -> },
-        onFilterClick     = {},
-        onSortClick       = {}
-    )
 }

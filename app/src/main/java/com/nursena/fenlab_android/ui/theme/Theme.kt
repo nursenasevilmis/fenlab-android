@@ -1,35 +1,36 @@
 package com.nursena.fenlab_android.ui.theme
 
 import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val FenlabColorScheme = lightColorScheme(
-    primary            = Teal500,
-    onPrimary          = Color.White,
+private val FenlabDarkColorScheme = darkColorScheme(
+    primary            = Teal400,
+    onPrimary          = DarkBg,
     primaryContainer   = Teal100,
-    onPrimaryContainer = Teal700,
-    secondary          = Orange500,
-    onSecondary        = Color.White,
+    onPrimaryContainer = Teal400,
+    secondary          = Orange400,
+    onSecondary        = DarkBg,
     secondaryContainer = Orange100,
-    background         = Color.White,
-    onBackground       = Gray900,
-    surface            = Color.White,
-    onSurface          = Gray900,
-    surfaceVariant     = Gray50,
-    onSurfaceVariant   = Gray700,
-    error              = Red500,
+    onSecondaryContainer = Orange400,
+    background         = DarkBg,
+    onBackground       = TextPrimary,
+    surface            = DarkSurface,
+    onSurface          = TextPrimary,
+    surfaceVariant     = DarkSurface2,
+    onSurfaceVariant   = TextSecondary,
+    outline            = DarkSurface3,
+    error              = Red400,
     onError            = Color.White
 )
 
 @Composable
 fun FenlabAndroidTheme(content: @Composable () -> Unit) {
-    // statusBarColor vs WindowCompat → enableEdgeToEdge() hallediyor
-    // Burada sadece MaterialTheme yeterli, ekstra window işlemi crash riskini artırıyor
     MaterialTheme(
-        colorScheme = FenlabColorScheme,
+        colorScheme = FenlabDarkColorScheme,
         typography  = Typography,
         content     = content
     )

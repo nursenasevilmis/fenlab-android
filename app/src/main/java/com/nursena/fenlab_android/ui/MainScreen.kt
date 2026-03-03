@@ -20,7 +20,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.nursena.fenlab_android.domain.model.enums.UserRole
-import com.nursena.fenlab_android.ui.screens.home.FenlabTeal
+import com.nursena.fenlab_android.ui.theme.DarkBg
+import com.nursena.fenlab_android.ui.theme.DarkSurface
+import com.nursena.fenlab_android.ui.theme.DarkSurface2
+import com.nursena.fenlab_android.ui.theme.Teal400
+import com.nursena.fenlab_android.ui.theme.TextSecondary
 
 sealed class BottomNavItem(
     val route: String,
@@ -51,33 +55,28 @@ fun FenlabBottomBar(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
-    ) {
-        // ── Bar ──────────────────────────────────────────────────────────────
+    Box(modifier = Modifier.fillMaxWidth().height(72.dp)) {
+
+        // ── Bar ─────────────────────────────────────────────────────────────
         Surface(
             modifier        = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
                 .align(Alignment.BottomCenter),
-            color           = Color.White,
+            color           = DarkSurface,       // dark tema
             shadowElevation = 12.dp,
             shape           = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
         ) {
             Row(
-                modifier              = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
+                modifier              = Modifier.fillMaxSize().padding(horizontal = 8.dp),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 NavTabItem(
-                    label       = BottomNavItem.Home.label,
-                    icon        = if (currentRoute == BottomNavItem.Home.route) BottomNavItem.Home.selectedIcon else BottomNavItem.Home.unselectedIcon,
-                    isSelected  = currentRoute == BottomNavItem.Home.route,
-                    onClick     = { goTo(BottomNavItem.Home.route) }
+                    label      = BottomNavItem.Home.label,
+                    icon       = if (currentRoute == BottomNavItem.Home.route) BottomNavItem.Home.selectedIcon else BottomNavItem.Home.unselectedIcon,
+                    isSelected = currentRoute == BottomNavItem.Home.route,
+                    onClick    = { goTo(BottomNavItem.Home.route) }
                 )
                 NavTabItem(
                     label      = BottomNavItem.Search.label,
@@ -85,8 +84,7 @@ fun FenlabBottomBar(
                     isSelected = currentRoute == BottomNavItem.Search.route,
                     onClick    = { goTo(BottomNavItem.Search.route) }
                 )
-                // FAB boşluğu
-                Spacer(Modifier.width(56.dp))
+                Spacer(Modifier.width(56.dp)) // FAB boşluğu
                 NavTabItem(
                     label      = BottomNavItem.Favorites.label,
                     icon       = if (currentRoute == BottomNavItem.Favorites.route) BottomNavItem.Favorites.selectedIcon else BottomNavItem.Favorites.unselectedIcon,
@@ -106,8 +104,8 @@ fun FenlabBottomBar(
         if (currentUserRole == UserRole.TEACHER) {
             FloatingActionButton(
                 onClick        = onAddClick,
-                containerColor = FenlabTeal,
-                contentColor   = Color.White,
+                containerColor = Teal400,
+                contentColor   = DarkBg,
                 elevation      = FloatingActionButtonDefaults.elevation(8.dp),
                 shape          = CircleShape,
                 modifier       = Modifier
@@ -132,7 +130,7 @@ private fun NavTabItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val tint = if (isSelected) FenlabTeal else Color(0xFFAAAAAA)
+    val tint = if (isSelected) Teal400 else TextSecondary
 
     Column(
         modifier            = Modifier
