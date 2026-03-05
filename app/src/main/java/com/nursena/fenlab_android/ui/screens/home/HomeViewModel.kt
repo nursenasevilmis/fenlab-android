@@ -7,6 +7,7 @@ import com.nursena.fenlab_android.core.network.ApiResult
 import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.domain.model.enums.DifficultyLevel
 import com.nursena.fenlab_android.domain.model.enums.EnvironmentType
+import com.nursena.fenlab_android.domain.model.enums.GradeGroup
 import com.nursena.fenlab_android.domain.model.enums.SortType
 import com.nursena.fenlab_android.domain.model.enums.SubjectType
 import com.nursena.fenlab_android.domain.repository.ExperimentRepository
@@ -29,6 +30,7 @@ data class HomeUiState(
     val selectedSubject: SubjectType?         = null,
     val selectedEnvironment: EnvironmentType? = null,
     val selectedDifficulty: DifficultyLevel?  = null,
+    val selectedGradeGroup: GradeGroup?       = null,
     val sortType: SortType                    = SortType.MOST_RECENT,
     val searchQuery: String                   = "",
     // Sayfalama
@@ -81,6 +83,8 @@ class HomeViewModel @Inject constructor(
                 subject     = s.selectedSubject?.name,
                 environment = s.selectedEnvironment?.name,
                 difficulty  = s.selectedDifficulty?.name,
+                minGradeLevel = s.selectedGradeGroup?.minGrade,
+                maxGradeLevel = s.selectedGradeGroup?.maxGrade,
                 sortType    = s.sortType.name,
                 page        = page,
                 size        = 20
@@ -140,11 +144,12 @@ class HomeViewModel @Inject constructor(
     fun applyFilters(
         subject: SubjectType?,
         environment: EnvironmentType?,
-        difficulty: DifficultyLevel?
+        difficulty: DifficultyLevel?,
+        gradeGroup: GradeGroup? = null
     ) {
         _uiState.update {
             it.copy(selectedSubject = subject, selectedEnvironment = environment,
-                selectedDifficulty = difficulty)
+                selectedDifficulty = difficulty, selectedGradeGroup = gradeGroup)
         }
         loadExperiments()
     }
@@ -156,6 +161,14 @@ class HomeViewModel @Inject constructor(
 
     fun onSearchQueryChange(query: String) = _uiState.update { it.copy(searchQuery = query) }
     fun search() = loadExperiments()
-    fun showFilterSheet() = showSnackbar("Filtre yakında eklenecek")
-    fun showSortSheet()   = showSnackbar("Sıralama yakında eklenecek")
+    fun showFilterSheet() = Unit
+    fun showSortSheet()   = Unit
+
+    fun clearFilters() {
+        _uiState.update {
+            it.copy(selectedSubject = null, selectedEnvironment = null,
+                selectedDifficulty = null, selectedGradeGroup = null)
+        }
+        loadExperiments()
+    }
 }

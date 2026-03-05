@@ -20,14 +20,24 @@ class ExperimentRepositoryImpl @Inject constructor(
         search: String?,
         subject: String?,
         environment: String?,
-        gradeLevel: Int?,
+        minGradeLevel: Int?,
+        maxGradeLevel: Int?,
         difficulty: String?,
         sortType: String,
         page: Int,
         size: Int
     ): ApiResult<PaginatedData<Experiment>> = safeApiCall {
-        experimentApi.getAllExperiments(search, subject, environment, gradeLevel, difficulty, sortType, page, size)
-            .toDomain { it.toDomain() }
+        experimentApi.getAllExperiments(
+            search        = search,
+            subject       = subject,
+            environment   = environment,
+            minGradeLevel = minGradeLevel,
+            maxGradeLevel = maxGradeLevel,
+            difficulty    = difficulty,
+            sortType      = sortType,
+            page          = page,
+            size          = size
+        ).toDomain { it.toDomain() }
     }
 
     override suspend fun getExperimentById(experimentId: Long): ApiResult<ExperimentDetail> = safeApiCall {

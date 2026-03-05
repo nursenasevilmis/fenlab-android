@@ -1,6 +1,7 @@
 package com.nursena.fenlab_android.core.base
 
 import com.nursena.fenlab_android.core.network.ApiResult
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -10,6 +11,9 @@ abstract class BaseRepository {
         call: suspend () -> T
     ): ApiResult<T> = try {
         ApiResult.Success(call())
+
+    } catch (e: CancellationException) {
+        throw e   // coroutine iptali hata değil — sessizce yukarı fırlat
 
     } catch (e: HttpException) {
         val message = when (e.code()) {

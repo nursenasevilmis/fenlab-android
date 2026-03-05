@@ -43,22 +43,17 @@ class AuthViewModel @Inject constructor(
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     // ── Splash: oturum var mı? ────────────────────────────────────────────────
-  /*  fun checkSession() {
+    fun checkSession() {
         viewModelScope.launch {
             val loggedIn = tokenManager.isLoggedIn()
             if (loggedIn) sendEvent(UiEvent.Navigate("home"))
-            else          sendEvent(UiEvent.Navigate("login"))
-        }
-    }*/
-    // AuthViewModel.kt → checkSession()
-    fun checkSession() {
-        // Geçici: her zaman home'a git
-        viewModelScope.launch {
-            sendEvent(UiEvent.Navigate("home"))
+            else          sendEvent(UiEvent.Navigate("auth"))
         }
     }
 
     // ── Login form ────────────────────────────────────────────────────────────
+    fun clearError() = _uiState.update { it.copy(error = null) }
+
     fun onLoginUsernameChange(v: String)  = _uiState.update { it.copy(loginUsernameOrEmail = v, error = null) }
     fun onLoginPasswordChange(v: String)  = _uiState.update { it.copy(loginPassword = v, error = null) }
 

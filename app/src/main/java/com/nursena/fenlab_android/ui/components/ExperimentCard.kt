@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,7 +40,7 @@ fun ExperimentCard(
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onCardClick)
     ) {
-        // ── Resim ──────────────────────────────────────────────────────────
+        // ── Tam resim ─────────────────────────────────────────────────────────
         AsyncImage(
             model              = experiment.thumbnailUrl ?: experiment.videoUrl,
             contentDescription = experiment.title,
@@ -45,61 +48,59 @@ fun ExperimentCard(
             modifier           = Modifier.fillMaxSize()
         )
 
-        // ── Gradient overlay (alt yarı) ────────────────────────────────────
+        // ── Güçlü alt gradient — bilgilerin okunabilmesi için ─────────────────
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0.0f  to Color.Transparent,
-                        0.35f to Color.Transparent,
-                        1.0f  to Color.Black.copy(alpha = 0.88f)
+                        0.0f to Color.Transparent,
+                        0.25f to Color.Transparent,
+                        0.55f to Color.Black.copy(alpha = 0.5f),
+                        1.0f  to Color.Black.copy(alpha = 0.92f)
                     )
                 )
         )
 
-        // ── Sol üst: Subject chip ──────────────────────────────────────────
-        experiment.subject?.let {
-            SubjectChip(
-                subject  = it,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(12.dp)
-            )
-        }
-
-        // ── Sağ üst: Favori butonu ─────────────────────────────────────────
-        FavoriteButton(
-            isFavorited = experiment.isFavoritedByCurrentUser,
-            onClick     = onFavoriteClick,
-            modifier    = Modifier
-                .align(Alignment.TopEnd)
-                .padding(10.dp)
-        )
-
-        // ── Orta: Play ikonu (video varsa) ─────────────────────────────────
+        // ── Play butonu (video varsa) ──────────────────────────────────────────
         if (experiment.videoUrl != null) {
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(48.dp)
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                    .background(Color.White.copy(alpha = 0.18f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector        = Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    tint               = Color.White,
-                    modifier           = Modifier.size(28.dp)
-                )
+                Icon(Icons.Default.PlayArrow, null,
+                    tint = Color.White, modifier = Modifier.size(28.dp))
             }
         }
 
-        // ── Alt bilgi bloğu ────────────────────────────────────────────────
+        // ── Favori butonu — sağ üst ────────────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(10.dp)
+                .size(34.dp)
+                .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+                .clickable(onClick = onFavoriteClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (experiment.isFavoritedByCurrentUser)
+                    Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = null,
+                tint = if (experiment.isFavoritedByCurrentUser) Red400 else Color.White,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+
+        // ── Alt bilgi bloğu — resmin üstünde şeffaf ───────────────────────────
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             // Başlık
             Text(
@@ -107,40 +108,60 @@ fun ExperimentCard(
                 color      = Color.White,
                 fontSize   = 15.sp,
                 fontWeight = FontWeight.Bold,
-                maxLines   = 2,
+                maxLines   = 1,
                 overflow   = TextOverflow.Ellipsis
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
 
-            // Yazar + chip'ler
+            // Yazar satırı
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 UserAvatar(user = experiment.author, size = 26.dp)
 
                 Text(
                     text     = experiment.author.displayName,
-                    color    = Color.White.copy(alpha = 0.85f),
+                    color    = Color.White.copy(alpha = 0.9f),
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                DifficultyChip(difficulty = experiment.difficulty)
-
-                experiment.environment?.let { EnvironmentChip(environment = it) }
-
-                // Favori sayısı
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text     = "♡ ${formatCount(experiment.favoriteCount)}",
-                        color    = Color.White.copy(alpha = 0.75f),
-                        fontSize = 11.sp
-                    )
+                // Görüntülenme
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Icon(Icons.Default.RemoveRedEye, null,
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(12.dp))
+                    Text(formatCount(experiment.favoriteCount * 3),
+                        color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
                 }
+
+                // Beğeni
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Icon(Icons.Default.FavoriteBorder, null,
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(12.dp))
+                    Text(formatCount(experiment.favoriteCount),
+                        color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
+                }
+            }
+
+            Spacer(Modifier.height(7.dp))
+
+            // Chip satırı
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment     = Alignment.CenterVertically
+            ) {
+                DifficultyChip(difficulty = experiment.difficulty)
+                experiment.environment?.let { EnvironmentChip(environment = it) }
+                experiment.subject?.let { SubjectChip(subject = it) }
             }
         }
     }

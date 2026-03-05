@@ -20,7 +20,8 @@ interface ExperimentApi {
         @Query("search")      search: String?      = null,
         @Query("subject")     subject: String?     = null,   // "SCIENCE", "PHYSICS"...
         @Query("environment") environment: String? = null,   // "HOME", "LABORATORY"...
-        @Query("gradeLevel")  gradeLevel: Int?     = null,
+        @Query("minGradeLevel") minGradeLevel: Int? = null,
+        @Query("maxGradeLevel") maxGradeLevel: Int? = null,
         @Query("difficulty")  difficulty: String?  = null,   // "EASY", "MEDIUM", "HARD"
         @Query("sortType")    sortType: String     = "MOST_RECENT",
         @Query("page")        page: Int            = 0,
