@@ -14,16 +14,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -41,7 +40,6 @@ import com.nursena.fenlab_android.ui.components.EmptyState
 import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
 import com.nursena.fenlab_android.ui.components.SubjectChip
-import com.nursena.fenlab_android.ui.components.formatCount
 import com.nursena.fenlab_android.ui.theme.*
 
 @Composable
@@ -50,24 +48,18 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg)
+        modifier = Modifier.fillMaxSize().background(DarkBg)
     ) {
-        // ── Top bar ile arama kutusu ──────────────────────────────────────────
         SearchHeader(
-            query          = uiState.query,
-            onQueryChange  = viewModel::onQueryChange,
-            onClear        = { viewModel.onQueryChange("") },
-            focusRequester = focusRequester,
-            onSearch       = { keyboard?.hide() }
+            query         = uiState.query,
+            onQueryChange = viewModel::onQueryChange,
+            onClear       = { viewModel.onQueryChange("") },
+            onSearch      = { keyboard?.hide() }
         )
 
-        // ── İçerik ───────────────────────────────────────────────────────────
         when {
             uiState.isLoading -> LoadingIndicator()
 
@@ -77,37 +69,36 @@ fun SearchScreen(
             )
 
             uiState.query.isBlank() -> HintContent(
-                isLoading        = uiState.isLoadingAll,
-                allExperiments   = uiState.allExperiments,
-                onTrendClick     = viewModel::onTrendClick,
-                onExperimentClick = onExperimentClick,
-                onFavoriteClick  = viewModel::toggleFavorite
+                recentSearches    = uiState.recentSearches,
+                onRecentClick     = viewModel::onRecentClick,
+                onRemoveRecent    = viewModel::removeRecent,
+                onClearAll        = viewModel::clearRecents,
+                onTrendClick      = viewModel::onQueryChange
             )
 
             uiState.isEmpty -> EmptyState(
                 emoji    = "🔍",
                 title    = "Sonuç bulunamadı",
-                subtitle = "\"${uiState.query}\" için deney yok"
+                subtitle = "\"${uiState.query}\" için deney bulunamadı"
             )
 
             else -> SearchResultList(
-                results          = uiState.results,
+                results           = uiState.results,
                 onExperimentClick = onExperimentClick,
-                onFavoriteClick  = viewModel::toggleFavorite
+                onFavoriteClick   = viewModel::toggleFavorite
             )
         }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Header + Arama kutusu
+// Header
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun SearchHeader(
     query: String,
     onQueryChange: (String) -> Unit,
     onClear: () -> Unit,
-    focusRequester: FocusRequester,
     onSearch: () -> Unit
 ) {
     Column(
@@ -117,30 +108,19 @@ private fun SearchHeader(
             .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 12.dp)
     ) {
-        Text(
-            text       = "Deney Ara",
-            color      = TextPrimary,
-            fontSize   = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text("Deney Ara", color = TextPrimary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
-
         TextField(
             value         = query,
             onValueChange = onQueryChange,
             placeholder   = {
-                Text("Deney adı, konu, öğretmen...",
-                    color = TextSecondary, fontSize = 14.sp)
+                Text("Deney adı, konu, öğretmen...", color = TextSecondary, fontSize = 14.sp)
             },
-            leadingIcon = {
-                Icon(Icons.Default.Search, null, tint = TextSecondary,
-                    modifier = Modifier.size(20.dp))
-            },
+            leadingIcon  = { Icon(Icons.Default.Search, null, tint = TextSecondary, modifier = Modifier.size(20.dp)) },
             trailingIcon = {
                 if (query.isNotBlank()) {
                     IconButton(onClick = onClear) {
-                        Icon(Icons.Default.Close, null, tint = TextSecondary,
-                            modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(18.dp))
                     }
                 }
             },
@@ -157,42 +137,93 @@ private fun SearchHeader(
                 focusedIndicatorColor   = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester)
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Hint durumu: Trend aramalar + Tüm Deneyler
+// Hint: Trend aramalar + Son arananlar
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun HintContent(
-    isLoading: Boolean,
-    allExperiments: List<Experiment>,
-    onTrendClick: (String) -> Unit,
-    onExperimentClick: (Long) -> Unit,
-    onFavoriteClick: (Experiment) -> Unit
+    recentSearches: List<String>,
+    onRecentClick: (String) -> Unit,
+    onRemoveRecent: (String) -> Unit,
+    onClearAll: () -> Unit,
+    onTrendClick: (String) -> Unit
 ) {
-    LazyColumn(
-        contentPadding      = PaddingValues(bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        // Trend aramalar
-        item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🔍", fontSize = 16.sp)
-                    Spacer(Modifier.width(6.dp))
+    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
+
+        // ── Son Arananlar ──────────────────────────────────────────────────
+        if (recentSearches.isNotEmpty()) {
+            item {
+                Row(
+                    modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 10.dp),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(17.dp))
+                        Text("Son Arananlar", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    }
                     Text(
-                        text       = "Trend Aramalar",
-                        color      = TextPrimary,
-                        fontSize   = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text     = "Temizle",
+                        color    = Teal400,
+                        fontSize = 13.sp,
+                        modifier = Modifier.clickable(onClick = onClearAll)
                     )
                 }
-                Spacer(Modifier.height(10.dp))
+            }
+
+            items(recentSearches) { term ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onRecentClick(term) }
+                        .padding(horizontal = 16.dp, vertical = 11.dp),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.size(34.dp).background(DarkSurface2, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                    }
+                    Text(
+                        text     = term,
+                        color    = TextPrimary,
+                        fontSize = 14.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick  = { onRemoveRecent(term) },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                    }
+                }
+                HorizontalDivider(
+                    modifier  = Modifier.padding(horizontal = 16.dp),
+                    thickness = 0.5.dp,
+                    color     = DarkSurface2
+                )
+            }
+
+            item { Spacer(Modifier.height(20.dp)) }
+        }
+
+        // ── Trend Aramalar ─────────────────────────────────────────────────
+        item {
+            Row(
+                modifier          = Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("🔥", fontSize = 16.sp)
+                Text("Trend Aramalar", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -205,48 +236,13 @@ private fun HintContent(
                     TrendChip(label = trend, onClick = { onTrendClick(trend) })
                 }
             }
-            Spacer(Modifier.height(20.dp))
-        }
-
-        // Tüm Deneyler başlığı
-        item {
-            Row(
-                modifier          = Modifier.padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("📋", fontSize = 16.sp)
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text       = "Tüm Deneyler",
-                    color      = TextPrimary,
-                    fontSize   = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-        }
-
-        if (isLoading) {
-            item { LoadingIndicator() }
-        } else {
-            items(items = allExperiments, key = { it.id }) { exp ->
-                CompactExperimentCard(
-                    experiment      = exp,
-                    onCardClick     = { onExperimentClick(exp.id) },
-                    onFavoriteClick = { onFavoriteClick(exp) }
-                )
-                HorizontalDivider(
-                    modifier  = Modifier.padding(horizontal = 16.dp),
-                    thickness = 0.5.dp,
-                    color     = DarkSurface2
-                )
-            }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Arama sonuçları listesi
+// Sonuç listesi
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun SearchResultList(
@@ -254,9 +250,7 @@ private fun SearchResultList(
     onExperimentClick: (Long) -> Unit,
     onFavoriteClick: (Experiment) -> Unit
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(bottom = 100.dp)
-    ) {
+    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
         item {
             Text(
                 text     = "${results.size} sonuç bulundu",
@@ -281,7 +275,7 @@ private fun SearchResultList(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Küçük kart — referanstaki gibi: sol küçük resim, sağda bilgiler
+// Compact kart
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun CompactExperimentCard(
@@ -294,10 +288,10 @@ private fun CompactExperimentCard(
             .fillMaxWidth()
             .clickable(onClick = onCardClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Küçük kare resim
+        // Thumbnail
         Box(
             modifier = Modifier
                 .size(width = 88.dp, height = 72.dp)
@@ -310,30 +304,22 @@ private fun CompactExperimentCard(
                 contentScale       = ContentScale.Crop,
                 modifier           = Modifier.fillMaxSize()
             )
-            // Play ikonu
             if (experiment.videoUrl != null) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.25f)),
+                    modifier         = Modifier.fillMaxSize().background(Color.Black.copy(0.25f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                        modifier         = Modifier.size(28.dp).background(Color.White.copy(0.2f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.PlayArrow, null,
-                            tint = Color.White, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(16.dp))
                     }
                 }
             }
         }
 
-        // Sağ: Bilgiler
         Column(modifier = Modifier.weight(1f)) {
-            // Başlık
             Text(
                 text       = experiment.title,
                 color      = TextPrimary,
@@ -343,26 +329,20 @@ private fun CompactExperimentCard(
                 overflow   = TextOverflow.Ellipsis,
                 lineHeight = 20.sp
             )
-
             Spacer(Modifier.height(4.dp))
 
-            // Yazar + rol
+            // Yazar satırı
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Avatar küçük
                 Box(
-                    modifier = Modifier
-                        .size(18.dp)
-                        .background(Teal500, CircleShape),
+                    modifier         = Modifier.size(18.dp).background(Teal500, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text     = experiment.author.displayName.take(1).uppercase(),
-                        color    = Color.White,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Bold
+                        experiment.author.displayName.take(1).uppercase(),
+                        color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold
                     )
                 }
                 Text(
@@ -373,43 +353,33 @@ private fun CompactExperimentCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
                 )
-                if (experiment.author.isTeacher) {
-                    Box(
-                        modifier = Modifier
-                            .background(Orange400.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 5.dp, vertical = 1.dp)
-                    ) {
-                        Text("Öğretmen", color = Orange400, fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium)
-                    }
-                }
             }
 
             Spacer(Modifier.height(6.dp))
 
-            // Chip + istatistikler
+            // Chip + rating + favori
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 experiment.subject?.let { SubjectChip(subject = it) }
-
                 Spacer(Modifier.weight(1f))
 
-                // Görüntülenme
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Icon(Icons.Default.RemoveRedEye, null,
-                        tint = TextSecondary, modifier = Modifier.size(12.dp))
-                    Text(formatCount(experiment.favoriteCount * 3),
-                        color = TextSecondary, fontSize = 11.sp)
+                // Rating yıldızı
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Icon(Icons.Default.Star, null, tint = Yellow400, modifier = Modifier.size(12.dp))
+                    Text(
+                        text  = experiment.averageRating?.let { "%.1f".format(it) } ?: "-",
+                        color = TextSecondary,
+                        fontSize = 11.sp
+                    )
                 }
 
                 // Favori butonu
-                IconButton(
-                    onClick  = onFavoriteClick,
-                    modifier = Modifier.size(28.dp)
-                ) {
+                IconButton(onClick = onFavoriteClick, modifier = Modifier.size(28.dp)) {
                     Icon(
                         imageVector = if (experiment.isFavoritedByCurrentUser)
                             Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -435,11 +405,6 @@ private fun TrendChip(label: String, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
-        Text(
-            text      = label,
-            color     = TextPrimary,
-            fontSize  = 13.sp,
-            fontWeight = FontWeight.Medium
-        )
+        Text(text = label, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
 }

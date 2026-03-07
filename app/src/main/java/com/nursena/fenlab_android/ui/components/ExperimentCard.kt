@@ -9,7 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RemoveRedEye
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -134,11 +134,13 @@ fun ExperimentCard(
                 // Görüntülenme
                 Row(verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Icon(Icons.Default.RemoveRedEye, null,
-                        tint = Color.White.copy(alpha = 0.7f),
+                    Icon(Icons.Default.Star, null,
+                        tint = Yellow400,
                         modifier = Modifier.size(12.dp))
-                    Text(formatCount(experiment.favoriteCount * 3),
-                        color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
+                    Text(
+                        text  = experiment.averageRating?.let { "%.1f".format(it) } ?: "-",
+                        color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp
+                    )
                 }
 
                 // Beğeni

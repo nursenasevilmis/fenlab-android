@@ -16,6 +16,7 @@ import com.nursena.fenlab_android.core.datastore.TokenManager
 import com.nursena.fenlab_android.domain.model.enums.UserRole
 import com.nursena.fenlab_android.ui.FenlabBottomBar
 import com.nursena.fenlab_android.ui.screens.favorites.FavoritesScreen
+import com.nursena.fenlab_android.ui.screens.add.AddExperimentScreen
 import com.nursena.fenlab_android.ui.screens.auth.AuthScreen
 import com.nursena.fenlab_android.ui.screens.home.HomeScreen
 import com.nursena.fenlab_android.ui.screens.profile.ProfileScreen
@@ -134,7 +135,12 @@ fun FenlabNavGraph() {
 
             composable(Routes.PROFILE) {
                 ProfileScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) }
+                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                    onLogout = {
+                        navController.navigate(Routes.AUTH) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
 
@@ -150,10 +156,13 @@ fun FenlabNavGraph() {
             }
 
             composable(Routes.ADD) {
-                com.nursena.fenlab_android.ui.components.EmptyState(
-                    emoji    = "➕",
-                    title    = "Deney Ekle",
-                    subtitle = "Yakında eklenecek"
+                AddExperimentScreen(
+                    onBack = { navController.popBackStack() },
+                    onPublished = { id ->
+                        navController.navigate(Routes.detail(id)) {
+                            popUpTo(Routes.ADD) { inclusive = true }
+                        }
+                    }
                 )
             }
         }

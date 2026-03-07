@@ -17,18 +17,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// Trend aramalar — ileride backend'den de çekilebilir
 val TRENDING_SEARCHES = listOf(
     "Kimya", "Fizik", "Çevre", "Mıknatıs", "Volkan",
     "Optik", "Asit-Baz", "Elektrik", "Su Döngüsü", "Bitki"
 )
 
+private const val MAX_RECENT = 8
+
 data class SearchUiState(
     val query: String             = "",
     val results: List<Experiment> = emptyList(),
-    val allExperiments: List<Experiment> = emptyList(), // boş sorguda tümünü göster
+    val recentSearches: List<String> = emptyList(),
     val isLoading: Boolean        = false,
-    val isLoadingAll: Boolean     = false,
     val isEmpty: Boolean          = false,
     val error: String?            = null
 )
@@ -44,94 +44,81 @@ class SearchViewModel @Inject constructor(
 
     private var debounceJob: Job? = null
 
-    init { loadAllExperiments() }
-
-    // Ekran açılınca tüm deneyleri yükle (hint state için)
-    private fun loadAllExperiments() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingAll = true) }
-            when (val result = experimentRepository.getAllExperiments(size = 20)) {
-                is ApiResult.Success -> _uiState.update {
-                    it.copy(allExperiments = result.data.content, isLoadingAll = false)
-                }
-                else -> _uiState.update { it.copy(isLoadingAll = false) }
-            }
-        }
-    }
-
     fun onQueryChange(query: String) {
         _uiState.update { it.copy(query = query, error = null) }
-
         debounceJob?.cancel()
         if (query.isBlank()) {
             _uiState.update { it.copy(results = emptyList(), isEmpty = false, isLoading = false) }
             return
         }
-
         debounceJob = viewModelScope.launch {
             delay(400)
             search(query)
         }
     }
 
-    fun onTrendClick(trend: String) {
-        onQueryChange(trend)
+    fun onRecentClick(term: String) = onQueryChange(term)
+
+    fun removeRecent(term: String) {
+        _uiState.update { it.copy(recentSearches = it.recentSearches - term) }
+    }
+
+    fun clearRecents() {
+        _uiState.update { it.copy(recentSearches = emptyList()) }
     }
 
     private suspend fun search(query: String) {
         _uiState.update { it.copy(isLoading = true) }
         try {
             when (val result = experimentRepository.getAllExperiments(search = query, size = 30)) {
-                is ApiResult.Success -> _uiState.update {
-                    it.copy(
-                        results   = result.data.content,
-                        isLoading = false,
-                        isEmpty   = result.data.content.isEmpty()
-                    )
+                is ApiResult.Success -> {
+                    // Başarılı aramayı son aramalara ekle
+                    if (query.length >= 2) addToRecents(query)
+                    _uiState.update {
+                        it.copy(
+                            results   = result.data.content,
+                            isLoading = false,
+                            isEmpty   = result.data.content.isEmpty()
+                        )
+                    }
                 }
                 is ApiResult.Error -> _uiState.update {
                     it.copy(isLoading = false, error = result.message)
                 }
                 is ApiResult.Loading -> Unit
             }
-        } catch (e: CancellationException) {
-            throw e
+        } catch (e: CancellationException) { throw e }
+    }
+
+    private fun addToRecents(query: String) {
+        _uiState.update { state ->
+            val updated = (listOf(query) + state.recentSearches.filter { it != query })
+                .take(MAX_RECENT)
+            state.copy(recentSearches = updated)
         }
     }
 
     fun toggleFavorite(experiment: Experiment) {
         viewModelScope.launch {
             val isFav = experiment.isFavoritedByCurrentUser
-
-            // Optimistic — ikisini de güncelle
-            fun updateList(list: List<Experiment>) = list.map {
+            fun toggle(list: List<Experiment>) = list.map {
                 if (it.id == experiment.id)
-                    it.copy(
-                        isFavoritedByCurrentUser = !isFav,
-                        favoriteCount = if (isFav) it.favoriteCount - 1 else it.favoriteCount + 1
-                    )
+                    it.copy(isFavoritedByCurrentUser = !isFav,
+                        favoriteCount = if (isFav) it.favoriteCount - 1 else it.favoriteCount + 1)
                 else it
             }
-            _uiState.update { it.copy(
-                results       = updateList(it.results),
-                allExperiments = updateList(it.allExperiments)
-            )}
+            _uiState.update { it.copy(results = toggle(it.results)) }
 
-            val result = if (isFav)
-                favoriteRepository.removeFromFavorites(experiment.id)
-            else
-                favoriteRepository.addToFavorites(experiment.id)
+            val result = if (isFav) favoriteRepository.removeFromFavorites(experiment.id)
+            else       favoriteRepository.addToFavorites(experiment.id)
 
             if (result is ApiResult.Error) {
-                fun revertList(list: List<Experiment>) = list.map {
+                fun revert(list: List<Experiment>) = list.map {
                     if (it.id == experiment.id)
                         it.copy(isFavoritedByCurrentUser = isFav, favoriteCount = experiment.favoriteCount)
                     else it
                 }
-                _uiState.update { it.copy(
-                    results        = revertList(it.results),
-                    allExperiments = revertList(it.allExperiments)
-                )}
+                _uiState.update { it.copy(results = revert(it.results)) }
                 showSnackbar(result.message)
             }
         }
