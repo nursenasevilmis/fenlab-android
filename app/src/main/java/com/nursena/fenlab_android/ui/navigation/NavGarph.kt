@@ -7,16 +7,13 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavType
 import androidx.navigation.compose.*
-import androidx.navigation.navArgument
 import com.nursena.fenlab_android.core.datastore.TokenManager
 import com.nursena.fenlab_android.domain.model.enums.UserRole
 import com.nursena.fenlab_android.ui.FenlabBottomBar
 import com.nursena.fenlab_android.ui.screens.favorites.FavoritesScreen
 import com.nursena.fenlab_android.ui.screens.add.AddExperimentScreen
+import com.nursena.fenlab_android.ui.screens.detail.ExperimentDetailScreen
 import com.nursena.fenlab_android.ui.screens.auth.AuthScreen
 import com.nursena.fenlab_android.ui.screens.home.HomeScreen
 import com.nursena.fenlab_android.ui.screens.profile.ProfileScreen
@@ -28,7 +25,6 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
-// Rotalar
 object Routes {
     const val HOME      = "home"
     const val SEARCH    = "search"
@@ -45,7 +41,6 @@ private val bottomBarRoutes = setOf(
     Routes.HOME, Routes.SEARCH, Routes.FAVORITES, Routes.PROFILE
 )
 
-// TokenManager'a Hilt EntryPoint ile erişim
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface TokenManagerEntryPoint {
@@ -58,7 +53,6 @@ fun FenlabNavGraph() {
     val navBackStack  by navController.currentBackStackEntryAsState()
     val currentRoute  = navBackStack?.destination?.route
 
-    // TokenManager'dan gerçek rolü al
     val context = LocalContext.current
     val tokenManager = remember {
         EntryPointAccessors.fromApplication(
@@ -67,11 +61,13 @@ fun FenlabNavGraph() {
         ).tokenManager()
     }
 
-    // Role'u asenkron oku, default USER (güvenli taraf)
+    // Rol'ü her route değişiminde yeniden oku (login sonrası güncel olsun)
     var userRole by remember { mutableStateOf(UserRole.USER) }
-    LaunchedEffect(Unit) {
-        val roleStr = tokenManager.getRole()
-        userRole = if (roleStr == "TEACHER") UserRole.TEACHER else UserRole.USER
+    LaunchedEffect(currentRoute) {
+        if (currentRoute in bottomBarRoutes) {
+            val roleStr = tokenManager.getRole()
+            userRole = if (roleStr == "TEACHER") UserRole.TEACHER else UserRole.USER
+        }
     }
 
     Scaffold(
@@ -92,18 +88,10 @@ fun FenlabNavGraph() {
             navController    = navController,
             startDestination = Routes.AUTH,
             modifier         = Modifier.padding(innerPadding),
-            enterTransition  = {
-                fadeIn(tween(220)) + slideInHorizontally(tween(220)) { it / 6 }
-            },
-            exitTransition   = {
-                fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { -it / 6 }
-            },
-            popEnterTransition = {
-                fadeIn(tween(220)) + slideInHorizontally(tween(220)) { -it / 6 }
-            },
-            popExitTransition  = {
-                fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { it / 6 }
-            }
+            enterTransition  = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 8 } },
+            exitTransition   = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { -it / 8 } },
+            popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 8 } },
+            popExitTransition  = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { it / 8 } }
         ) {
             composable(Routes.AUTH) {
                 AuthScreen(
@@ -116,21 +104,15 @@ fun FenlabNavGraph() {
             }
 
             composable(Routes.HOME) {
-                HomeScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) }
-                )
+                HomeScreen(onExperimentClick = { id -> navController.navigate(Routes.detail(id)) })
             }
 
             composable(Routes.SEARCH) {
-                SearchScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) }
-                )
+                SearchScreen(onExperimentClick = { id -> navController.navigate(Routes.detail(id)) })
             }
 
             composable(Routes.FAVORITES) {
-                FavoritesScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) }
-                )
+                FavoritesScreen(onExperimentClick = { id -> navController.navigate(Routes.detail(id)) })
             }
 
             composable(Routes.PROFILE) {
@@ -146,13 +128,11 @@ fun FenlabNavGraph() {
 
             composable(
                 route     = Routes.DETAIL,
-                arguments = listOf(navArgument("experimentId") { type = NavType.LongType })
+                arguments = listOf(androidx.navigation.navArgument("experimentId") {
+                    type = androidx.navigation.NavType.LongType
+                })
             ) {
-                com.nursena.fenlab_android.ui.components.EmptyState(
-                    emoji    = "🔬",
-                    title    = "Detay sayfası",
-                    subtitle = "Yakında eklenecek"
-                )
+                ExperimentDetailScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.ADD) {

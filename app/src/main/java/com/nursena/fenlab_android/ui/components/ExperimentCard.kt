@@ -36,8 +36,8 @@ fun ExperimentCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(220.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .height(155.dp)
+            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onCardClick)
     ) {
         // ── Tam resim ─────────────────────────────────────────────────────────
@@ -67,12 +67,12 @@ fun ExperimentCard(
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(48.dp)
+                    .size(26.dp)
                     .background(Color.White.copy(alpha = 0.18f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.PlayArrow, null,
-                    tint = Color.White, modifier = Modifier.size(28.dp))
+                    tint = Color.White, modifier = Modifier.size(17.dp))
             }
         }
 
@@ -81,7 +81,7 @@ fun ExperimentCard(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(10.dp)
-                .size(34.dp)
+                .size(26.dp)
                 .background(Color.Black.copy(alpha = 0.35f), CircleShape)
                 .clickable(onClick = onFavoriteClick),
             contentAlignment = Alignment.Center
@@ -91,7 +91,7 @@ fun ExperimentCard(
                     Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 contentDescription = null,
                 tint = if (experiment.isFavoritedByCurrentUser) Red400 else Color.White,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(12.dp)
             )
         }
 
@@ -100,31 +100,31 @@ fun ExperimentCard(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .padding(horizontal = 8.dp, vertical = 6.dp)
         ) {
             // Başlık
             Text(
                 text       = experiment.title,
                 color      = Color.White,
-                fontSize   = 15.sp,
+                fontSize   = 12.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines   = 1,
                 overflow   = TextOverflow.Ellipsis
             )
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(3.dp))
 
             // Yazar satırı
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                UserAvatar(user = experiment.author, size = 26.dp)
+                UserAvatar(user = experiment.author, size = 18.dp)
 
                 Text(
                     text     = experiment.author.displayName,
                     color    = Color.White.copy(alpha = 0.9f),
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
@@ -139,7 +139,7 @@ fun ExperimentCard(
                         modifier = Modifier.size(12.dp))
                     Text(
                         text  = experiment.averageRating?.let { "%.1f".format(it) } ?: "-",
-                        color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp
+                        color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp
                     )
                 }
 
@@ -154,7 +154,7 @@ fun ExperimentCard(
                 }
             }
 
-            Spacer(Modifier.height(7.dp))
+            Spacer(Modifier.height(3.dp))
 
             // Chip satırı
             Row(

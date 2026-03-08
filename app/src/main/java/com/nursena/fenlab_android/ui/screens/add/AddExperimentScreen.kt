@@ -147,7 +147,7 @@ private fun AddTopBar(currentStep: Int, onBack: () -> Unit) {
         Spacer(Modifier.width(8.dp))
         Text("Deney Ekle", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.width(4.dp))
-        Text("+", color = Teal400, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text("+", color = Teal400, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -307,7 +307,7 @@ private fun Step1Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
     SectionCard(title = "Kapak Görseli") {
         if (state.coverImageUrl != null) {
             Box(
-                modifier = Modifier.fillMaxWidth().height(160.dp)
+                modifier = Modifier.fillMaxWidth().height(130.dp)
                     .clip(RoundedCornerShape(10.dp))
             ) {
                 AsyncImage(
@@ -478,7 +478,7 @@ private fun Step2Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
 private fun Step3Preview(state: AddExperimentUiState) {
     // Kapak
     Box(
-        modifier = Modifier.fillMaxWidth().height(180.dp)
+        modifier = Modifier.fillMaxWidth().height(140.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(DarkSurface)
     ) {
@@ -549,7 +549,7 @@ private fun SuccessScreen(onNewExperiment: () -> Unit) {
         Spacer(Modifier.height(10.dp))
         Text(
             "Deneyin topluluğa katıldı.\nÖğrenciler artık keşfedebilir.",
-            color     = TextSecondary, fontSize = 14.sp,
+            color     = TextSecondary, fontSize = 12.sp,
             lineHeight = 21.sp, textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(32.dp))
@@ -557,7 +557,7 @@ private fun SuccessScreen(onNewExperiment: () -> Unit) {
             onClick  = onNewExperiment,
             shape    = RoundedCornerShape(14.dp),
             colors   = ButtonDefaults.buttonColors(containerColor = Teal400),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+            modifier = Modifier.fillMaxWidth().height(42.dp)
         ) {
             Text("+ Yeni Deney Ekle", color = DarkBg, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
@@ -586,7 +586,7 @@ private fun BottomButtons(
         if (currentStep > 0) {
             OutlinedButton(
                 onClick = onBack,
-                modifier = Modifier.weight(1f).height(48.dp),
+                modifier = Modifier.weight(1f).height(40.dp),
                 shape = RoundedCornerShape(12.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, DarkSurface3),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
@@ -601,7 +601,7 @@ private fun BottomButtons(
         Button(
             onClick  = onNext,
             enabled  = !isLoading,
-            modifier = Modifier.weight(if (currentStep == 0) 1f else 1.4f).height(48.dp),
+            modifier = Modifier.weight(if (currentStep == 0) 1f else 1.4f).height(40.dp),
             shape    = RoundedCornerShape(12.dp),
             colors   = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             contentPadding = PaddingValues(0.dp)

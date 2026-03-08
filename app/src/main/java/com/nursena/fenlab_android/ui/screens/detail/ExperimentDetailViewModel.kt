@@ -23,7 +23,7 @@ data class DetailUiState(
     val isCommentsLoading: Boolean    = false,
     val isQuestionsLoading: Boolean   = false,
     val error: String?                = null,
-    val selectedTab: Int              = 0,     // 0=Malzeme 1=Adımlar 2=Yorumlar 3=S&C
+    val selectedTab: Int              = 0,
     val commentInput: String          = "",
     val questionInput: String         = "",
     val isFavorited: Boolean          = false,
@@ -52,7 +52,6 @@ class ExperimentDetailViewModel @Inject constructor(
         loadQuestions()
     }
 
-    // ── Deney detayı ─────────────────────────────────────────────────────────
     fun loadExperiment() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
@@ -71,7 +70,6 @@ class ExperimentDetailViewModel @Inject constructor(
         }
     }
 
-    // ── Yorumlar ──────────────────────────────────────────────────────────────
     fun loadComments() {
         viewModelScope.launch {
             _uiState.update { it.copy(isCommentsLoading = true) }
@@ -94,13 +92,8 @@ class ExperimentDetailViewModel @Inject constructor(
             when (val result = commentRepository.addComment(
                 experimentId, CommentCreateRequest(content = text)
             )) {
-                is ApiResult.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            comments     = listOf(result.data) + it.comments,
-                            commentInput = ""
-                        )
-                    }
+                is ApiResult.Success -> _uiState.update {
+                    it.copy(comments = listOf(result.data) + it.comments, commentInput = "")
                 }
                 is ApiResult.Error -> showSnackbar(result.message)
                 is ApiResult.Loading -> Unit
@@ -120,7 +113,6 @@ class ExperimentDetailViewModel @Inject constructor(
         }
     }
 
-    // ── Sorular ───────────────────────────────────────────────────────────────
     fun loadQuestions() {
         viewModelScope.launch {
             _uiState.update { it.copy(isQuestionsLoading = true) }
@@ -143,13 +135,8 @@ class ExperimentDetailViewModel @Inject constructor(
             when (val result = questionRepository.askQuestion(
                 experimentId, QuestionCreateRequest(questionText = text)
             )) {
-                is ApiResult.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            questions     = it.questions + result.data,
-                            questionInput = ""
-                        )
-                    }
+                is ApiResult.Success -> _uiState.update {
+                    it.copy(questions = it.questions + result.data, questionInput = "")
                 }
                 is ApiResult.Error -> showSnackbar(result.message)
                 is ApiResult.Loading -> Unit
@@ -164,9 +151,7 @@ class ExperimentDetailViewModel @Inject constructor(
                 questionId, AnswerCreateRequest(answerText = answerText)
             )) {
                 is ApiResult.Success -> _uiState.update {
-                    it.copy(questions = it.questions.map { q ->
-                        if (q.id == questionId) result.data else q
-                    })
+                    it.copy(questions = it.questions.map { q -> if (q.id == questionId) result.data else q })
                 }
                 is ApiResult.Error -> showSnackbar(result.message)
                 is ApiResult.Loading -> Unit
@@ -186,39 +171,59 @@ class ExperimentDetailViewModel @Inject constructor(
         }
     }
 
-    // ── Favori ───────────────────────────────────────────────────────────────
     fun toggleFavorite() {
         viewModelScope.launch {
             val isFav = _uiState.value.isFavorited
-            _uiState.update { it.copy(isFavorited = !isFav) } // optimistic
+            _uiState.update { it.copy(isFavorited = !isFav) }
             val result = if (isFav)
                 favoriteRepository.removeFromFavorites(experimentId)
             else
                 favoriteRepository.addToFavorites(experimentId)
             if (result is ApiResult.Error) {
-                _uiState.update { it.copy(isFavorited = isFav) } // geri al
+                _uiState.update { it.copy(isFavorited = isFav) }
                 showSnackbar(result.message)
             }
         }
     }
 
-    // ── Puanlama ──────────────────────────────────────────────────────────────
+    // ── Rating: sonrası averageRating'i de güncelle ──────────────────────────
     fun rateExperiment(rating: Int) {
         viewModelScope.launch {
+            // Optimistic: yıldızları hemen güncelle
+            val prevRating = _uiState.value.currentUserRating
+            _uiState.update { it.copy(currentUserRating = rating) }
+
             when (val result = ratingRepository.rateExperiment(
                 experimentId, RatingRequest(rating = rating)
             )) {
                 is ApiResult.Success -> {
+                    // averageRating'i de yenile: deneyi tekrar yükle
                     _uiState.update { it.copy(currentUserRating = result.data.rating) }
+                    // Arka planda güncel ortalamayı çek
+                    loadExperimentSilently()
                     showSnackbar("Puanınız kaydedildi.")
                 }
-                is ApiResult.Error -> showSnackbar(result.message)
+                is ApiResult.Error -> {
+                    _uiState.update { it.copy(currentUserRating = prevRating) }
+                    showSnackbar(result.message)
+                }
                 is ApiResult.Loading -> Unit
             }
         }
     }
 
-    // ── PDF ───────────────────────────────────────────────────────────────────
+    // Sadece experiment'i güncelle, loading gösterme
+    private fun loadExperimentSilently() {
+        viewModelScope.launch {
+            when (val result = experimentRepository.getExperimentById(experimentId)) {
+                is ApiResult.Success -> _uiState.update { state ->
+                    state.copy(experiment = result.data)
+                }
+                else -> Unit
+            }
+        }
+    }
+
     fun downloadPdf() {
         viewModelScope.launch {
             when (val result = pdfRepository.generatePdf(experimentId)) {
@@ -229,6 +234,5 @@ class ExperimentDetailViewModel @Inject constructor(
         }
     }
 
-    // ── Tab ───────────────────────────────────────────────────────────────────
     fun selectTab(index: Int) = _uiState.update { it.copy(selectedTab = index) }
 }

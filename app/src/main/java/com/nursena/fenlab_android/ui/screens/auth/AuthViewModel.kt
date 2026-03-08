@@ -28,6 +28,7 @@ data class AuthUiState(
     val registerPassword: String = "",
     val registerRole: UserRole = UserRole.USER,
     val registerBranch: String = "",
+    val registerExperienceYears: String = "",
     // Genel
     val isLoading: Boolean = false,
     val error: String? = null
@@ -99,6 +100,7 @@ class AuthViewModel @Inject constructor(
     fun onRegisterPasswordChange(v: String)  = _uiState.update { it.copy(registerPassword = v, error = null) }
     fun onRegisterRoleChange(v: UserRole)    = _uiState.update { it.copy(registerRole = v, error = null) }
     fun onRegisterBranchChange(v: String)    = _uiState.update { it.copy(registerBranch = v, error = null) }
+    fun onRegisterExperienceYearsChange(v: String) = _uiState.update { it.copy(registerExperienceYears = v, error = null) }
 
     fun register() {
         val state = _uiState.value
@@ -121,7 +123,8 @@ class AuthViewModel @Inject constructor(
                     email     = state.registerEmail.trim(),
                     password  = state.registerPassword,
                     role      = state.registerRole.name,
-                    branch    = state.registerBranch.ifBlank { null }
+                    branch    = state.registerBranch.ifBlank { null },
+                    experienceYears = state.registerExperienceYears.toIntOrNull()
                 )
             )
             when (result) {
