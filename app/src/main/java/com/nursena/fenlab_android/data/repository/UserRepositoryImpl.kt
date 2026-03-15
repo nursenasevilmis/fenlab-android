@@ -21,6 +21,10 @@ class UserRepositoryImpl @Inject constructor(
         userApi.getUserById(userId).toDomain()
     }
 
+    override suspend fun searchUsers(query: String): ApiResult<List<User>> = safeApiCall {
+        userApi.searchUsers(query).map { it.toDomain() }
+    }
+
     override suspend fun updateUser(userId: Long, request: UserUpdateRequest): ApiResult<User> = safeApiCall {
         userApi.updateUser(userId, request).toDomain()
     }

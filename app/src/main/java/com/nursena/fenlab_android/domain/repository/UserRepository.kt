@@ -10,6 +10,8 @@ interface UserRepository {
 
     suspend fun getUserById(userId: Long): ApiResult<User>
 
+    suspend fun searchUsers(query: String): ApiResult<List<User>>
+
     suspend fun updateUser(userId: Long, request: UserUpdateRequest): ApiResult<User>
 
     suspend fun deleteUser(userId: Long): ApiResult<Unit>

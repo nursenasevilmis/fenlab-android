@@ -7,6 +7,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface UserApi {
 
@@ -17,6 +18,11 @@ interface UserApi {
     suspend fun getUserById(
         @Path("userId") userId: Long
     ): UserResponse
+
+    @GET("api/users/search")
+    suspend fun searchUsers(
+        @Query("q") query: String
+    ): List<UserResponse>
 
     @PUT("api/users/{userId}")
     suspend fun updateUser(
