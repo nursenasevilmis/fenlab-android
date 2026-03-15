@@ -11,6 +11,7 @@ import com.nursena.fenlab_android.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,6 @@ data class SearchUiState(
     val recentSearches: List<String> = emptyList(),
     val isLoading: Boolean           = false,
     val isEmpty: Boolean             = false,
-    val isUserSearch: Boolean        = false,
     val error: String?               = null
 )
 
@@ -53,64 +53,56 @@ class SearchViewModel @Inject constructor(
         _uiState.update { it.copy(query = query, error = null) }
         debounceJob?.cancel()
         if (query.isBlank()) {
-            _uiState.update { it.copy(results = emptyList(), userResults = emptyList(), isEmpty = false, isLoading = false, isUserSearch = false) }
+            _uiState.update { it.copy(results = emptyList(), userResults = emptyList(), isEmpty = false, isLoading = false) }
             return
         }
         debounceJob = viewModelScope.launch {
             delay(400)
-            // @ ile başlıyorsa kullanıcı araması
-            if (query.startsWith("@")) {
-                searchUsers(query.removePrefix("@").trim())
-            } else {
-                searchExperiments(query)
-            }
+            search(query)
         }
     }
 
     fun onRecentClick(term: String) = onQueryChange(term)
 
-    fun removeRecent(term: String) = _uiState.update { it.copy(recentSearches = it.recentSearches - term) }
-
-    fun clearRecents() = _uiState.update { it.copy(recentSearches = emptyList()) }
-
-    private suspend fun searchExperiments(query: String) {
-        _uiState.update { it.copy(isLoading = true, isUserSearch = false) }
-        try {
-            when (val result = experimentRepository.getAllExperiments(search = query, size = 30)) {
-                is ApiResult.Success -> {
-                    if (query.length >= 2) addToRecents(query)
-                    _uiState.update {
-                        it.copy(results = result.data.content, isLoading = false, isEmpty = result.data.content.isEmpty())
-                    }
-                }
-                is ApiResult.Error -> _uiState.update { it.copy(isLoading = false, error = result.message) }
-                is ApiResult.Loading -> Unit
-            }
-        } catch (e: CancellationException) { throw e }
+    fun removeRecent(term: String) {
+        _uiState.update { it.copy(recentSearches = it.recentSearches - term) }
     }
 
-    private suspend fun searchUsers(query: String) {
-        if (query.isBlank()) {
-            _uiState.update { it.copy(isLoading = false, isUserSearch = true, userResults = emptyList(), isEmpty = false) }
-            return
-        }
-        _uiState.update { it.copy(isLoading = true, isUserSearch = true) }
+    fun clearRecents() {
+        _uiState.update { it.copy(recentSearches = emptyList()) }
+    }
+
+    private suspend fun search(query: String) {
+        _uiState.update { it.copy(isLoading = true) }
         try {
-            when (val result = userRepository.searchUsers(query)) {
-                is ApiResult.Success -> {
-                    _uiState.update {
-                        it.copy(userResults = result.data, isLoading = false, isEmpty = result.data.isEmpty())
-                    }
-                }
-                is ApiResult.Error -> _uiState.update { it.copy(isLoading = false, error = result.message) }
-                is ApiResult.Loading -> Unit
+            // Deney ve kullanıcı araması paralel çalışır
+            val expDeferred  = viewModelScope.async { experimentRepository.getAllExperiments(search = query, size = 30) }
+            val userDeferred = viewModelScope.async { userRepository.searchUsers(query) }
+
+            val expResult  = expDeferred.await()
+            val userResult = userDeferred.await()
+
+            val experiments = if (expResult is ApiResult.Success) expResult.data.content else emptyList()
+            val users       = if (userResult is ApiResult.Success) userResult.data else emptyList()
+
+            if (query.length >= 2) addToRecents(query)
+
+            _uiState.update {
+                it.copy(
+                    results     = experiments,
+                    userResults = users,
+                    isLoading   = false,
+                    isEmpty     = experiments.isEmpty() && users.isEmpty(),
+                    error       = if (expResult is ApiResult.Error) expResult.message else null
+                )
             }
         } catch (e: CancellationException) { throw e }
     }
 
     private fun addToRecents(query: String) {
         _uiState.update { state ->
-            val updated = (listOf(query) + state.recentSearches.filter { it != query }).take(MAX_RECENT)
+            val updated = (listOf(query) + state.recentSearches.filter { it != query })
+                .take(MAX_RECENT)
             state.copy(recentSearches = updated)
         }
     }
@@ -125,8 +117,10 @@ class SearchViewModel @Inject constructor(
                 else it
             }
             _uiState.update { it.copy(results = toggle(it.results)) }
+
             val result = if (isFav) favoriteRepository.removeFromFavorites(experiment.id)
             else       favoriteRepository.addToFavorites(experiment.id)
+
             if (result is ApiResult.Error) {
                 fun revert(list: List<Experiment>) = list.map {
                     if (it.id == experiment.id)
