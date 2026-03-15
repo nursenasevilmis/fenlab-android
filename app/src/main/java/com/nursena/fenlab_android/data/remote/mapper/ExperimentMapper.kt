@@ -8,6 +8,14 @@ import com.nursena.fenlab_android.domain.model.enums.DifficultyLevel
 import com.nursena.fenlab_android.domain.model.enums.EnvironmentType
 import com.nursena.fenlab_android.domain.model.enums.SubjectType
 
+private fun String.fixMinioUrl(): String =
+    this
+        .replace("10.0.3.2", "192.168.1.108")
+        .replace("10.0.2.2", "192.168.1.108")
+        .replace("localhost", "192.168.1.108")
+        .replace("127.0.0.1", "192.168.1.108")
+        .replace("192.168.1.50", "192.168.1.108")
+
 fun ExperimentSummaryResponse.toDomain(): Experiment = Experiment(
     id                       = id,
     author                   = user.toDomain(),
@@ -19,8 +27,8 @@ fun ExperimentSummaryResponse.toDomain(): Experiment = Experiment(
     topic                    = topic,
     difficulty               = runCatching { DifficultyLevel.valueOf(difficulty) }.getOrDefault(DifficultyLevel.MEDIUM),
     createdAt                = createdAt,
-    thumbnailUrl             = thumbnailUrl,
-    videoUrl                 = videoUrl,
+    thumbnailUrl             = thumbnailUrl?.fixMinioUrl(),
+    videoUrl                 = videoUrl?.fixMinioUrl(),
     favoriteCount            = favoriteCount,
     averageRating            = averageRating,
     commentCount             = commentCount,
