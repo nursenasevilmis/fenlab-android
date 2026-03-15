@@ -52,6 +52,7 @@ import com.nursena.fenlab_android.ui.theme.*
 @Composable
 fun ExperimentDetailScreen(
     onBack: () -> Unit,
+    onAuthorClick: (Long) -> Unit = {},
     viewModel: ExperimentDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -177,6 +178,7 @@ fun ExperimentDetailScreen(
                             exp           = exp,
                             currentRating = uiState.currentUserRating,
                             isPdfLoading  = uiState.isPdfLoading,
+                            onAuthorClick = onAuthorClick,
                             onRate        = viewModel::rateExperiment,
                             onDownloadPdf = { viewModel.downloadPdf(context) }
                         )
@@ -189,7 +191,7 @@ fun ExperimentDetailScreen(
                             onSelect      = viewModel::selectTab
                         )
                     }
-                    item { DescriptionCard(description = exp.description) }
+                    item { DescriptionCard(description = exp.description, safetyNotes = exp.safetyNotes, expectedResult = exp.expectedResult) }
                     when (uiState.selectedTab) {
                         0 -> items(exp.materials, key = { it.id }) { mat ->
                             MaterialRow(index = exp.materials.indexOf(mat) + 1, material = mat)
@@ -445,12 +447,41 @@ private fun MediaSection(
 @Composable
 private fun InfoSection(
     exp: ExperimentDetail, currentRating: Int?, isPdfLoading: Boolean,
+    onAuthorClick: (Long) -> Unit = {},
     onRate: (Int) -> Unit, onDownloadPdf: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().background(DarkBg).padding(horizontal = 16.dp, vertical = 14.dp)) {
+
+        // ── Başlık ────────────────────────────────────────────────────────────
         Text(exp.title, color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
+        Spacer(Modifier.height(4.dp))
+
+        // ── Meta: sınıf, zorluk, ders, ortam ─────────────────────────────────
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("${exp.gradeLevel}. Sınıf", color = TextSecondary, fontSize = 12.sp)
+            Text("·", color = DarkSurface3, fontSize = 12.sp)
+            Text(exp.displayDifficulty, color = TextSecondary, fontSize = 12.sp)
+            if (exp.subject != null) {
+                Text("·", color = DarkSurface3, fontSize = 12.sp)
+                Text(exp.displaySubject, color = Orange400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+            if (exp.environment != null) {
+                Text("·", color = DarkSurface3, fontSize = 12.sp)
+                Text(exp.displayEnvironment, color = TextSecondary, fontSize = 12.sp)
+            }
+        }
+
         Spacer(Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+
+        // ── Yazar — tıklanabilir kart ─────────────────────────────────────────
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp)).background(DarkSurface)
+                .clickable { onAuthorClick(exp.author.id) }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             Box(modifier = Modifier.size(36.dp).clip(CircleShape)
                 .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
                 contentAlignment = Alignment.Center) {
@@ -459,62 +490,37 @@ private fun InfoSection(
                         contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
                 else Text(exp.author.initials, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(exp.author.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                if (exp.author.isTeacher) Text("Öğretmen", color = TextSecondary, fontSize = 11.sp)
+                Text(if (exp.author.isTeacher) "Öğretmen" else "Kullanıcı", color = TextSecondary, fontSize = 11.sp)
             }
+            // Puan + Beğeni
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(exp.averageRating?.let { "%.1f".format(it) } ?: "-",
                         color = if (exp.averageRating != null) Orange400 else TextSecondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text("Puan", color = TextSecondary, fontSize = 12.sp)
+                    Text("Puan", color = TextSecondary, fontSize = 11.sp)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(exp.favoriteCount.toString(), color = Red400, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text("Beğeni", color = TextSecondary, fontSize = 12.sp)
+                    Text("Beğeni", color = TextSecondary, fontSize = 11.sp)
                 }
             }
         }
-        Spacer(Modifier.height(12.dp))
-        // Temel chip'ler
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            DetailChip(exp.displayDifficulty, false)
-            if (exp.subject != null) DetailChip(exp.displaySubject, true)
-            if (exp.environment != null) DetailChip(exp.displayEnvironment, false)
-        }
+
+        // ── Konu etiketi ──────────────────────────────────────────────────────
         if (!exp.topic.isNullOrBlank()) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 Icon(Icons.Default.Tag, null, tint = TextSecondary, modifier = Modifier.size(13.dp))
                 Text(exp.topic!!, color = TextSecondary, fontSize = 12.sp)
             }
         }
-        if (!exp.safetyNotes.isNullOrBlank()) {
-            Spacer(Modifier.height(6.dp))
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF3D1A00)).border(1.dp, Orange400.copy(0.4f), RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                Icon(Icons.Default.Warning, null, tint = Orange400, modifier = Modifier.size(14.dp))
-                Text(exp.safetyNotes!!, color = Orange400.copy(0.9f), fontSize = 12.sp, lineHeight = 17.sp)
-            }
-        }
-        if (!exp.expectedResult.isNullOrBlank()) {
-            Spacer(Modifier.height(6.dp))
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                .background(Teal400.copy(0.06f)).border(1.dp, Teal400.copy(0.2f), RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                Icon(Icons.Default.EmojiObjects, null, tint = Teal400, modifier = Modifier.size(14.dp))
-                Text(exp.expectedResult!!, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
-            }
-        }
+
         Spacer(Modifier.height(14.dp))
         RatingBar(currentRating = currentRating, onRate = onRate)
         Spacer(Modifier.height(14.dp))
+
         Button(onClick = onDownloadPdf, enabled = !isPdfLoading,
             modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), contentPadding = PaddingValues(0.dp)) {
@@ -528,14 +534,6 @@ private fun InfoSection(
                 }
             }
         }
-    }
-}
-
-@Composable private fun DetailChip(label: String, isSubject: Boolean = false) {
-    Box(modifier = Modifier.clip(RoundedCornerShape(20.dp))
-        .background(if (isSubject) Orange400.copy(0.15f) else Teal400.copy(0.12f))
-        .padding(horizontal = 10.dp, vertical = 5.dp)) {
-        Text(label, color = if (isSubject) Orange400 else Teal400, fontSize = 11.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -568,15 +566,48 @@ private fun InfoSection(
     }
 }
 
-@Composable private fun DescriptionCard(description: String) {
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
-        .clip(RoundedCornerShape(10.dp)).background(DarkSurface)
-        .border(1.dp, Brush.horizontalGradient(listOf(Teal400.copy(0.5f), Color.Transparent)), RoundedCornerShape(10.dp))
-        .padding(12.dp)) {
-        Column {
-            Text("AÇIKLAMA", color = Teal400, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            Spacer(Modifier.height(6.dp))
-            Text(description, color = TextSecondary, fontSize = 13.sp, lineHeight = 19.sp)
+@Composable private fun DescriptionCard(description: String, safetyNotes: String? = null, expectedResult: String? = null) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+        // Açıklama
+        Box(modifier = Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp)).background(DarkSurface)
+            .border(1.dp, Brush.horizontalGradient(listOf(Teal400.copy(0.5f), Color.Transparent)), RoundedCornerShape(10.dp))
+            .padding(12.dp)) {
+            Column {
+                Text("AÇIKLAMA", color = Teal400, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Spacer(Modifier.height(6.dp))
+                Text(description, color = TextSecondary, fontSize = 13.sp, lineHeight = 19.sp)
+            }
+        }
+        // Güvenlik notu
+        if (!safetyNotes.isNullOrBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFF3D1A00)).border(1.dp, Orange400.copy(0.3f), RoundedCornerShape(10.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.Warning, null, tint = Orange400, modifier = Modifier.size(15.dp))
+                Column {
+                    Text("GÜVENLİK NOTU", color = Orange400, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                    Spacer(Modifier.height(3.dp))
+                    Text(safetyNotes, color = Orange400.copy(0.85f), fontSize = 12.sp, lineHeight = 17.sp)
+                }
+            }
+        }
+        // Beklenen sonuç
+        if (!expectedResult.isNullOrBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                .background(Teal400.copy(0.06f)).border(1.dp, Teal400.copy(0.2f), RoundedCornerShape(10.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.EmojiObjects, null, tint = Teal400, modifier = Modifier.size(15.dp))
+                Column {
+                    Text("BEKLENEN SONUÇ", color = Teal400, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                    Spacer(Modifier.height(3.dp))
+                    Text(expectedResult, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
+                }
+            }
         }
     }
 }

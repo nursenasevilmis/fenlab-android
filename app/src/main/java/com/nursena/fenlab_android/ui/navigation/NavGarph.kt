@@ -26,15 +26,17 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
 object Routes {
-    const val HOME      = "home"
-    const val SEARCH    = "search"
-    const val FAVORITES = "favorites"
-    const val PROFILE   = "profile"
-    const val DETAIL    = "detail/{experimentId}"
-    const val ADD       = "add"
-    const val AUTH      = "auth"
+    const val HOME         = "home"
+    const val SEARCH       = "search"
+    const val FAVORITES    = "favorites"
+    const val PROFILE      = "profile"
+    const val PROFILE_USER = "profile/{userId}"
+    const val DETAIL       = "detail/{experimentId}"
+    const val ADD          = "add"
+    const val AUTH         = "auth"
 
-    fun detail(id: Long) = "detail/$id"
+    fun detail(id: Long)  = "detail/$id"
+    fun profile(id: Long) = "profile/$id"
 }
 
 private val bottomBarRoutes = setOf(
@@ -108,7 +110,10 @@ fun FenlabNavGraph() {
             }
 
             composable(Routes.SEARCH) {
-                SearchScreen(onExperimentClick = { id -> navController.navigate(Routes.detail(id)) })
+                SearchScreen(
+                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                    onUserClick       = { userId -> navController.navigate(Routes.profile(userId)) }
+                )
             }
 
             composable(Routes.FAVORITES) {
@@ -126,13 +131,33 @@ fun FenlabNavGraph() {
                 )
             }
 
+            // Başka kullanıcının profili
+            composable(
+                route     = Routes.PROFILE_USER,
+                arguments = listOf(androidx.navigation.navArgument("userId") {
+                    type = androidx.navigation.NavType.LongType
+                })
+            ) {
+                ProfileScreen(
+                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                    onLogout = {
+                        navController.navigate(Routes.AUTH) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(
                 route     = Routes.DETAIL,
                 arguments = listOf(androidx.navigation.navArgument("experimentId") {
                     type = androidx.navigation.NavType.LongType
                 })
             ) {
-                ExperimentDetailScreen(onBack = { navController.popBackStack() })
+                ExperimentDetailScreen(
+                    onBack        = { navController.popBackStack() },
+                    onAuthorClick = { userId -> navController.navigate(Routes.profile(userId)) }
+                )
             }
 
             composable(Routes.ADD) {
