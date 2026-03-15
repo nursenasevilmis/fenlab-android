@@ -112,6 +112,17 @@ fun ProfileScreen(
                     }
 
                     // ── Tab başlıkları ────────────────────────────────────────
+                    // ── Hakkında ─────────────────────────────────────────────
+                    item { SectionDivider(label = "Hakkında") }
+                    item {
+                        AboutCard(
+                            user      = user,
+                            isOwn     = isOwn,
+                            isTeacher = isTeacher,
+                            onEdit    = viewModel::toggleEdit
+                        )
+                    }
+
                     if (isTeacher) {
                         item { SectionDivider(label = "Deneyleri") }
                         // Edit formu
@@ -129,17 +140,6 @@ fun ProfileScreen(
                                 )
                             }
                         }
-                    }
-
-                    // ── Hakkında ─────────────────────────────────────────────
-                    item { SectionDivider(label = "Hakkında") }
-                    item {
-                        AboutCard(
-                            user      = user,
-                            isOwn     = isOwn,
-                            isTeacher = isTeacher,
-                            onEdit    = viewModel::toggleEdit
-                        )
                     }
                 }
             }
@@ -448,7 +448,6 @@ private fun TeacherExperimentCard(
                         Icon(Icons.Outlined.FavoriteBorder, null, tint = Red400.copy(0.7f), modifier = Modifier.size(12.dp))
                         Text(formatCount(exp.favoriteCount), color = TextSecondary, fontSize = 11.sp)
                     }
-                    exp.subject?.let { SubjectChip(subject = it) }
                 }
             }
             if (isOwn) {
