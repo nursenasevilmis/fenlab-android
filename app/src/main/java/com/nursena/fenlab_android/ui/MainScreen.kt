@@ -43,7 +43,8 @@ private val IconInactive = Color(0xFF6B7A99)
 fun FenlabBottomBar(
     navController: NavController,
     currentUserRole: UserRole,
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    hasNotification: Boolean = false
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -60,6 +61,7 @@ fun FenlabBottomBar(
     Box(
         modifier         = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .height(if (isTeacher) 88.dp else 76.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
@@ -102,8 +104,12 @@ fun FenlabBottomBar(
                 GlassNavItem(icon = if (currentRoute == "favorites") Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                     isSelected = currentRoute == "favorites", onClick = { goTo("favorites") })
 
-                GlassNavItem(icon = if (currentRoute == "profile") Icons.Filled.Person else Icons.Outlined.Person,
-                    isSelected = currentRoute == "profile", onClick = { goTo("profile") })
+                GlassNavItem(
+                    icon       = if (currentRoute == "profile") Icons.Filled.Person else Icons.Outlined.Person,
+                    isSelected = currentRoute == "profile",
+                    onClick    = { goTo("profile") },
+                    badge      = hasNotification
+                )
             }
         }
 
@@ -136,7 +142,8 @@ fun FenlabBottomBar(
 private fun GlassNavItem(
     icon: ImageVector,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    badge: Boolean = false
 ) {
     Box(
         modifier         = Modifier
@@ -152,5 +159,16 @@ private fun GlassNavItem(
             tint               = if (isSelected) Teal400 else IconInactive,
             modifier           = Modifier.size(22.dp)
         )
+        // Bildirim noktası
+        if (badge) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFFF4444))
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-8).dp, y = 8.dp)
+            )
+        }
     }
 }

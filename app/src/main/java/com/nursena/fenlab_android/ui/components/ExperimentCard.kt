@@ -1,170 +1,131 @@
-package com.nursena.fenlab_android.ui.components
+    package com.nursena.fenlab_android.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import com.nursena.fenlab_android.domain.model.Experiment
-import com.nursena.fenlab_android.ui.theme.*
+    import androidx.compose.foundation.background
+    import androidx.compose.foundation.clickable
+    import androidx.compose.foundation.layout.*
+    import androidx.compose.foundation.shape.CircleShape
+    import androidx.compose.foundation.shape.RoundedCornerShape
+    import androidx.compose.material.icons.Icons
+    import androidx.compose.material.icons.filled.Favorite
+    import androidx.compose.material.icons.filled.FavoriteBorder
+    import androidx.compose.material.icons.filled.PlayArrow
+    import androidx.compose.material.icons.filled.Star
+    import androidx.compose.material3.*
+    import androidx.compose.runtime.Composable
+    import androidx.compose.ui.Alignment
+    import androidx.compose.ui.Modifier
+    import androidx.compose.ui.draw.clip
+    import androidx.compose.ui.graphics.Brush
+    import androidx.compose.ui.graphics.Color
+    import androidx.compose.ui.layout.ContentScale
+    import androidx.compose.ui.text.font.FontWeight
+    import androidx.compose.ui.text.style.TextOverflow
+    import androidx.compose.ui.unit.dp
+    import androidx.compose.ui.unit.sp
+    import coil.compose.AsyncImage
+    import com.nursena.fenlab_android.domain.model.Experiment
+    import com.nursena.fenlab_android.ui.theme.*
 
-@Composable
-fun ExperimentCard(
-    experiment: Experiment,
-    onCardClick: () -> Unit,
-    onFavoriteClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(155.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(onClick = onCardClick)
+    @Composable
+    fun ExperimentCard(
+        experiment: Experiment,
+        onCardClick: () -> Unit,
+        onFavoriteClick: () -> Unit,
+        modifier: Modifier = Modifier
     ) {
-        // ── Tam resim ─────────────────────────────────────────────────────────
-        AsyncImage(
-            model              = experiment.thumbnailUrl ?: experiment.videoUrl,
-            contentDescription = experiment.title,
-            contentScale       = ContentScale.Crop,
-            modifier           = Modifier.fillMaxSize()
-        )
-
-        // ── Güçlü alt gradient — bilgilerin okunabilmesi için ─────────────────
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0.0f to Color.Transparent,
-                        0.25f to Color.Transparent,
-                        0.55f to Color.Black.copy(alpha = 0.5f),
-                        1.0f  to Color.Black.copy(alpha = 0.92f)
-                    )
-                )
-        )
+            modifier = modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(onClick = onCardClick)
+        ) {
+            // ── Tam resim ─────────────────────────────────────────────────────────
+            AsyncImage(
+                model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(experiment.thumbnailUrl ?: experiment.videoUrl)
+                    .allowHardware(false)
+                    .build(),
+                contentDescription = experiment.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
 
-        // ── Play butonu (video varsa) ──────────────────────────────────────────
-        if (experiment.videoUrl != null) {
+            // ── Güçlü alt gradient — bilgilerin okunabilmesi için ─────────────────
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(26.dp)
-                    .background(Color.White.copy(alpha = 0.18f), CircleShape),
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0.0f to Color.Transparent,
+                            0.25f to Color.Transparent,
+                            0.55f to Color.Black.copy(alpha = 0.5f),
+                            1.0f  to Color.Black.copy(alpha = 0.92f)
+                        )
+                    )
+            )
+
+            // ── Play butonu (video varsa) ──────────────────────────────────────────
+            if (experiment.videoUrl != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(48.dp)
+                        .background(Color.White.copy(alpha = 0.18f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.PlayArrow, null,
+                        tint = Color.White, modifier = Modifier.size(28.dp))
+                }
+            }
+
+            // ── Favori butonu — sağ üst ────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp)
+                    .size(30.dp)
+                    .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+                    .clickable(onClick = onFavoriteClick),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.PlayArrow, null,
-                    tint = Color.White, modifier = Modifier.size(17.dp))
-            }
-        }
-
-        // ── Favori butonu — sağ üst ────────────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(10.dp)
-                .size(26.dp)
-                .background(Color.Black.copy(alpha = 0.35f), CircleShape)
-                .clickable(onClick = onFavoriteClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = if (experiment.isFavoritedByCurrentUser)
-                    Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = null,
-                tint = if (experiment.isFavoritedByCurrentUser) Red400 else Color.White,
-                modifier = Modifier.size(12.dp)
-            )
-        }
-
-        // ── Alt bilgi bloğu — resmin üstünde şeffaf ───────────────────────────
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp)
-        ) {
-            // Başlık
-            Text(
-                text       = experiment.title,
-                color      = Color.White,
-                fontSize   = 12.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines   = 1,
-                overflow   = TextOverflow.Ellipsis
-            )
-
-            Spacer(Modifier.height(3.dp))
-
-            // Yazar satırı
-            Row(
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                UserAvatar(user = experiment.author, size = 18.dp)
-
-                Text(
-                    text     = experiment.author.displayName,
-                    color    = Color.White.copy(alpha = 0.9f),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                Icon(
+                    imageVector = if (experiment.isFavoritedByCurrentUser)
+                        Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = null,
+                    tint = if (experiment.isFavoritedByCurrentUser) Red400 else Color.White,
+                    modifier = Modifier.size(14.dp)
                 )
+            }
 
-                // Görüntülenme
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Icon(Icons.Default.Star, null,
-                        tint = Yellow400,
-                        modifier = Modifier.size(12.dp))
+            // ── Alt bilgi — sadece başlık + rating ───────────────────────────────────
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text       = experiment.title,
+                    color      = Color.White,
+                    fontSize   = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines   = 2,
+                    overflow   = TextOverflow.Ellipsis,
+                    lineHeight = 18.sp
+                )
+                Spacer(Modifier.height(5.dp))
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(Icons.Default.Star, null, tint = Yellow400, modifier = Modifier.size(13.dp))
                     Text(
-                        text  = experiment.averageRating?.let { "%.1f".format(it) } ?: "-",
-                        color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp
+                        text  = experiment.averageRating?.let { "%.1f".format(it) } ?: "—",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                     )
                 }
-
-                // Beğeni
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Icon(Icons.Default.FavoriteBorder, null,
-                        tint = Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.size(12.dp))
-                    Text(formatCount(experiment.favoriteCount),
-                        color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
-                }
-            }
-
-            Spacer(Modifier.height(3.dp))
-
-            // Chip satırı
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalAlignment     = Alignment.CenterVertically
-            ) {
-                DifficultyChip(difficulty = experiment.difficulty)
-                experiment.environment?.let { EnvironmentChip(environment = it) }
-                experiment.subject?.let { SubjectChip(subject = it) }
             }
         }
     }
-}

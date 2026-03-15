@@ -1,14 +1,24 @@
 package com.nursena.fenlab_android.ui.screens.detail
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
+import android.net.Uri
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.activity.compose.BackHandler
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -18,19 +28,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.nursena.fenlab_android.domain.model.*
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
 import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.theme.*
 
+@OptIn(UnstableApi::class)
 @Composable
 fun ExperimentDetailScreen(
     onBack: () -> Unit,
@@ -38,6 +56,47 @@ fun ExperimentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    // ExoPlayer — screen seviyesinde tutulur
+    val videoUrl = uiState.experiment?.videoMedia?.mediaUrl
+    val exoPlayer = remember(videoUrl) {
+        if (videoUrl == null) null
+        else ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(Uri.parse(videoUrl)))
+            prepare()
+        }
+    }
+    DisposableEffect(exoPlayer) {
+        onDispose {
+            exoPlayer?.release()
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    // Fullscreen state — screen seviyesinde
+    var isFullscreen by remember { mutableStateOf(false) }
+
+    fun enterFullscreen() {
+        isFullscreen = true
+        exoPlayer?.playWhenReady = true
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        // Sistem çubuklarını gizle
+        activity?.window?.decorView?.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                )
+    }
+
+    fun exitFullscreen() {
+        isFullscreen = false
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        activity?.window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+    }
+
+    BackHandler(enabled = isFullscreen) { exitFullscreen() }
 
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { event ->
@@ -46,21 +105,82 @@ fun ExperimentDetailScreen(
         }
     }
 
+    // TAM EKRAN OVERLAY — Scaffold'un üstünde, tüm ekranı kaplar
+    if (isFullscreen && exoPlayer != null) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player        = exoPlayer
+                        useController = true
+                        layoutParams  = FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        setShowNextButton(false)
+                        setShowPreviousButton(false)
+                        setShowRewindButton(true)
+                        setShowFastForwardButton(true)
+                        controllerAutoShow    = true
+                        controllerHideOnTouch = true
+                    }
+                },
+                update   = { it.player = exoPlayer },
+                modifier = Modifier.fillMaxSize()
+            )
+            // Tam ekrandan çık
+            IconButton(
+                onClick  = { exitFullscreen() },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .systemBarsPadding()
+                    .padding(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.Black.copy(0.65f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(Icons.Default.FullscreenExit, null, tint = Color.White, modifier = Modifier.size(22.dp)) }
+            }
+        }
+        return  // Normal içeriği render etme
+    }
+
+    // NORMAL EKRAN
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost   = { SnackbarHost(snackbarHostState) },
         containerColor = DarkBg
     ) { padding ->
         when {
-            uiState.isLoading -> LoadingIndicator()
-            uiState.error != null -> ErrorMessage(message = uiState.error!!, onRetry = viewModel::loadExperiment)
+            uiState.isLoading && uiState.experiment == null -> LoadingIndicator()
+            uiState.error != null && uiState.experiment == null ->
+                ErrorMessage(message = uiState.error!!, onRetry = viewModel::loadExperiment)
             uiState.experiment != null -> {
                 val exp = uiState.experiment!!
                 LazyColumn(
                     modifier       = Modifier.fillMaxSize().padding(padding),
-                    contentPadding = PaddingValues(bottom = 32.dp)
+                    contentPadding = PaddingValues(bottom = 40.dp)
                 ) {
-                    item { MediaSection(exp, uiState.isFavorited, onBack, viewModel::toggleFavorite) }
-                    item { InfoSection(exp, uiState.currentUserRating, viewModel::rateExperiment, viewModel::downloadPdf) }
+                    item {
+                        MediaSection(
+                            exp            = exp,
+                            exoPlayer      = exoPlayer,
+                            isFavorited    = uiState.isFavorited,
+                            isOwner        = uiState.isOwner,
+                            onBack         = onBack,
+                            onFavorite     = viewModel::toggleFavorite,
+                            onDelete       = { viewModel.deleteExperiment(onBack) },
+                            onFullscreen   = { enterFullscreen() }
+                        )
+                    }
+                    item {
+                        InfoSection(
+                            exp           = exp,
+                            currentRating = uiState.currentUserRating,
+                            isPdfLoading  = uiState.isPdfLoading,
+                            onRate        = viewModel::rateExperiment,
+                            onDownloadPdf = { viewModel.downloadPdf(context) }
+                        )
+                    }
                     item {
                         DetailTabBar(
                             selected      = uiState.selectedTab,
@@ -70,7 +190,6 @@ fun ExperimentDetailScreen(
                         )
                     }
                     item { DescriptionCard(description = exp.description) }
-
                     when (uiState.selectedTab) {
                         0 -> items(exp.materials, key = { it.id }) { mat ->
                             MaterialRow(index = exp.materials.indexOf(mat) + 1, material = mat)
@@ -94,9 +213,10 @@ fun ExperimentDetailScreen(
                             }
                             items(uiState.questions, key = { "q${it.id}" }) { question ->
                                 QuestionItem(
-                                    question = question,
-                                    onAnswer = { text -> viewModel.answerQuestion(question.id, text) },
-                                    onDelete = { viewModel.deleteQuestion(question.id) }
+                                    question  = question,
+                                    canDelete = uiState.isOwner || question.canAnswer,
+                                    onAnswer  = { text -> viewModel.answerQuestion(question.id, text) },
+                                    onDelete  = { viewModel.deleteQuestion(question.id) }
                                 )
                             }
                         }
@@ -107,206 +227,339 @@ fun ExperimentDetailScreen(
     }
 }
 
-// ── Media bölümü ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Medya bölümü (inline video + galeri)
+// ─────────────────────────────────────────────────────────────────────────────
+@OptIn(UnstableApi::class)
 @Composable
 private fun MediaSection(
     exp: ExperimentDetail,
+    exoPlayer: ExoPlayer?,
     isFavorited: Boolean,
+    isOwner: Boolean,
     onBack: () -> Unit,
-    onFavorite: () -> Unit
+    onFavorite: () -> Unit,
+    onDelete: () -> Unit,
+    onFullscreen: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxWidth().height(210.dp).background(DarkSurface)) {
-        val imageUrl = exp.videoMedia?.mediaUrl ?: exp.imageMediaList.firstOrNull()?.mediaUrl
-        AsyncImage(
-            model = imageUrl, contentDescription = exp.title,
-            contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()
+    val videoUrl  = exp.videoMedia?.mediaUrl
+    val allImages = exp.imageMediaList.map { it.mediaUrl }
+    val hasVideo  = videoUrl != null
+    val pageCount = (if (hasVideo) 1 else 0) + allImages.size
+
+    var currentPage      by remember { mutableIntStateOf(0) }
+    var isVideoPlaying   by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showMenu         by remember { mutableStateOf(false) }
+
+    val isVideoPage    = hasVideo && currentPage == 0
+    val playerHeight   = if (isVideoPlaying && isVideoPage) 280.dp else 240.dp
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            containerColor   = DarkSurface,
+            title = { Text("Deneyi Sil", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text  = { Text("Bu deneyi kalıcı olarak silmek istediğinizden emin misiniz?", color = TextSecondary, fontSize = 13.sp) },
+            confirmButton = {
+                TextButton(onClick = { showDeleteDialog = false; onDelete() }) {
+                    Text("Evet, Sil", color = Red400, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("İptal", color = TextSecondary) }
+            }
         )
-        Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.verticalGradient(listOf(Color.Black.copy(0.35f), Color.Transparent, Color.Black.copy(0.5f)))
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(playerHeight)
+            .background(Color.Black)
+            .pointerInput(pageCount, isVideoPlaying) {
+                if (pageCount <= 1 || (isVideoPlaying && isVideoPage)) return@pointerInput
+                detectHorizontalDragGestures { _, drag ->
+                    if (drag < -40f && currentPage < pageCount - 1) currentPage++
+                    else if (drag > 40f && currentPage > 0) currentPage--
+                }
+            }
+    ) {
+        // ── Video inline player ──────────────────────────────────────────────
+        if (isVideoPage && isVideoPlaying && exoPlayer != null) {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player        = exoPlayer
+                        useController = true
+                        layoutParams  = FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        setShowNextButton(false)
+                        setShowPreviousButton(false)
+                        setShowRewindButton(true)
+                        setShowFastForwardButton(true)
+                        controllerAutoShow    = true
+                        controllerHideOnTouch = true
+                    }
+                },
+                update   = { it.player = exoPlayer },
+                modifier = Modifier.fillMaxSize()
             )
-        )
-        // Geri
-        Box(
-            modifier = Modifier.statusBarsPadding().padding(10.dp).size(34.dp)
-                .clip(CircleShape).background(Color.Black.copy(0.38f))
-                .clickable(onClick = onBack).align(Alignment.TopStart),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.ArrowBackIosNew, null, tint = Color.White, modifier = Modifier.size(14.dp))
-        }
-        // Favori
-        Box(
-            modifier = Modifier.statusBarsPadding().padding(10.dp).size(34.dp)
-                .clip(CircleShape).background(Color.Black.copy(0.38f))
-                .clickable(onClick = onFavorite).align(Alignment.TopEnd),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                if (isFavorited) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
-                null,
-                tint = if (isFavorited) Red400 else Color.White,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-        // Play
-        if (exp.videoMedia != null) {
+
+            // Sol üst — videoyu durdur (← GERI butonu yok, çakışma yok)
             Box(
-                modifier = Modifier.size(46.dp).clip(CircleShape)
-                    .background(Color.White.copy(0.18f))
-                    .border(1.5.dp, Color.White.copy(0.4f), CircleShape)
-                    .align(Alignment.Center),
+                modifier = Modifier.statusBarsPadding().padding(10.dp).size(36.dp)
+                    .clip(CircleShape).background(Color.Black.copy(0.65f))
+                    .clickable { isVideoPlaying = false; exoPlayer.pause() }
+                    .align(Alignment.TopStart),
                 contentAlignment = Alignment.Center
+            ) { Icon(Icons.Default.KeyboardArrowDown, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
+
+            // Sağ üst — tam ekran
+            Box(
+                modifier = Modifier.statusBarsPadding().padding(10.dp).size(36.dp)
+                    .clip(CircleShape).background(Color.Black.copy(0.65f))
+                    .clickable { onFullscreen() }
+                    .align(Alignment.TopEnd),
+                contentAlignment = Alignment.Center
+            ) { Icon(Icons.Default.Fullscreen, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
+
+        } else {
+            // ── Kapak / Resim galerisi ───────────────────────────────────────
+            val displayUrl = when {
+                isVideoPage -> allImages.firstOrNull()
+                else        -> allImages.getOrNull(if (hasVideo) currentPage - 1 else currentPage)
+            }
+
+            Box(modifier = Modifier.fillMaxSize()
+                .background(Brush.linearGradient(listOf(Color(0xFF0D2D28), Color(0xFF1A2235))))) {
+                if (displayUrl != null) {
+                    AsyncImage(model = displayUrl, contentDescription = null,
+                        contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                }
+            }
+
+            Box(modifier = Modifier.fillMaxSize().background(
+                Brush.verticalGradient(listOf(Color.Black.copy(0.35f), Color.Transparent, Color.Black.copy(0.55f)))
+            ))
+
+            // Video oynat
+            if (isVideoPage) {
+                Box(
+                    modifier = Modifier.size(64.dp).clip(CircleShape)
+                        .background(Color.Black.copy(0.5f))
+                        .border(2.dp, Color.White.copy(0.6f), CircleShape)
+                        .clickable { isVideoPlaying = true; exoPlayer?.playWhenReady = true }
+                        .align(Alignment.Center),
+                    contentAlignment = Alignment.Center
+                ) { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(32.dp)) }
+
+                Box(
+                    modifier = Modifier.align(Alignment.BottomStart).padding(10.dp)
+                        .background(Color.Black.copy(0.6f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) { Text("▶ Video", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Medium) }
+            }
+
+            // Sayfa noktaları
+            if (pageCount > 1) {
+                Row(
+                    modifier              = Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    repeat(pageCount) { i ->
+                        Box(modifier = Modifier
+                            .size(if (i == currentPage) 8.dp else 5.dp)
+                            .clip(CircleShape)
+                            .background(if (i == currentPage) Teal400 else Color.White.copy(0.5f)))
+                    }
+                }
+            }
+
+            // ── Üst butonlar (video OYNATILMIYOR) ───────────────────────────
+            // Sol üst: Geri (video durdurulduğunda tekrar görünür)
+            Box(
+                modifier = Modifier.statusBarsPadding().padding(10.dp).size(38.dp)
+                    .clip(CircleShape).background(Color.Black.copy(0.45f))
+                    .clickable(onClick = onBack).align(Alignment.TopStart),
+                contentAlignment = Alignment.Center
+            ) { Icon(Icons.Default.ArrowBackIosNew, null, tint = Color.White, modifier = Modifier.size(16.dp)) }
+
+            // Sağ üst: Favori + 3 nokta
+            Row(
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(top = 10.dp, end = 10.dp)
+                    .align(Alignment.TopEnd),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment     = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                Box(
+                    modifier = Modifier.size(38.dp).clip(CircleShape)
+                        .background(Color.Black.copy(0.45f)).clickable(onClick = onFavorite),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        if (isFavorited) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                        null,
+                        tint     = if (isFavorited) Red400 else Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                Box {
+                    Box(
+                        modifier = Modifier.size(38.dp).clip(CircleShape)
+                            .background(Color.Black.copy(0.45f)).clickable { showMenu = true },
+                        contentAlignment = Alignment.Center
+                    ) { Icon(Icons.Default.MoreVert, null, tint = Color.White, modifier = Modifier.size(18.dp)) }
+
+                    DropdownMenu(
+                        expanded         = showMenu,
+                        onDismissRequest = { showMenu = false },
+                        modifier         = Modifier.background(DarkSurface)
+                    ) {
+                        DropdownMenuItem(
+                            text        = { Text("Paylaş", color = TextPrimary, fontSize = 13.sp) },
+                            leadingIcon = { Icon(Icons.Default.Share, null, tint = TextSecondary, modifier = Modifier.size(16.dp)) },
+                            onClick     = { showMenu = false }
+                        )
+                        if (isOwner) {
+                            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+                            DropdownMenuItem(
+                                text        = { Text("Deneyi Sil", color = Red400, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) },
+                                leadingIcon = { Icon(Icons.Default.DeleteOutline, null, tint = Red400, modifier = Modifier.size(16.dp)) },
+                                onClick     = { showMenu = false; showDeleteDialog = true }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-// ── Başlık + yazar + etiket + puan ───────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun InfoSection(
-    exp: ExperimentDetail,
-    currentRating: Int?,
-    onRate: (Int) -> Unit,
-    onDownloadPdf: () -> Unit
+    exp: ExperimentDetail, currentRating: Int?, isPdfLoading: Boolean,
+    onRate: (Int) -> Unit, onDownloadPdf: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth().background(DarkBg)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-    ) {
-        // Başlık
-        Text(exp.title, color = TextPrimary, fontSize = 17.sp, fontWeight = FontWeight.Bold, lineHeight = 23.sp)
-        Spacer(Modifier.height(10.dp))
-
-        // Yazar satırı — avatar küçük (28dp)
+    Column(modifier = Modifier.fillMaxWidth().background(DarkBg).padding(horizontal = 16.dp, vertical = 14.dp)) {
+        Text(exp.title, color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
+        Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier.size(28.dp).clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
-                contentAlignment = Alignment.Center
-            ) {
-                if (exp.author.profileImageUrl != null) {
-                    AsyncImage(
-                        model = exp.author.profileImageUrl, contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize().clip(CircleShape)
-                    )
-                } else {
-                    Text(exp.author.initials, color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                }
+            Box(modifier = Modifier.size(36.dp).clip(CircleShape)
+                .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
+                contentAlignment = Alignment.Center) {
+                if (exp.author.profileImageUrl != null)
+                    AsyncImage(model = exp.author.profileImageUrl, contentDescription = null,
+                        contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
+                else Text(exp.author.initials, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(Modifier.width(7.dp))
+            Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(exp.author.displayName, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                if (exp.author.isTeacher)
-                    Text("Öğretmen", color = TextSecondary, fontSize = 10.sp)
+                Text(exp.author.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                if (exp.author.isTeacher) Text("Öğretmen", color = TextSecondary, fontSize = 11.sp)
             }
-            // Puan + beğeni
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        exp.averageRating?.let { "%.1f".format(it) } ?: "-",
-                        color = if (exp.averageRating != null) Orange400 else TextSecondary,
-                        fontSize = 13.sp, fontWeight = FontWeight.Bold
-                    )
-                    Text("Puan", color = TextSecondary, fontSize = 9.sp)
+                    Text(exp.averageRating?.let { "%.1f".format(it) } ?: "-",
+                        color = if (exp.averageRating != null) Orange400 else TextSecondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text("Puan", color = TextSecondary, fontSize = 12.sp)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(exp.favoriteCount.toString(), color = Red400, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text("Beğeni", color = TextSecondary, fontSize = 9.sp)
+                    Text(exp.favoriteCount.toString(), color = Red400, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text("Beğeni", color = TextSecondary, fontSize = 12.sp)
                 }
             }
         }
-
-        Spacer(Modifier.height(10.dp))
-
-        // Chip'ler
-        @OptIn(ExperimentalLayoutApi::class)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            DetailChip(exp.displayDifficulty)
-            if (exp.subject != null) DetailChip(exp.displaySubject, isSubject = true)
-            if (exp.environment != null) DetailChip(exp.displayEnvironment)
-            exp.topic?.takeIf { it.isNotBlank() }?.let { DetailChip(it) }
-            if (exp.safetyNotes?.isNotBlank() == true) DetailChip("⚠️ Güvenlik")
+        Spacer(Modifier.height(12.dp))
+        // Temel chip'ler
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            DetailChip(exp.displayDifficulty, false)
+            if (exp.subject != null) DetailChip(exp.displaySubject, true)
+            if (exp.environment != null) DetailChip(exp.displayEnvironment, false)
         }
-
-        Spacer(Modifier.height(12.dp))
-
-        // Yıldız puanlama
-        RatingBar(currentRating = currentRating, onRate = onRate)
-
-        Spacer(Modifier.height(12.dp))
-
-        // PDF butonu
-        Button(
-            onClick = onDownloadPdf,
-            modifier = Modifier.fillMaxWidth().height(40.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize()
-                    .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center
+        if (!exp.topic.isNullOrBlank()) {
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Icon(Icons.Default.Tag, null, tint = TextSecondary, modifier = Modifier.size(13.dp))
+                Text(exp.topic!!, color = TextSecondary, fontSize = 12.sp)
+            }
+        }
+        if (!exp.safetyNotes.isNullOrBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF3D1A00)).border(1.dp, Orange400.copy(0.4f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Default.PictureAsPdf, null, tint = DarkBg, modifier = Modifier.size(15.dp))
-                    Text("PDF Olarak İndir", color = DarkBg, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.Warning, null, tint = Orange400, modifier = Modifier.size(14.dp))
+                Text(exp.safetyNotes!!, color = Orange400.copy(0.9f), fontSize = 12.sp, lineHeight = 17.sp)
+            }
+        }
+        if (!exp.expectedResult.isNullOrBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                .background(Teal400.copy(0.06f)).border(1.dp, Teal400.copy(0.2f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Icon(Icons.Default.EmojiObjects, null, tint = Teal400, modifier = Modifier.size(14.dp))
+                Text(exp.expectedResult!!, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        RatingBar(currentRating = currentRating, onRate = onRate)
+        Spacer(Modifier.height(14.dp))
+        Button(onClick = onDownloadPdf, enabled = !isPdfLoading,
+            modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), contentPadding = PaddingValues(0.dp)) {
+            Box(modifier = Modifier.fillMaxSize()
+                .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center) {
+                if (isPdfLoading) CircularProgressIndicator(color = DarkBg, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.PictureAsPdf, null, tint = DarkBg, modifier = Modifier.size(18.dp))
+                    Text("PDF Olarak İndir", color = DarkBg, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
     }
 }
 
-@Composable
-private fun DetailChip(label: String, isSubject: Boolean = false) {
-    Box(
-        modifier = Modifier.clip(RoundedCornerShape(16.dp))
-            .background(if (isSubject) Orange400.copy(alpha = 0.12f) else Teal400.copy(alpha = 0.1f))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(label, color = if (isSubject) Orange400 else Teal400, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+@Composable private fun DetailChip(label: String, isSubject: Boolean = false) {
+    Box(modifier = Modifier.clip(RoundedCornerShape(20.dp))
+        .background(if (isSubject) Orange400.copy(0.15f) else Teal400.copy(0.12f))
+        .padding(horizontal = 10.dp, vertical = 5.dp)) {
+        Text(label, color = if (isSubject) Orange400 else Teal400, fontSize = 11.sp, fontWeight = FontWeight.Medium)
     }
 }
 
-@Composable
-private fun RatingBar(currentRating: Int?, onRate: (Int) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text("Puan ver:", color = TextSecondary, fontSize = 11.sp)
-        Spacer(Modifier.width(3.dp))
+@Composable private fun RatingBar(currentRating: Int?, onRate: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Puan ver:", color = TextSecondary, fontSize = 12.sp)
+        Spacer(Modifier.width(4.dp))
         (1..5).forEach { star ->
-            Icon(
-                if ((currentRating ?: 0) >= star) Icons.Default.Star else Icons.Outlined.StarBorder,
-                null,
+            Icon(if ((currentRating ?: 0) >= star) Icons.Default.Star else Icons.Outlined.StarBorder, null,
                 tint = if ((currentRating ?: 0) >= star) Orange400 else TextSecondary,
-                modifier = Modifier.size(20.dp).clickable { onRate(star) }
-            )
+                modifier = Modifier.size(22.dp).clickable { onRate(star) })
         }
     }
 }
 
-// ── Tab bar ───────────────────────────────────────────────────────────────────
-@Composable
-private fun DetailTabBar(selected: Int, commentCount: Int, questionCount: Int, onSelect: (Int) -> Unit) {
-    val tabs = listOf("Malzemeler", "Adımlar", "Yorumlar (${commentCount + questionCount})")
+@Composable private fun DetailTabBar(selected: Int, commentCount: Int, questionCount: Int, onSelect: (Int) -> Unit) {
+    val tabs = listOf("Malzemeler", "Adımlar", "Yorum & S/C (${commentCount + questionCount})")
     Column(modifier = Modifier.fillMaxWidth().background(DarkBg)) {
         Row {
             tabs.forEachIndexed { i, label ->
-                Column(
-                    modifier = Modifier.weight(1f).clickable { onSelect(i) },
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        label,
-                        color = if (selected == i) Teal400 else TextSecondary,
-                        fontSize = 11.sp,
+                Column(modifier = Modifier.weight(1f).clickable { onSelect(i) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(label, color = if (selected == i) Teal400 else TextSecondary, fontSize = 12.sp,
                         fontWeight = if (selected == i) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier.padding(vertical = 9.dp),
-                        textAlign = TextAlign.Center
-                    )
+                        modifier = Modifier.padding(vertical = 11.dp), textAlign = TextAlign.Center)
                     Box(Modifier.fillMaxWidth().height(2.dp).background(if (selected == i) Teal400 else Color.Transparent))
                 }
             }
@@ -315,239 +568,186 @@ private fun DetailTabBar(selected: Int, commentCount: Int, questionCount: Int, o
     }
 }
 
-// ── Açıklama ──────────────────────────────────────────────────────────────────
-@Composable
-private fun DescriptionCard(description: String) {
-    Box(
-        modifier = Modifier.fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(DarkSurface)
-            .border(1.dp, Brush.horizontalGradient(listOf(Teal400.copy(0.4f), Color.Transparent)), RoundedCornerShape(10.dp))
-            .padding(11.dp)
-    ) {
+@Composable private fun DescriptionCard(description: String) {
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
+        .clip(RoundedCornerShape(10.dp)).background(DarkSurface)
+        .border(1.dp, Brush.horizontalGradient(listOf(Teal400.copy(0.5f), Color.Transparent)), RoundedCornerShape(10.dp))
+        .padding(12.dp)) {
         Column {
-            Text("AÇIKLAMA", color = Teal400, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
-            Spacer(Modifier.height(5.dp))
-            Text(description, color = TextSecondary, fontSize = 12.sp, lineHeight = 18.sp)
+            Text("AÇIKLAMA", color = Teal400, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Spacer(Modifier.height(6.dp))
+            Text(description, color = TextSecondary, fontSize = 13.sp, lineHeight = 19.sp)
         }
     }
 }
 
-// ── Malzeme satırı ────────────────────────────────────────────────────────────
-@Composable
-private fun MaterialRow(index: Int, material: Material) {
-    Row(
-        modifier = Modifier.fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 3.dp)
-            .clip(RoundedCornerShape(9.dp))
-            .background(DarkSurface)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Box(
-            modifier = Modifier.size(24.dp).background(DarkSurface3, CircleShape),
-            contentAlignment = Alignment.Center
-        ) { Text("$index", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-        Text(material.materialName, color = TextPrimary, fontSize = 12.sp, modifier = Modifier.weight(1f))
-        if (material.quantity.isNotBlank())
-            Text(material.quantity, color = Teal400, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+@Composable private fun MaterialRow(index: Int, material: Material) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+        .clip(RoundedCornerShape(10.dp)).background(DarkSurface).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(modifier = Modifier.size(28.dp).background(DarkSurface3, CircleShape), contentAlignment = Alignment.Center) {
+            Text("$index", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+        Text(material.materialName, color = TextPrimary, fontSize = 13.sp, modifier = Modifier.weight(1f))
+        if (material.quantity.isNotBlank()) Text(material.quantity, color = Teal400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
-// ── Adım satırı ───────────────────────────────────────────────────────────────
-@Composable
-private fun StepRow(step: Step) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Box(
-            modifier = Modifier.size(24.dp).clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896)))),
-            contentAlignment = Alignment.Center
-        ) { Text("${step.stepOrder}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-        Box(
-            modifier = Modifier.weight(1f).clip(RoundedCornerShape(9.dp))
-                .background(DarkSurface).padding(10.dp)
-        ) {
-            Text(step.stepText, color = TextPrimary, fontSize = 12.sp, lineHeight = 17.sp)
+@Composable private fun StepRow(step: Step) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(modifier = Modifier.size(28.dp).clip(CircleShape)
+            .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896)))), contentAlignment = Alignment.Center) {
+            Text("${step.stepOrder}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+        Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(DarkSurface).padding(12.dp)) {
+            Text(step.stepText, color = TextPrimary, fontSize = 13.sp, lineHeight = 19.sp)
         }
     }
 }
 
-// ── Yorum & Soru input ────────────────────────────────────────────────────────
-@Composable
-private fun CommentQuestionInput(
-    commentInput: String,
-    questionInput: String,
-    onCommentChange: (String) -> Unit,
-    onQuestionChange: (String) -> Unit,
-    onAddComment: () -> Unit,
-    onAskQuestion: () -> Unit
+@Composable private fun CommentQuestionInput(
+    commentInput: String, questionInput: String,
+    onCommentChange: (String) -> Unit, onQuestionChange: (String) -> Unit,
+    onAddComment: () -> Unit, onAskQuestion: () -> Unit
 ) {
     var isQuestionMode by remember { mutableStateOf(false) }
     val text = if (isQuestionMode) questionInput else commentInput
     val onChange = if (isQuestionMode) onQuestionChange else onCommentChange
-
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface)
-    ) {
-        Column(Modifier.padding(10.dp)) {
-            Text("Yorum veya Soru", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(6.dp))
-            TextField(
-                value = text, onValueChange = onChange,
-                placeholder = {
-                    Text(
-                        if (isQuestionMode) "Sorunuzu yazın..." else "Yorumunuzu yazın...",
-                        color = Color(0xFF3D5070), fontSize = 11.sp
-                    )
-                },
-                modifier = Modifier.fillMaxWidth().height(80.dp),
-                maxLines = 4,
-                shape = RoundedCornerShape(8.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor   = DarkSurface2,
-                    unfocusedContainerColor = DarkSurface2,
-                    focusedTextColor        = TextPrimary,
-                    unfocusedTextColor      = TextPrimary,
-                    cursorColor             = Teal400,
-                    focusedIndicatorColor   = Teal400,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-            Spacer(Modifier.height(7.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                OutlinedButton(
-                    onClick = { isQuestionMode = false; if (!isQuestionMode) onAddComment() },
-                    modifier = Modifier.weight(1f).height(36.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, if (!isQuestionMode) Teal400 else DarkSurface3),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = if (!isQuestionMode) Teal400 else TextSecondary)
-                ) { Text("💬 Yorum", fontSize = 11.sp) }
-                Button(
-                    onClick = { isQuestionMode = true; if (isQuestionMode) onAskQuestion() },
-                    modifier = Modifier.weight(1f).height(36.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Teal400)
-                ) { Text("❓ Soru Sor", color = DarkBg, fontSize = 11.sp) }
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+        shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = DarkSurface)) {
+        Column(Modifier.padding(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(DarkSurface2)) {
+                listOf("💬 Yorum" to false, "❓ Soru" to true).forEach { (lbl, isQ) ->
+                    Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp))
+                        .background(if (isQuestionMode == isQ) Teal400.copy(0.18f) else Color.Transparent)
+                        .clickable { isQuestionMode = isQ }.padding(vertical = 9.dp),
+                        contentAlignment = Alignment.Center) {
+                        Text(lbl, color = if (isQuestionMode == isQ) Teal400 else TextSecondary, fontSize = 12.sp,
+                            fontWeight = if (isQuestionMode == isQ) FontWeight.SemiBold else FontWeight.Normal)
+                    }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            TextField(value = text, onValueChange = onChange,
+                placeholder = { Text(if (isQuestionMode) "Sorunuzu yazın..." else "Yorumunuzu yazın...", color = Color(0xFF3D5070), fontSize = 12.sp) },
+                modifier = Modifier.fillMaxWidth().height(80.dp), maxLines = 4, shape = RoundedCornerShape(8.dp),
+                colors = TextFieldDefaults.colors(focusedContainerColor = DarkSurface2, unfocusedContainerColor = DarkSurface2,
+                    focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+                    cursorColor = Teal400, focusedIndicatorColor = Teal400, unfocusedIndicatorColor = Color.Transparent))
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = { if (isQuestionMode) onAskQuestion() else onAddComment() },
+                modifier = Modifier.fillMaxWidth().height(40.dp), shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), contentPadding = PaddingValues(0.dp)) {
+                Box(modifier = Modifier.fillMaxSize()
+                    .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center) {
+                    Text(if (isQuestionMode) "Soruyu Gönder" else "Yorum Ekle", color = DarkBg, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
 }
 
-// ── Yorum item ────────────────────────────────────────────────────────────────
-@Composable
-private fun CommentItem(comment: Comment, onDelete: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 5.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        AuthorAvatar(initials = comment.author.initials, size = 28)
+@Composable private fun CommentItem(comment: Comment, onDelete: () -> Unit) {
+    var showConfirm by remember { mutableStateOf(false) }
+    if (showConfirm) {
+        AlertDialog(onDismissRequest = { showConfirm = false }, containerColor = DarkSurface,
+            title = { Text("Yorumu Sil", color = TextPrimary) },
+            text  = { Text("Bu yorumu silmek istediğinizden emin misiniz?", color = TextSecondary, fontSize = 13.sp) },
+            confirmButton = { TextButton(onClick = { showConfirm = false; onDelete() }) { Text("Sil", color = Red400, fontWeight = FontWeight.Bold) } },
+            dismissButton = { TextButton(onClick = { showConfirm = false }) { Text("İptal", color = TextSecondary) } })
+    }
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        AuthorAvatar(initials = comment.author.initials, size = 34)
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(comment.author.displayName, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Text(comment.createdAt.take(10), color = TextSecondary, fontSize = 9.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(comment.author.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(comment.createdAt.take(10), color = TextSecondary, fontSize = 12.sp)
             }
-            Spacer(Modifier.height(2.dp))
-            Text(comment.content, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
+            Spacer(Modifier.height(3.dp))
+            Text(comment.content, color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
         }
         if (comment.isOwner) {
-            IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.DeleteOutline, null, tint = Red400.copy(0.7f), modifier = Modifier.size(13.dp))
+            IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(28.dp)) {
+                Icon(Icons.Default.DeleteOutline, null, tint = Red400.copy(0.7f), modifier = Modifier.size(15.dp))
             }
         }
     }
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 14.dp, vertical = 3.dp), thickness = 0.5.dp, color = DarkSurface3)
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), thickness = 0.5.dp, color = DarkSurface3)
 }
 
-// ── Soru item ─────────────────────────────────────────────────────────────────
-@Composable
-private fun QuestionItem(question: Question, onAnswer: (String) -> Unit, onDelete: () -> Unit) {
+@Composable private fun QuestionItem(question: Question, canDelete: Boolean = false, onAnswer: (String) -> Unit, onDelete: () -> Unit) {
     var answerInput by remember { mutableStateOf("") }
     var showAnswerInput by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 5.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AuthorAvatar(initials = question.asker.initials, size = 28)
+    var showConfirm by remember { mutableStateOf(false) }
+    if (showConfirm) {
+        AlertDialog(onDismissRequest = { showConfirm = false }, containerColor = DarkSurface,
+            title = { Text("Soruyu Sil", color = TextPrimary) },
+            text  = { Text("Bu soruyu silmek istediğinizden emin misiniz?", color = TextSecondary, fontSize = 13.sp) },
+            confirmButton = { TextButton(onClick = { showConfirm = false; onDelete() }) { Text("Sil", color = Red400, fontWeight = FontWeight.Bold) } },
+            dismissButton = { TextButton(onClick = { showConfirm = false }) { Text("İptal", color = TextSecondary) } })
+    }
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            AuthorAvatar(initials = question.asker.initials, size = 34)
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(question.asker.displayName, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                    Box(
-                        modifier = Modifier.background(Orange400.copy(0.12f), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    ) { Text("Soru", color = Orange400, fontSize = 9.sp) }
-                    Text(question.createdAt.take(10), color = TextSecondary, fontSize = 9.sp)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(question.asker.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Box(modifier = Modifier.background(Orange400.copy(0.15f), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
+                        Text("❓ Soru", color = Orange400, fontSize = 12.sp)
+                    }
+                    Text(question.createdAt.take(10), color = TextSecondary, fontSize = 12.sp)
                 }
-                Spacer(Modifier.height(2.dp))
-                Text(question.questionText, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
+                Spacer(Modifier.height(3.dp))
+                Text(question.questionText, color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
                 if (question.canAnswer && !question.isAnswered) {
-                    Text("Yanıtla", color = Teal400, fontSize = 10.sp,
-                        modifier = Modifier.clickable { showAnswerInput = !showAnswerInput }.padding(top = 3.dp))
+                    Text("Yanıtla", color = Teal400, fontSize = 11.sp,
+                        modifier = Modifier.clickable { showAnswerInput = !showAnswerInput }.padding(top = 4.dp))
+                }
+            }
+            if (canDelete) {
+                IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Default.DeleteOutline, null, tint = Red400.copy(0.7f), modifier = Modifier.size(15.dp))
                 }
             }
         }
-
         if (showAnswerInput) {
-            Spacer(Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.padding(start = 36.dp),
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextField(
-                    value = answerInput, onValueChange = { answerInput = it },
-                    placeholder = { Text("Yanıtınızı yazın...", color = Color(0xFF3D5070), fontSize = 11.sp) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    singleLine = true,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurface2, unfocusedContainerColor = DarkSurface2,
+            Spacer(Modifier.height(8.dp))
+            Row(modifier = Modifier.padding(start = 44.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextField(value = answerInput, onValueChange = { answerInput = it },
+                    placeholder = { Text("Yanıtınızı yazın...", color = Color(0xFF3D5070), fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f), shape = RoundedCornerShape(8.dp), singleLine = true,
+                    colors = TextFieldDefaults.colors(focusedContainerColor = DarkSurface2, unfocusedContainerColor = DarkSurface2,
                         focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
-                        cursorColor = Teal400, focusedIndicatorColor = Teal400, unfocusedIndicatorColor = Color.Transparent
-                    )
-                )
-                IconButton(
-                    onClick = { if (answerInput.isNotBlank()) { onAnswer(answerInput); answerInput = ""; showAnswerInput = false } },
-                    modifier = Modifier.size(34.dp).clip(CircleShape).background(Teal400)
-                ) { Icon(Icons.Default.Send, null, tint = DarkBg, modifier = Modifier.size(14.dp)) }
+                        cursorColor = Teal400, focusedIndicatorColor = Teal400, unfocusedIndicatorColor = Color.Transparent))
+                IconButton(onClick = { if (answerInput.isNotBlank()) { onAnswer(answerInput); answerInput = ""; showAnswerInput = false } },
+                    modifier = Modifier.size(38.dp).clip(CircleShape).background(Teal400)) {
+                    Icon(Icons.AutoMirrored.Filled.Send, null, tint = DarkBg, modifier = Modifier.size(16.dp))
+                }
             }
         }
-
         if (question.isAnswered && question.answerText != null) {
-            Spacer(Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.padding(start = 36.dp).clip(RoundedCornerShape(9.dp))
-                    .background(Teal400.copy(0.07f))
-                    .border(1.dp, Teal400.copy(0.18f), RoundedCornerShape(9.dp))
-                    .padding(9.dp),
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                Icon(Icons.Default.School, null, tint = Teal400, modifier = Modifier.size(13.dp))
+            Spacer(Modifier.height(8.dp))
+            Row(modifier = Modifier.padding(start = 44.dp).clip(RoundedCornerShape(10.dp))
+                .background(Teal400.copy(0.08f)).border(1.dp, Teal400.copy(0.2f), RoundedCornerShape(10.dp)).padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.School, null, tint = Teal400, modifier = Modifier.size(16.dp))
                 Column {
-                    Text("ÖĞRETMEN YANITI", color = Teal400, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-                    Spacer(Modifier.height(2.dp))
-                    Text(question.answerText, color = TextSecondary, fontSize = 11.sp, lineHeight = 16.sp)
+                    Text("ÖĞRETMEN YANITI", color = Teal400, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+                    Spacer(Modifier.height(3.dp))
+                    Text(question.answerText, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
                 }
             }
         }
     }
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 14.dp, vertical = 3.dp), thickness = 0.5.dp, color = DarkSurface3)
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), thickness = 0.5.dp, color = DarkSurface3)
 }
 
-// ── Avatar ────────────────────────────────────────────────────────────────────
-@Composable
-private fun AuthorAvatar(initials: String, size: Int) {
-    Box(
-        modifier = Modifier.size(size.dp).clip(CircleShape)
-            .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
-        contentAlignment = Alignment.Center
-    ) {
+@Composable private fun AuthorAvatar(initials: String, size: Int) {
+    Box(modifier = Modifier.size(size.dp).clip(CircleShape)
+        .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
+        contentAlignment = Alignment.Center) {
         Text(initials, color = Color.White, fontSize = (size / 3).sp, fontWeight = FontWeight.Bold)
     }
 }
