@@ -45,6 +45,10 @@ android {
 }
 
 dependencies {
+    // ── AppCompat (UCrop için gerekli) ────────────────────────────────────────
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.github.yalantis:ucrop:2.2.8")
+
     // ── Core ──────────────────────────────────────────────────────────────────
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
@@ -81,7 +85,7 @@ dependencies {
 
     // ── Hilt ──────────────────────────────────────────────────────────────────
     implementation("com.google.dagger:hilt-android:2.51.1")
-   ksp("com.google.dagger:hilt-android-compiler:2.51.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // ── Navigation ────────────────────────────────────────────────────────────

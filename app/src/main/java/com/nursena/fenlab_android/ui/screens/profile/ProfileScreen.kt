@@ -52,6 +52,7 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    var selectedTab  by remember { mutableIntStateOf(0) }
     var showNotif    by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -111,8 +112,10 @@ fun ProfileScreen(
                         }
                     }
 
-                    // ── Tab başlıkları ────────────────────────────────────────
-                    // ── Hakkında ─────────────────────────────────────────────
+                    // Edit formu
+                    if (uiState.isEditing) item { EditFormCard(state = uiState, vm = viewModel) }
+
+                    // ── Hakkında (önce) ───────────────────────────────────────
                     item { SectionDivider(label = "Hakkında") }
                     item {
                         AboutCard(
@@ -123,11 +126,9 @@ fun ProfileScreen(
                         )
                     }
 
+                    // ── Deneyleri (öğretmen için, sonra) ─────────────────────
                     if (isTeacher) {
                         item { SectionDivider(label = "Deneyleri") }
-                        // Edit formu
-                        if (uiState.isEditing) item { EditFormCard(state = uiState, vm = viewModel) }
-                        // Deneyler
                         if (uiState.experiments.isEmpty()) {
                             item { EmptyExperiments() }
                         } else {
@@ -366,6 +367,32 @@ private fun RowScope.StatDivider() {
 // Section divider başlık
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
+private fun ProfileTabBar(selected: Int, tabs: List<String>, onSelect: (Int) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().background(DarkBg)
+            .padding(horizontal = 16.dp).padding(top = 8.dp)
+    ) {
+        tabs.forEachIndexed { i, label ->
+            Column(
+                modifier            = Modifier.weight(1f).clickable { onSelect(i) },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    label,
+                    color      = if (selected == i) Teal400 else TextSecondary,
+                    fontSize   = 13.sp,
+                    fontWeight = if (selected == i) FontWeight.SemiBold else FontWeight.Normal,
+                    modifier   = Modifier.padding(vertical = 10.dp)
+                )
+                Box(Modifier.fillMaxWidth().height(2.dp)
+                    .background(if (selected == i) Teal400 else Color.Transparent))
+            }
+        }
+    }
+    HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+}
+
+@Composable
 private fun SectionDivider(label: String) {
     Row(
         modifier          = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 16.dp, bottom = 6.dp),
@@ -448,6 +475,7 @@ private fun TeacherExperimentCard(
                         Icon(Icons.Outlined.FavoriteBorder, null, tint = Red400.copy(0.7f), modifier = Modifier.size(12.dp))
                         Text(formatCount(exp.favoriteCount), color = TextSecondary, fontSize = 11.sp)
                     }
+                    exp.subject?.let { SubjectChip(subject = it) }
                 }
             }
             if (isOwn) {

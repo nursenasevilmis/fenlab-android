@@ -335,10 +335,12 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
 private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) {
     val context = LocalContext.current
 
-    val videoLauncher      = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    // Video — kırpma yok
+    val videoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { vm.uploadVideo(context, it) }
     }
-    val coverLauncher      = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+
+    val coverLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { vm.uploadCoverImage(context, it) }
     }
     val additionalLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
