@@ -1,26 +1,22 @@
 package com.nursena.fenlab_android.ui.screens.auth
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,20 +25,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.nursena.fenlab_android.core.base.UiEvent
 import com.nursena.fenlab_android.domain.model.enums.UserRole
 import com.nursena.fenlab_android.ui.theme.*
+
+// Ekran modları
+private enum class AuthMode { SPLASH, LOGIN, REGISTER }
 
 @Composable
 fun AuthScreen(
@@ -50,385 +49,468 @@ fun AuthScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var isLoginTab by remember { mutableStateOf(true) }
+    var mode by remember { mutableStateOf(AuthMode.SPLASH) }
+    val context = LocalContext.current
 
     LaunchedEffect(viewModel) {
-        viewModel.eventFlow.collect { event ->
-            if (event is UiEvent.Navigate) onNavigateHome()
-        }
+        viewModel.eventFlow.collect { if (it is UiEvent.Navigate) onNavigateHome() }
     }
 
-    Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // ── Arka plan — yeşil teal gradient ──────────────────────────────────
+        Box(modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(listOf(Color(0xFF2D6A5F), Color(0xFF1A4A42), Color(0xFF0F3530)))
+        ))
+        // Dekoratif daireler (resimdeki gibi subtle)
+        Box(modifier = Modifier.size(500.dp).offset((-150).dp, (-180).dp)
+            .background(Brush.radialGradient(listOf(Color.White.copy(0.06f), Color.Transparent)), CircleShape))
+        Box(modifier = Modifier.size(350.dp).align(Alignment.BottomEnd).offset(100.dp, 120.dp)
+            .background(Brush.radialGradient(listOf(Color.White.copy(0.05f), Color.Transparent)), CircleShape))
+        Box(modifier = Modifier.size(200.dp).align(Alignment.TopEnd).offset(60.dp, 40.dp)
+            .background(Brush.radialGradient(listOf(Color(0xFF4DB6AC).copy(0.15f), Color.Transparent)), CircleShape))
 
-        // ── Tam ekran koyu gradient arka plan ─────────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0.0f to Color(0xFF04080F),
-                        0.4f to Color(0xFF071428),
-                        1.0f to Color(0xFF041410)
+        AnimatedContent(
+            targetState = mode,
+            transitionSpec = {
+                if (targetState == AuthMode.SPLASH) {
+                    (fadeIn(tween(300))).togetherWith(fadeOut(tween(200)))
+                } else {
+                    (slideInVertically(tween(350)) { it / 4 } + fadeIn(tween(300))).togetherWith(
+                        slideOutVertically(tween(250)) { -it / 4 } + fadeOut(tween(200))
                     )
+                }
+            },
+            label = "auth_mode"
+        ) { currentMode ->
+            when (currentMode) {
+                AuthMode.SPLASH   -> SplashPage(
+                    onLogin    = { viewModel.clearError(); mode = AuthMode.LOGIN },
+                    onRegister = { viewModel.clearError(); mode = AuthMode.REGISTER }
                 )
-        )
-
-        // ── Teal dekoratif daireler ────────────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .size(320.dp)
-                .offset(x = (-80).dp, y = (-60).dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(Teal400.copy(alpha = 0.18f), Color.Transparent)
-                    ),
-                    androidx.compose.foundation.shape.CircleShape
+                AuthMode.LOGIN    -> LoginPage(
+                    uiState    = uiState,
+                    viewModel  = viewModel,
+                    onBack     = { viewModel.clearError(); mode = AuthMode.SPLASH },
+                    onGoSignup = { viewModel.clearError(); viewModel.resetRegister(); mode = AuthMode.REGISTER }
                 )
-        )
-        Box(
-            modifier = Modifier
-                .size(280.dp)
-                .align(Alignment.BottomEnd)
-                .offset(x = 60.dp, y = 60.dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(Color(0xFF004D40).copy(alpha = 0.3f), Color.Transparent)
-                    ),
-                    androidx.compose.foundation.shape.CircleShape
-                )
-        )
-
-        // ── İçerik ────────────────────────────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.height(24.dp))
-
-            // Logo
-            LogoSection()
-
-            Spacer(Modifier.height(14.dp))
-
-            // Tab seçici
-            TabSelector(
-                isLogin  = isLoginTab,
-                onLogin  = { isLoginTab = true; viewModel.clearError() },
-                onSignup = { isLoginTab = false; viewModel.clearError() }
-            )
-
-            Spacer(Modifier.height(28.dp))
-
-            // Form
-            AnimatedVisibility(
-                visible = isLoginTab,
-                enter   = fadeIn() + slideInVertically(),
-                exit    = fadeOut()
-            ) {
-                LoginForm(
+                AuthMode.REGISTER -> RegisterFlow(
                     uiState   = uiState,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    context   = context,
+                    onBack    = { viewModel.clearError(); mode = AuthMode.SPLASH },
+                    onGoLogin = { viewModel.clearError(); mode = AuthMode.LOGIN }
                 )
             }
-
-            AnimatedVisibility(
-                visible = !isLoginTab,
-                enter   = fadeIn() + slideInVertically(),
-                exit    = fadeOut()
-            ) {
-                RegisterForm(
-                    uiState   = uiState,
-                    viewModel = viewModel
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // Alt geçiş metni
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment     = Alignment.CenterVertically
-            ) {
-                Text(
-                    text     = if (isLoginTab) "Hesabın yok mu? " else "Zaten hesabın var mı? ",
-                    color    = TextSecondary,
-                    fontSize = 13.sp
-                )
-                Text(
-                    text      = if (isLoginTab) "Kayıt Ol" else "Giriş Yap",
-                    color     = Teal400,
-                    fontSize  = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier  = Modifier.clickable {
-                        isLoginTab = !isLoginTab
-                        viewModel.clearError()
-                    }
-                )
-            }
-
-            Spacer(Modifier.height(40.dp))
         }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Logo
+// SPLASH — tam ekran, resimde sol panel gibi
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun LogoSection() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // Ikon çember
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .background(
-                    Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))),
-                    androidx.compose.foundation.shape.CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("⚗️", fontSize = 22.sp)
+private fun SplashPage(onLogin: () -> Unit, onRegister: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()
+            .padding(horizontal = 36.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Logo ve slogan — ortada
+        Spacer(Modifier.weight(1f))
+        Box(modifier = Modifier.size(80.dp).clip(RoundedCornerShape(22.dp))
+            .background(Color.White.copy(0.15f)).border(1.dp, Color.White.copy(0.25f), RoundedCornerShape(22.dp)),
+            contentAlignment = Alignment.Center) {
+            Text("⚗️", fontSize = 38.sp)
         }
-
+        Spacer(Modifier.height(28.dp))
+        Row {
+            Text("Fen", color = Color.White, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
+            Text("lab", color = Color(0xFFB2DFDB), fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
+        }
         Spacer(Modifier.height(14.dp))
-
-        Row {
-            Text(
-                text       = "Fen",
-                color      = TextPrimary,
-                fontSize   = 22.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Text(
-                text       = "lab",
-                color      = Teal400,
-                fontSize   = 22.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-        }
-
-        Spacer(Modifier.height(6.dp))
-
         Text(
-            text      = "Bilimi keşfetmeye başla",
-            color     = TextSecondary,
-            fontSize  = 14.sp,
-            textAlign = TextAlign.Center
+            "Deneyleri keşfet, öğren\nve bilimi paylaş.",
+            color = Color.White.copy(0.75f), fontSize = 15.sp,
+            textAlign = TextAlign.Center, lineHeight = 22.sp
         )
-    }
-}
+        Spacer(Modifier.weight(1f))
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab seçici
-// ─────────────────────────────────────────────────────────────────────────────
-@Composable
-private fun TabSelector(isLogin: Boolean, onLogin: () -> Unit, onSignup: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF0E1E35))
-            .padding(4.dp)
-    ) {
-        Row {
-            TabItem(label = "Giriş Yap", selected = isLogin,  onClick = onLogin,  modifier = Modifier.weight(1f))
-            TabItem(label = "Kayıt Ol",  selected = !isLogin, onClick = onSignup, modifier = Modifier.weight(1f))
+        // Butonlar — her zaman altta
+        Button(
+            onClick = onLogin,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+        ) {
+            Text("Giriş Yap", color = Color(0xFF1A4A42), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
         }
-    }
-}
-
-@Composable
-private fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(
-                if (selected)
-                    Brush.linearGradient(listOf(Teal400, Color(0xFF00A896)))
-                else
-                    Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
-            )
-            .clickable(onClick = onClick)
-            .padding(vertical = 11.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text       = label,
-            color      = if (selected) DarkBg else TextSecondary,
-            fontSize   = 14.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-        )
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = onRegister,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.White.copy(0.5f)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+        ) {
+            Text("Hesap Oluştur", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        }
+        Spacer(Modifier.height(48.dp))
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Login Formu
+// GİRİŞ — resimde sağ panel gibi beyaz kart
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun LoginForm(uiState: AuthUiState, viewModel: AuthViewModel) {
+private fun LoginPage(
+    uiState: AuthUiState, viewModel: AuthViewModel,
+    onBack: () -> Unit, onGoSignup: () -> Unit
+) {
     val focusManager = LocalFocusManager.current
 
-    Column {
-        AuthTextField(
-            value       = uiState.loginUsernameOrEmail,
-            onValueChange = viewModel::onLoginUsernameChange,
-            label       = "Kullanıcı adı veya e-posta",
-            leadingIcon = { Icon(Icons.Default.Person, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
-            imeAction   = ImeAction.Next,
-            onImeAction = { focusManager.moveFocus(FocusDirection.Down) }
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        PasswordTextField(
-            value         = uiState.loginPassword,
-            onValueChange = viewModel::onLoginPasswordChange,
-            label         = "Şifre",
-            imeAction     = ImeAction.Done,
-            onImeAction   = { focusManager.clearFocus(); viewModel.login() }
-        )
-
-        // Hata
-        ErrorText(error = uiState.error)
-
+    Column(
+        modifier = Modifier.fillMaxSize().statusBarsPadding()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Küçük üst alan
+        Spacer(Modifier.height(20.dp))
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(0.15f))
+                .clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.ArrowBackIosNew, null, tint = Color.White, modifier = Modifier.size(14.dp))
+            }
+        }
         Spacer(Modifier.height(20.dp))
 
-        AuthButton(
-            text      = "Giriş Yap",
-            isLoading = uiState.isLoading,
-            onClick   = viewModel::login
-        )
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Register Formu
-// ─────────────────────────────────────────────────────────────────────────────
-@Composable
-private fun RegisterForm(uiState: AuthUiState, viewModel: AuthViewModel) {
-    val focusManager = LocalFocusManager.current
-
-    Column {
-        AuthTextField(
-            value         = uiState.registerFullName,
-            onValueChange = viewModel::onRegisterFullNameChange,
-            label         = "Ad Soyad",
-            leadingIcon   = { Icon(Icons.Default.Person, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
-            imeAction     = ImeAction.Next,
-            onImeAction   = { focusManager.moveFocus(FocusDirection.Down) }
-        )
-        Spacer(Modifier.height(12.dp))
-
-        AuthTextField(
-            value         = uiState.registerUsername,
-            onValueChange = viewModel::onRegisterUsernameChange,
-            label         = "Kullanıcı adı",
-            leadingIcon   = { Icon(Icons.Default.Person, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
-            imeAction     = ImeAction.Next,
-            onImeAction   = { focusManager.moveFocus(FocusDirection.Down) }
-        )
-        Spacer(Modifier.height(12.dp))
-
-        AuthTextField(
-            value         = uiState.registerEmail,
-            onValueChange = viewModel::onRegisterEmailChange,
-            label         = "E-posta",
-            leadingIcon   = { Icon(Icons.Default.Email, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
-            keyboardType  = KeyboardType.Email,
-            imeAction     = ImeAction.Next,
-            onImeAction   = { focusManager.moveFocus(FocusDirection.Down) }
-        )
-        Spacer(Modifier.height(12.dp))
-
-        PasswordTextField(
-            value         = uiState.registerPassword,
-            onValueChange = viewModel::onRegisterPasswordChange,
-            label         = "Şifre (en az 6 karakter)",
-            imeAction     = ImeAction.Next,
-            onImeAction   = { focusManager.moveFocus(FocusDirection.Down) }
-        )
-        Spacer(Modifier.height(16.dp))
-
-        // Rol seçici
-        Text("Hesap Türü", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-        Spacer(Modifier.height(8.dp))
-        RoleSelector(
-            selected = uiState.registerRole,
-            onSelect = viewModel::onRegisterRoleChange
-        )
-
-        // Branş (sadece öğretmen)
-        AnimatedVisibility(visible = uiState.registerRole == UserRole.TEACHER) {
+        // Beyaz kart
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            .clip(RoundedCornerShape(24.dp)).background(Color.White).padding(28.dp)) {
             Column {
-                Spacer(Modifier.height(12.dp))
-                AuthTextField(
-                    value         = uiState.registerBranch,
-                    onValueChange = viewModel::onRegisterBranchChange,
-                    label         = "Branş (Fen Bilimleri, Fizik...)",
-                    leadingIcon   = { Icon(Icons.Default.School, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
-                    imeAction     = ImeAction.Next,
-                    onImeAction   = { focusManager.moveFocus(FocusDirection.Down) }
+                Text("Giriş Yap", color = Color(0xFF1A3A35), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                Spacer(Modifier.height(4.dp))
+                Text("Seni bekliyorduk!", color = Color(0xFF5A7A75), fontSize = 13.sp)
+                Spacer(Modifier.height(24.dp))
+
+                LightField(
+                    value = uiState.loginUsernameOrEmail, onValueChange = viewModel::onLoginUsernameChange,
+                    placeholder = "Kullanıcı adı veya e-posta", icon = Icons.Default.Person,
+                    imeAction = ImeAction.Next, onIme = { focusManager.moveFocus(FocusDirection.Down) }
                 )
                 Spacer(Modifier.height(12.dp))
-                AuthTextField(
-                    value         = uiState.registerExperienceYears,
-                    onValueChange = viewModel::onRegisterExperienceYearsChange,
-                    label         = "Deneyim Yılı",
-                    leadingIcon   = { Icon(Icons.Default.DateRange, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
-                    keyboardType  = KeyboardType.Number,
-                    imeAction     = ImeAction.Done,
-                    onImeAction   = { focusManager.clearFocus() }
+                LightPasswordField(
+                    value = uiState.loginPassword, onValueChange = viewModel::onLoginPasswordChange,
+                    placeholder = "Şifre", imeAction = ImeAction.Done,
+                    onIme = { focusManager.clearFocus(); viewModel.login() }
                 )
+
+                AnimatedVisibility(visible = uiState.error != null) {
+                    Text(uiState.error ?: "", color = Color(0xFFE53935), fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 8.dp))
+                }
+
+                Spacer(Modifier.height(24.dp))
+                GreenButton(text = "Giriş Yap", isLoading = uiState.isLoading, onClick = viewModel::login)
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    Text("Hesabın yok mu? ", color = Color(0xFF5A7A75), fontSize = 13.sp)
+                    Text("Kayıt Ol", color = Color(0xFF2D6A5F), fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable(onClick = onGoSignup))
+                }
             }
         }
-
-        ErrorText(error = uiState.error)
-
-        Spacer(Modifier.height(20.dp))
-
-        AuthButton(
-            text      = "Kayıt Ol",
-            isLoading = uiState.isLoading,
-            onClick   = viewModel::register
-        )
+        Spacer(Modifier.height(40.dp))
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Rol seçici
+// KAYIT AKIŞI
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun RoleSelector(selected: UserRole, onSelect: (UserRole) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        listOf(UserRole.USER to "Öğrenci", UserRole.TEACHER to "Öğretmen").forEach { (role, label) ->
-            val isSelected = selected == role
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(
-                        if (isSelected) Teal400.copy(alpha = 0.15f)
-                        else Color(0xFF0E1E35)
-                    )
-                    .border(
-                        1.dp,
-                        if (isSelected) Teal400 else DarkSurface3,
-                        RoundedCornerShape(10.dp)
-                    )
-                    .clickable { onSelect(role) }
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text       = label,
-                    color      = if (isSelected) Teal400 else TextSecondary,
-                    fontSize   = 14.sp,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                )
+private fun RegisterFlow(
+    uiState: AuthUiState, viewModel: AuthViewModel,
+    context: android.content.Context,
+    onBack: () -> Unit, onGoLogin: () -> Unit
+) {
+    val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { viewModel.onPhotoSelected(context, it) }
+    }
+
+    // Öğrenci adımları: ROLE → REQUIRED → BIO → PHOTO (4 adım)
+    // Öğretmen adımları: ROLE → REQUIRED → BRANCH → EXPERIENCE → BIO → PHOTO (6 adım)
+    val steps = if (uiState.registerRole == UserRole.TEACHER)
+        listOf(RegisterStep.ROLE, RegisterStep.REQUIRED, RegisterStep.BRANCH, RegisterStep.EXPERIENCE, RegisterStep.BIO, RegisterStep.PHOTO)
+    else
+        listOf(RegisterStep.ROLE, RegisterStep.REQUIRED, RegisterStep.BIO, RegisterStep.PHOTO)
+
+    val currentIndex = steps.indexOf(uiState.registerStep).coerceAtLeast(0)
+    val progress = (currentIndex + 1f) / steps.size
+
+    Column(
+        modifier = Modifier.fillMaxSize().statusBarsPadding()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.height(20.dp))
+
+        // Üst bar
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(0.15f))
+                .clickable(onClick = if (uiState.registerStep == RegisterStep.ROLE) onBack else viewModel::prevStep),
+                contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.ArrowBackIosNew, null, tint = Color.White, modifier = Modifier.size(14.dp))
             }
+            Spacer(Modifier.weight(1f))
+            Text("${currentIndex + 1} / ${steps.size}", color = Color.White.copy(0.7f), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        // İnce progress bar
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(3.dp)
+            .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(0.15f))) {
+            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(progress)
+                .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(0.8f)))
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        // Beyaz kart içinde adım içeriği
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            .clip(RoundedCornerShape(24.dp)).background(Color.White).padding(28.dp)) {
+            AnimatedContent(
+                targetState = uiState.registerStep,
+                transitionSpec = {
+                    (slideInHorizontally(tween(280)) { it / 3 } + fadeIn(tween(280))).togetherWith(
+                        slideOutHorizontally(tween(220)) { -it / 3 } + fadeOut(tween(220))
+                    )
+                },
+                label = "step"
+            ) { step ->
+                when (step) {
+                    RegisterStep.ROLE       -> RoleStep(uiState, viewModel, onGoLogin)
+                    RegisterStep.REQUIRED   -> RequiredStep(uiState, viewModel)
+                    RegisterStep.BRANCH     -> OptionalStep(
+                        title = "Branşın nedir?", subtitle = "İsteğe bağlı, istersen atlayabilirsin.",
+                        value = uiState.registerBranch, onValueChange = viewModel::onRegisterBranchChange,
+                        placeholder = "Fen Bilimleri, Fizik, Kimya...",
+                        icon = Icons.Default.School, keyboardType = KeyboardType.Text,
+                        error = uiState.error, onNext = viewModel::nextStep, onSkip = viewModel::skipStep
+                    )
+                    RegisterStep.EXPERIENCE -> OptionalStep(
+                        title = "Kaç yıllık deneyimin var?", subtitle = "İsteğe bağlı, istersen atlayabilirsin.",
+                        value = uiState.registerExperienceYears, onValueChange = viewModel::onRegisterExperienceYearsChange,
+                        placeholder = "Örn: 5",
+                        icon = Icons.Default.WorkHistory, keyboardType = KeyboardType.Number,
+                        error = uiState.error, onNext = viewModel::nextStep, onSkip = viewModel::skipStep
+                    )
+                    RegisterStep.BIO        -> BioStep(uiState, viewModel)
+                    RegisterStep.PHOTO      -> PhotoStep(uiState, viewModel) { photoLauncher.launch("image/*") }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Adım 0: Rol seç
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun RoleStep(uiState: AuthUiState, viewModel: AuthViewModel, onGoLogin: () -> Unit) {
+    Column {
+        Text("Nasıl kullanacaksın?", color = Color(0xFF1A3A35), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+        Spacer(Modifier.height(4.dp))
+        Text("Sana özel deneyim için hesap türünü seç.", color = Color(0xFF5A7A75), fontSize = 13.sp)
+        Spacer(Modifier.height(20.dp))
+
+        RoleCard(
+            emoji = "🎓", title = "Öğrenci",
+            bullets = listOf("Deneyleri keşfet ve favorile", "Öğretmenlere soru sor", "Yorum yap ve değerlendir"),
+            selected = uiState.registerRole == UserRole.USER,
+            onClick = { viewModel.onRegisterRoleChange(UserRole.USER) }
+        )
+        Spacer(Modifier.height(10.dp))
+        RoleCard(
+            emoji = "👨‍🏫", title = "Öğretmen",
+            bullets = listOf("Deney ekle ve yönet", "Öğrenci sorularını yanıtla", "Sınıf düzeyine göre içerik"),
+            selected = uiState.registerRole == UserRole.TEACHER,
+            onClick = { viewModel.onRegisterRoleChange(UserRole.TEACHER) }
+        )
+        Spacer(Modifier.height(22.dp))
+        GreenButton("Devam Et", false, viewModel::nextStep)
+        Spacer(Modifier.height(12.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Text("Zaten hesabın var mı? ", color = Color(0xFF5A7A75), fontSize = 13.sp)
+            Text("Giriş Yap", color = Color(0xFF2D6A5F), fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(onClick = onGoLogin))
+        }
+    }
+}
+
+@Composable
+private fun RoleCard(emoji: String, title: String, bullets: List<String>, selected: Boolean, onClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+        .background(if (selected) Color(0xFFE8F5E9) else Color(0xFFF5F9F8))
+        .border(1.5.dp, if (selected) Color(0xFF2D6A5F) else Color(0xFFDDE8E6), RoundedCornerShape(14.dp))
+        .clickable(onClick = onClick).padding(14.dp)) {
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(10.dp))
+                .background(if (selected) Color(0xFF2D6A5F).copy(0.12f) else Color.White),
+                contentAlignment = Alignment.Center) { Text(emoji, fontSize = 20.sp) }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, color = if (selected) Color(0xFF1A3A35) else Color(0xFF2A4A45),
+                    fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(4.dp))
+                bullets.forEach { b ->
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        modifier = Modifier.padding(vertical = 1.dp)) {
+                        Box(modifier = Modifier.size(3.dp).clip(CircleShape)
+                            .background(if (selected) Color(0xFF2D6A5F) else Color(0xFF8AADA8)))
+                        Text(b, color = Color(0xFF5A7A75), fontSize = 11.sp, lineHeight = 15.sp)
+                    }
+                }
+            }
+            if (selected) Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(Color(0xFF2D6A5F)),
+                contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Adım 1: Zorunlu bilgiler
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun RequiredStep(uiState: AuthUiState, viewModel: AuthViewModel) {
+    val focusManager = LocalFocusManager.current
+    Column {
+        StepHeader("Hesap Bilgilerin", "Bu alanlar zorunludur.")
+        Spacer(Modifier.height(18.dp))
+        LightField(uiState.registerFullName, viewModel::onRegisterFullNameChange, "Ad Soyad",
+            Icons.Default.Person, ImeAction.Next) { focusManager.moveFocus(FocusDirection.Down) }
+        Spacer(Modifier.height(10.dp))
+        LightField(uiState.registerUsername, viewModel::onRegisterUsernameChange, "Kullanıcı adı",
+            Icons.Default.AlternateEmail, ImeAction.Next) { focusManager.moveFocus(FocusDirection.Down) }
+        Spacer(Modifier.height(10.dp))
+        LightField(uiState.registerEmail, viewModel::onRegisterEmailChange, "E-posta",
+            Icons.Default.Email, ImeAction.Next, KeyboardType.Email) { focusManager.moveFocus(FocusDirection.Down) }
+        Spacer(Modifier.height(10.dp))
+        LightPasswordField(uiState.registerPassword, viewModel::onRegisterPasswordChange,
+            "Şifre (en az 6 karakter)", ImeAction.Done) { focusManager.clearFocus() }
+        AnimatedVisibility(visible = uiState.error != null) {
+            Text(uiState.error ?: "", color = Color(0xFFE53935), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+        }
+        Spacer(Modifier.height(20.dp))
+        GreenButton("Devam Et", false, viewModel::nextStep)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Genel opsiyonel adım
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun OptionalStep(
+    title: String, subtitle: String,
+    value: String, onValueChange: (String) -> Unit, placeholder: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector, keyboardType: KeyboardType,
+    error: String?, onNext: () -> Unit, onSkip: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+    Column {
+        StepHeader(title, subtitle)
+        Spacer(Modifier.height(18.dp))
+        LightField(value, onValueChange, placeholder, icon, ImeAction.Done, keyboardType) { focusManager.clearFocus() }
+        AnimatedVisibility(visible = error != null) {
+            Text(error ?: "", color = Color(0xFFE53935), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+        }
+        Spacer(Modifier.height(20.dp))
+        GreenButton("Devam Et", false, onNext)
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
+            Text("Şimdi atla →", color = Color(0xFF8AADA8), fontSize = 13.sp)
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Biyografi
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun BioStep(uiState: AuthUiState, viewModel: AuthViewModel) {
+    Column {
+        StepHeader("Kendini Tanıt", "İsteğe bağlı, atayabilirsin.")
+        Spacer(Modifier.height(18.dp))
+        TextField(
+            value = uiState.registerBio, onValueChange = viewModel::onRegisterBioChange,
+            placeholder = { Text("Merhaba! Fen bilimlerine meraklıyım...", color = Color(0xFFAAC4C0), fontSize = 13.sp) },
+            modifier = Modifier.fillMaxWidth().height(110.dp),
+            maxLines = 6, shape = RoundedCornerShape(12.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFFF0F7F5), unfocusedContainerColor = Color(0xFFF0F7F5),
+                focusedTextColor = Color(0xFF1A3A35), unfocusedTextColor = Color(0xFF1A3A35),
+                cursorColor = Color(0xFF2D6A5F), focusedIndicatorColor = Color(0xFF2D6A5F),
+                unfocusedIndicatorColor = Color.Transparent
+            )
+        )
+        Spacer(Modifier.height(20.dp))
+        GreenButton("Devam Et", false, viewModel::nextStep)
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = viewModel::skipStep, modifier = Modifier.fillMaxWidth()) {
+            Text("Şimdi atla →", color = Color(0xFF8AADA8), fontSize = 13.sp)
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Profil fotoğrafı
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun PhotoStep(uiState: AuthUiState, viewModel: AuthViewModel, onLaunchPicker: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        StepHeader("Profil Fotoğrafı", "İsteğe bağlı, daha sonra da ekleyebilirsin.")
+        Spacer(Modifier.height(24.dp))
+        Box(modifier = Modifier.size(100.dp).clip(CircleShape)
+            .background(Color(0xFFF0F7F5))
+            .border(2.dp, if (uiState.registerPhotoUri != null) Color(0xFF2D6A5F) else Color(0xFFDDE8E6), CircleShape)
+            .clickable(onClick = onLaunchPicker), contentAlignment = Alignment.Center) {
+            when {
+                uiState.isUploadingPhoto -> CircularProgressIndicator(color = Color(0xFF2D6A5F), modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                uiState.registerPhotoUri != null -> AsyncImage(
+                    model = uiState.registerPhotoUri, contentDescription = null,
+                    contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
+                else -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.CameraAlt, null, tint = Color(0xFF2D6A5F), modifier = Modifier.size(26.dp))
+                    Spacer(Modifier.height(3.dp))
+                    Text("Ekle", color = Color(0xFF2D6A5F), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+        if (uiState.registerPhotoUri != null && !uiState.isUploadingPhoto) {
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF2D6A5F), modifier = Modifier.size(14.dp))
+                Text("Fotoğraf yüklendi", color = Color(0xFF2D6A5F), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text("Fotoğrafına dokunarak seç", color = Color(0xFF8AADA8), fontSize = 12.sp, textAlign = TextAlign.Center)
+        AnimatedVisibility(visible = uiState.error != null) {
+            Text(uiState.error ?: "", color = Color(0xFFE53935), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+        }
+        Spacer(Modifier.height(24.dp))
+        GreenButton(
+            text = if (uiState.isLoading) "Hesap Oluşturuluyor..." else "Hesabı Oluştur",
+            isLoading = uiState.isLoading || uiState.isUploadingPhoto,
+            onClick = viewModel::nextStep
+        )
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = viewModel::skipStep, modifier = Modifier.fillMaxWidth()) {
+            Text("Fotoğrafsız devam et", color = Color(0xFF8AADA8), fontSize = 13.sp)
         }
     }
 }
@@ -437,136 +519,73 @@ private fun RoleSelector(selected: UserRole, onSelect: (UserRole) -> Unit) {
 // Paylaşımlı bileşenler
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun AuthTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    imeAction: ImeAction = ImeAction.Next,
-    onImeAction: () -> Unit = {}
-) {
-    TextField(
-        value         = value,
-        onValueChange = onValueChange,
-        placeholder   = { Text(label, color = Color(0xFF4A5A75), fontSize = 14.sp) },
-        leadingIcon   = leadingIcon,
-        singleLine    = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
-        keyboardActions = KeyboardActions(
-            onNext = { onImeAction() },
-            onDone = { onImeAction() }
-        ),
-        shape  = RoundedCornerShape(12.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor   = Color(0xFF0E1E35),
-            unfocusedContainerColor = Color(0xFF0E1E35),
-            focusedTextColor        = TextPrimary,
-            unfocusedTextColor      = TextPrimary,
-            cursorColor             = Teal400,
-            focusedIndicatorColor   = Teal400,
-            unfocusedIndicatorColor = Color.Transparent,
-            focusedLeadingIconColor = Teal400
-        ),
-        modifier = Modifier.fillMaxWidth()
-    )
-}
-
-@Composable
-private fun PasswordTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    imeAction: ImeAction = ImeAction.Done,
-    onImeAction: () -> Unit = {}
-) {
-    var visible by remember { mutableStateOf(false) }
-
-    TextField(
-        value               = value,
-        onValueChange       = onValueChange,
-        placeholder         = { Text(label, color = Color(0xFF4A5A75), fontSize = 14.sp) },
-        leadingIcon         = { Icon(Icons.Default.Lock, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
-        trailingIcon        = {
-            IconButton(onClick = { visible = !visible }) {
-                Icon(
-                    if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    null,
-                    tint = TextSecondary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        },
-        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
-        singleLine           = true,
-        keyboardOptions      = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction),
-        keyboardActions      = KeyboardActions(onDone = { onImeAction() }),
-        shape  = RoundedCornerShape(12.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor   = Color(0xFF0E1E35),
-            unfocusedContainerColor = Color(0xFF0E1E35),
-            focusedTextColor        = TextPrimary,
-            unfocusedTextColor      = TextPrimary,
-            cursorColor             = Teal400,
-            focusedIndicatorColor   = Teal400,
-            unfocusedIndicatorColor = Color.Transparent,
-            focusedLeadingIconColor = Teal400
-        ),
-        modifier = Modifier.fillMaxWidth()
-    )
-}
-
-@Composable
-private fun AuthButton(text: String, isLoading: Boolean, onClick: () -> Unit) {
-    Button(
-        onClick  = onClick,
-        enabled  = !isLoading,
-        modifier = Modifier.fillMaxWidth().height(44.dp),
-        shape    = RoundedCornerShape(14.dp),
-        colors   = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent
-        ),
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    if (!isLoading)
-                        Brush.linearGradient(listOf(Teal400, Color(0xFF00A896)))
-                    else
-                        Brush.linearGradient(listOf(DarkSurface3, DarkSurface3)),
-                    RoundedCornerShape(14.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    color     = Teal400,
-                    modifier  = Modifier.size(22.dp),
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text       = text,
-                    color      = DarkBg,
-                    fontSize   = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+private fun StepHeader(title: String, subtitle: String) {
+    Column {
+        Text(title, color = Color(0xFF1A3A35), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+        Spacer(Modifier.height(3.dp))
+        Text(subtitle, color = Color(0xFF5A7A75), fontSize = 13.sp)
     }
 }
 
 @Composable
-private fun ErrorText(error: String?) {
-    AnimatedVisibility(visible = error != null) {
-        Text(
-            text     = error ?: "",
-            color    = Color(0xFFFF6B6B),
-            fontSize = 13.sp,
-            modifier = Modifier.padding(top = 10.dp)
+private fun LightField(
+    value: String, onValueChange: (String) -> Unit, placeholder: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    imeAction: ImeAction = ImeAction.Next,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    onIme: () -> Unit = {}
+) {
+    TextField(value = value, onValueChange = onValueChange,
+        placeholder = { Text(placeholder, color = Color(0xFFAAC4C0), fontSize = 14.sp) },
+        leadingIcon = { Icon(icon, null, tint = Color(0xFF8AADA8), modifier = Modifier.size(18.dp)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardActions = KeyboardActions(onNext = { onIme() }, onDone = { onIme() }),
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFFF0F7F5), unfocusedContainerColor = Color(0xFFF0F7F5),
+            focusedTextColor = Color(0xFF1A3A35), unfocusedTextColor = Color(0xFF1A3A35),
+            cursorColor = Color(0xFF2D6A5F), focusedIndicatorColor = Color(0xFF2D6A5F),
+            unfocusedIndicatorColor = Color.Transparent, focusedLeadingIconColor = Color(0xFF2D6A5F)
+        ), modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun LightPasswordField(
+    value: String, onValueChange: (String) -> Unit, placeholder: String,
+    imeAction: ImeAction = ImeAction.Done, onIme: () -> Unit = {}
+) {
+    var visible by remember { mutableStateOf(false) }
+    TextField(value = value, onValueChange = onValueChange,
+        placeholder = { Text(placeholder, color = Color(0xFFAAC4C0), fontSize = 14.sp) },
+        leadingIcon = { Icon(Icons.Default.Lock, null, tint = Color(0xFF8AADA8), modifier = Modifier.size(18.dp)) },
+        trailingIcon = { IconButton(onClick = { visible = !visible }) {
+            Icon(if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility, null,
+                tint = Color(0xFF8AADA8), modifier = Modifier.size(18.dp))
+        }},
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction),
+        keyboardActions = KeyboardActions(onDone = { onIme() }),
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFFF0F7F5), unfocusedContainerColor = Color(0xFFF0F7F5),
+            focusedTextColor = Color(0xFF1A3A35), unfocusedTextColor = Color(0xFF1A3A35),
+            cursorColor = Color(0xFF2D6A5F), focusedIndicatorColor = Color(0xFF2D6A5F),
+            unfocusedIndicatorColor = Color.Transparent, focusedLeadingIconColor = Color(0xFF2D6A5F)
+        ), modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun GreenButton(text: String, isLoading: Boolean, onClick: () -> Unit) {
+    Button(onClick = onClick, enabled = !isLoading,
+        modifier = Modifier.fillMaxWidth().height(50.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF2D6A5F), disabledContainerColor = Color(0xFFB0CEC9)
         )
+    ) {
+        if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+        else Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
