@@ -4,20 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,10 +31,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.domain.model.User
+import com.nursena.fenlab_android.domain.model.enums.SubjectType
 import com.nursena.fenlab_android.ui.components.EmptyState
 import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
-import com.nursena.fenlab_android.ui.components.SubjectChip
 import com.nursena.fenlab_android.ui.theme.*
 
 @Composable
@@ -50,41 +44,64 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Her geçişte o anki kullanıcının aramalarını yükle
+    LaunchedEffect(Unit) {
+        viewModel.loadRecentSearches()
+    }
     val keyboard = LocalSoftwareKeyboardController.current
 
-    Column(
-        modifier = Modifier.fillMaxSize().background(DarkBg)
-    ) {
-        SearchHeader(
-            query         = uiState.query,
-            onQueryChange = viewModel::onQueryChange,
-            onClear       = { viewModel.onQueryChange("") },
-            onSearch      = { keyboard?.hide() }
-        )
+    Column(modifier = Modifier.fillMaxSize().background(DarkBg)) {
 
+        // ── Header + Arama kutusu ────────────────────────────────────────────
+        Box(modifier = Modifier.fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(Color(0xFF0A2820), DarkBg)))
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp).padding(top = 16.dp, bottom = 14.dp)
+        ) {
+            Column {
+                Text("Keşfet", color = TextPrimary, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                Spacer(Modifier.height(12.dp))
+                TextField(
+                    value = uiState.query, onValueChange = viewModel::onQueryChange,
+                    placeholder = { Text("Deney, konu veya kullanıcı ara...", color = TextSecondary, fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Default.Search, null, tint = TextSecondary, modifier = Modifier.size(20.dp)) },
+                    trailingIcon = {
+                        if (uiState.query.isNotBlank()) {
+                            IconButton(onClick = { viewModel.onQueryChange("") }) {
+                                Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(17.dp))
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = DarkSurface2, unfocusedContainerColor = DarkSurface2,
+                        focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+                        cursorColor = Teal400, focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // ── İçerik ──────────────────────────────────────────────────────────
         when {
             uiState.isLoading -> LoadingIndicator()
-
-            uiState.error != null -> ErrorMessage(
-                message = uiState.error!!,
-                onRetry = { viewModel.onQueryChange(uiState.query) }
-            )
-
+            uiState.error != null -> ErrorMessage(message = uiState.error!!, onRetry = { viewModel.onQueryChange(uiState.query) })
             uiState.query.isBlank() -> HintContent(
-                recentSearches    = uiState.recentSearches,
-                onRecentClick     = viewModel::onRecentClick,
-                onRemoveRecent    = viewModel::removeRecent,
-                onClearAll        = viewModel::clearRecents,
-                onTrendClick      = viewModel::onQueryChange
+                recentSearches = uiState.recentSearches,
+                onRecentClick  = viewModel::onRecentClick,
+                onRemoveRecent = viewModel::removeRecent,
+                onClearAll     = viewModel::clearRecents,
+                onTrendClick   = viewModel::onQueryChange
             )
-
-            uiState.isEmpty -> EmptyState(
-                emoji    = "🔍",
-                title    = "Sonuç bulunamadı",
-                subtitle = "\"${uiState.query}\" için sonuç bulunamadı"
-            )
-
-            else -> SearchResultList(
+            uiState.isEmpty -> EmptyState(emoji = "🔍", title = "Sonuç bulunamadı",
+                subtitle = "\"${uiState.query}\" için sonuç bulunamadı")
+            else -> ResultsContent(
                 results           = uiState.results,
                 userResults       = uiState.userResults,
                 onExperimentClick = onExperimentClick,
@@ -96,349 +113,136 @@ fun SearchScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Header
-// ─────────────────────────────────────────────────────────────────────────────
-@Composable
-private fun SearchHeader(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onClear: () -> Unit,
-    onSearch: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(DarkBg)
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 12.dp)
-    ) {
-        Text("Deney Ara", color = TextPrimary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(12.dp))
-        TextField(
-            value         = query,
-            onValueChange = onQueryChange,
-            placeholder   = {
-                Text("Deney adı, konu, öğretmen...", color = TextSecondary, fontSize = 14.sp)
-            },
-            leadingIcon  = { Icon(Icons.Default.Search, null, tint = TextSecondary, modifier = Modifier.size(20.dp)) },
-            trailingIcon = {
-                if (query.isNotBlank()) {
-                    IconButton(onClick = onClear) {
-                        Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(18.dp))
-                    }
-                }
-            },
-            singleLine      = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-            shape  = RoundedCornerShape(14.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor   = DarkSurface2,
-                unfocusedContainerColor = DarkSurface2,
-                focusedTextColor        = TextPrimary,
-                unfocusedTextColor      = TextPrimary,
-                cursorColor             = Teal400,
-                focusedIndicatorColor   = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Hint: Trend aramalar + Son arananlar
+// Hint: Son aramalar + trendler
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun HintContent(
-    recentSearches: List<String>,
-    onRecentClick: (String) -> Unit,
-    onRemoveRecent: (String) -> Unit,
-    onClearAll: () -> Unit,
+    recentSearches: List<String>, onRecentClick: (String) -> Unit,
+    onRemoveRecent: (String) -> Unit, onClearAll: () -> Unit,
     onTrendClick: (String) -> Unit
 ) {
+    if (recentSearches.isEmpty()) {
+        // Henüz arama yok
+        Box(modifier = Modifier.fillMaxSize().padding(40.dp), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("🔍", fontSize = 40.sp)
+                Spacer(Modifier.height(12.dp))
+                Text("Aramaya başla", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                Text("Deney, konu veya kullanıcı ara", color = TextSecondary, fontSize = 13.sp,
+                    textAlign = TextAlign.Center)
+            }
+        }
+        return
+    }
+
     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
-
-        // ── Son Arananlar ──────────────────────────────────────────────────
-        if (recentSearches.isNotEmpty()) {
-            item {
-                Row(
-                    modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 10.dp),
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(17.dp))
-                        Text("Son Arananlar", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    }
-                    Text(
-                        text     = "Temizle",
-                        color    = Teal400,
-                        fontSize = 13.sp,
-                        modifier = Modifier.clickable(onClick = onClearAll)
-                    )
-                }
-            }
-
-            items(recentSearches) { term ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onRecentClick(term) }
-                        .padding(horizontal = 16.dp, vertical = 11.dp),
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.size(34.dp).background(DarkSurface2, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
-                    }
-                    Text(
-                        text     = term,
-                        color    = TextPrimary,
-                        fontSize = 14.sp,
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(
-                        onClick  = { onRemoveRecent(term) },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(14.dp))
-                    }
-                }
-                HorizontalDivider(
-                    modifier  = Modifier.padding(horizontal = 16.dp),
-                    thickness = 0.5.dp,
-                    color     = DarkSurface2
-                )
-            }
-
-            item { Spacer(Modifier.height(20.dp)) }
-        }
-
-        // ── Trend Aramalar ─────────────────────────────────────────────────
         item {
-            Row(
-                modifier          = Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp),
+            Row(modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp).padding(top = 16.dp, bottom = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                    Text("Son Aramalar", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Text("Temizle", color = Teal400, fontSize = 12.sp,
+                    modifier = Modifier.clickable(onClick = onClearAll))
+            }
+        }
+        items(recentSearches) { term ->
+            Row(modifier = Modifier.fillMaxWidth().clickable { onRecentClick(term) }
+                .padding(horizontal = 16.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text("🔥", fontSize = 16.sp)
-                Text("Trend Aramalar", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
-
-        item {
-            LazyRow(
-                contentPadding        = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(TRENDING_SEARCHES) { trend ->
-                    TrendChip(label = trend, onClick = { onTrendClick(trend) })
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(modifier = Modifier.size(32.dp).background(DarkSurface, CircleShape),
+                    contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                }
+                Text(term, color = TextPrimary, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                IconButton(onClick = { onRemoveRecent(term) }, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Default.Close, null, tint = DarkSurface3, modifier = Modifier.size(13.dp))
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
+                thickness = 0.5.dp, color = DarkSurface)
         }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sonuç listesi
+// Sonuçlar — kullanıcılar + deneyler ayrı bölüm
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun SearchResultList(
-    results: List<Experiment>,
-    userResults: List<User> = emptyList(),
-    onExperimentClick: (Long) -> Unit,
-    onUserClick: (Long) -> Unit = {},
+private fun ResultsContent(
+    results: List<Experiment>, userResults: List<User>,
+    onExperimentClick: (Long) -> Unit, onUserClick: (Long) -> Unit,
     onFavoriteClick: (Experiment) -> Unit
 ) {
     LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
-        // ── Kullanıcılar ──────────────────────────────────────────────────────
+
+        // ── Kullanıcılar ──────────────────────────────────────────────────
         if (userResults.isNotEmpty()) {
             item {
-                Text("Kullanıcılar", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                SectionLabel("Kullanıcılar", "${userResults.size} sonuç")
             }
             items(items = userResults, key = { "u${it.id}" }) { user ->
-                UserCard(user = user, onClick = { onUserClick(user.id) })
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = DarkSurface2)
+                UserRow(user = user, onClick = { onUserClick(user.id) })
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
+                    thickness = 0.5.dp, color = DarkSurface)
             }
         }
-        // ── Deneyler ──────────────────────────────────────────────────────────
+
+        // ── Deneyler ──────────────────────────────────────────────────────
         if (results.isNotEmpty()) {
             item {
-                Text("Deneyler", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = if (userResults.isNotEmpty()) 12.dp else 8.dp, bottom = 8.dp))
+                SectionLabel("Deneyler", "${results.size} sonuç",
+                    topPadding = if (userResults.isNotEmpty()) 16.dp else 8.dp)
             }
             items(items = results, key = { it.id }) { exp ->
-                CompactExperimentCard(
+                ExperimentRow(
                     experiment      = exp,
                     onCardClick     = { onExperimentClick(exp.id) },
                     onFavoriteClick = { onFavoriteClick(exp) }
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = DarkSurface2)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
+                    thickness = 0.5.dp, color = DarkSurface)
             }
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Compact kart
-// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun CompactExperimentCard(
-    experiment: Experiment,
-    onCardClick: () -> Unit,
-    onFavoriteClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onCardClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Thumbnail
-        Box(
-            modifier = Modifier
-                .size(width = 88.dp, height = 72.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(DarkSurface2)
-        ) {
-            AsyncImage(
-                model              = experiment.thumbnailUrl ?: experiment.videoUrl,
-                contentDescription = experiment.title,
-                contentScale       = ContentScale.Crop,
-                modifier           = Modifier.fillMaxSize()
-            )
-            if (experiment.videoUrl != null) {
-                Box(
-                    modifier         = Modifier.fillMaxSize().background(Color.Black.copy(0.25f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier         = Modifier.size(28.dp).background(Color.White.copy(0.2f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    }
-                }
-            }
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text       = experiment.title,
-                color      = TextPrimary,
-                fontSize   = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines   = 2,
-                overflow   = TextOverflow.Ellipsis,
-                lineHeight = 20.sp
-            )
-            Spacer(Modifier.height(4.dp))
-
-            // Yazar satırı
-            Row(
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(
-                    modifier         = Modifier.size(18.dp).background(Teal500, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        experiment.author.displayName.take(1).uppercase(),
-                        color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold
-                    )
-                }
-                Text(
-                    text     = experiment.author.displayName,
-                    color    = TextSecondary,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-            }
-
-            Spacer(Modifier.height(6.dp))
-
-            // Chip + rating + favori
-            Row(
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                experiment.subject?.let { SubjectChip(subject = it) }
-                Spacer(Modifier.weight(1f))
-
-                // Rating yıldızı
-                Row(
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Icon(Icons.Default.Star, null, tint = Yellow400, modifier = Modifier.size(12.dp))
-                    Text(
-                        text  = experiment.averageRating?.let { "%.1f".format(it) } ?: "-",
-                        color = TextSecondary,
-                        fontSize = 11.sp
-                    )
-                }
-
-                // Favori butonu
-                IconButton(onClick = onFavoriteClick, modifier = Modifier.size(28.dp)) {
-                    Icon(
-                        imageVector = if (experiment.isFavoritedByCurrentUser)
-                            Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = null,
-                        tint = if (experiment.isFavoritedByCurrentUser) Red400 else TextSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-        }
+private fun SectionLabel(title: String, subtitle: String, topPadding: androidx.compose.ui.unit.Dp = 8.dp) {
+    Row(modifier = Modifier.fillMaxWidth()
+        .padding(horizontal = 16.dp).padding(top = topPadding, bottom = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically) {
+        Text(title, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(subtitle, color = TextSecondary, fontSize = 12.sp)
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Trend chip
+// Kullanıcı satırı
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun TrendChip(label: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(DarkSurface2)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Text(text = label, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-    }
-}
-@Composable
-private fun UserCard(user: User, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+private fun UserRow(user: User, onClick: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier.size(40.dp).clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
-            contentAlignment = Alignment.Center
-        ) {
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(modifier = Modifier.size(42.dp).clip(CircleShape)
+            .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
+            contentAlignment = Alignment.Center) {
             if (user.profileImageUrl != null) {
                 AsyncImage(model = user.profileImageUrl, contentDescription = null,
                     contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
             } else {
-                Text(user.displayName.take(2).uppercase(), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(user.displayName.take(2).uppercase(), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -446,9 +250,80 @@ private fun UserCard(user: User, onClick: () -> Unit) {
             Text("@${user.username}", color = TextSecondary, fontSize = 11.sp)
         }
         Box(modifier = Modifier
-            .background(if (user.isTeacher) Teal400.copy(0.12f) else DarkSurface2, RoundedCornerShape(12.dp))
+            .background(if (user.isTeacher) Teal400.copy(0.12f) else DarkSurface, RoundedCornerShape(10.dp))
             .padding(horizontal = 8.dp, vertical = 3.dp)) {
             Text(user.displayRole, color = if (user.isTeacher) Teal400 else TextSecondary, fontSize = 10.sp)
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Deney satırı
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun ExperimentRow(
+    experiment: Experiment, onCardClick: () -> Unit, onFavoriteClick: () -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth().clickable(onClick = onCardClick)
+        .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+        Box(modifier = Modifier.size(width = 88.dp, height = 70.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Brush.linearGradient(listOf(Color(0xFF0D2D28), Color(0xFF1A2235))))) {
+            AsyncImage(model = experiment.thumbnailUrl ?: experiment.videoUrl,
+                contentDescription = null, contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize())
+            if (experiment.videoUrl != null) {
+                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.2f)),
+                    contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.size(26.dp).background(Color.White.copy(0.2f), CircleShape),
+                        contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    }
+                }
+            }
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(experiment.title, color = TextPrimary, fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold, maxLines = 2,
+                overflow = TextOverflow.Ellipsis, lineHeight = 18.sp)
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Box(modifier = Modifier.size(15.dp).background(Teal500, CircleShape),
+                    contentAlignment = Alignment.Center) {
+                    Text(experiment.author.displayName.take(1).uppercase(),
+                        color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                }
+                Text(experiment.author.displayName, color = TextSecondary, fontSize = 11.sp,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+            }
+            Spacer(Modifier.height(5.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                experiment.averageRating?.let {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Icon(Icons.Default.Star, null, tint = Orange400, modifier = Modifier.size(11.dp))
+                        Text("%.1f".format(it), color = TextSecondary, fontSize = 11.sp)
+                    }
+                }
+                experiment.subject?.let { subject ->
+                    Box(modifier = Modifier.background(Teal400.copy(0.1f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)) {
+                        Text(subject.toDisplayString(), color = Teal400, fontSize = 10.sp)
+                    }
+                }
+            }
+        }
+
+        IconButton(onClick = onFavoriteClick, modifier = Modifier.size(36.dp)) {
+            Icon(
+                if (experiment.isFavoritedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                null,
+                tint = if (experiment.isFavoritedByCurrentUser) Red400 else TextSecondary,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

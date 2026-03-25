@@ -2,6 +2,7 @@ package com.nursena.fenlab_android.ui.screens.search
 
 import androidx.lifecycle.viewModelScope
 import com.nursena.fenlab_android.core.base.BaseViewModel
+import com.nursena.fenlab_android.core.datastore.TokenManager
 import com.nursena.fenlab_android.core.network.ApiResult
 import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.domain.model.User
@@ -20,13 +21,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-val TRENDING_SEARCHES = listOf(
-    "Kimya", "Fizik", "Çevre", "Mıknatıs", "Volkan",
-    "Optik", "Asit-Baz", "Elektrik", "Su Döngüsü", "Bitki"
-)
-
-private const val MAX_RECENT = 8
-
 data class SearchUiState(
     val query: String                = "",
     val results: List<Experiment>    = emptyList(),
@@ -41,13 +35,26 @@ data class SearchUiState(
 class SearchViewModel @Inject constructor(
     private val experimentRepository: ExperimentRepository,
     private val favoriteRepository: FavoriteRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val tokenManager: TokenManager
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     private var debounceJob: Job? = null
+
+    init {
+        loadRecentSearches()
+    }
+
+    // Her tab geçişinde çağrılır — güncel kullanıcının aramalarını yükler
+    fun loadRecentSearches() {
+        viewModelScope.launch {
+            val saved = tokenManager.getRecentSearches()
+            _uiState.update { it.copy(recentSearches = saved) }
+        }
+    }
 
     fun onQueryChange(query: String) {
         _uiState.update { it.copy(query = query, error = null) }
@@ -65,27 +72,35 @@ class SearchViewModel @Inject constructor(
     fun onRecentClick(term: String) = onQueryChange(term)
 
     fun removeRecent(term: String) {
-        _uiState.update { it.copy(recentSearches = it.recentSearches - term) }
+        viewModelScope.launch {
+            tokenManager.removeRecentSearch(term)
+            _uiState.update { it.copy(recentSearches = it.recentSearches - term) }
+        }
     }
 
     fun clearRecents() {
-        _uiState.update { it.copy(recentSearches = emptyList()) }
+        viewModelScope.launch {
+            tokenManager.clearRecentSearches()
+            _uiState.update { it.copy(recentSearches = emptyList()) }
+        }
     }
 
     private suspend fun search(query: String) {
         _uiState.update { it.copy(isLoading = true) }
         try {
-            // Deney ve kullanıcı araması paralel çalışır
             val expDeferred  = viewModelScope.async { experimentRepository.getAllExperiments(search = query, size = 30) }
             val userDeferred = viewModelScope.async { userRepository.searchUsers(query) }
+            val expResult    = expDeferred.await()
+            val userResult   = userDeferred.await()
 
-            val expResult  = expDeferred.await()
-            val userResult = userDeferred.await()
+            val experiments = if (expResult  is ApiResult.Success) expResult.data.content  else emptyList()
+            val users       = if (userResult is ApiResult.Success) userResult.data          else emptyList()
 
-            val experiments = if (expResult is ApiResult.Success) expResult.data.content else emptyList()
-            val users       = if (userResult is ApiResult.Success) userResult.data else emptyList()
-
-            if (query.length >= 2) addToRecents(query)
+            // En az 2 karakter olan aramaları kaydet
+            if (query.length >= 2) {
+                tokenManager.addRecentSearch(query)
+                _uiState.update { it.copy(recentSearches = tokenManager.getRecentSearches()) }
+            }
 
             _uiState.update {
                 it.copy(
@@ -99,14 +114,6 @@ class SearchViewModel @Inject constructor(
         } catch (e: CancellationException) { throw e }
     }
 
-    private fun addToRecents(query: String) {
-        _uiState.update { state ->
-            val updated = (listOf(query) + state.recentSearches.filter { it != query })
-                .take(MAX_RECENT)
-            state.copy(recentSearches = updated)
-        }
-    }
-
     fun toggleFavorite(experiment: Experiment) {
         viewModelScope.launch {
             val isFav = experiment.isFavoritedByCurrentUser
@@ -117,10 +124,8 @@ class SearchViewModel @Inject constructor(
                 else it
             }
             _uiState.update { it.copy(results = toggle(it.results)) }
-
             val result = if (isFav) favoriteRepository.removeFromFavorites(experiment.id)
             else       favoriteRepository.addToFavorites(experiment.id)
-
             if (result is ApiResult.Error) {
                 fun revert(list: List<Experiment>) = list.map {
                     if (it.id == experiment.id)
