@@ -65,6 +65,7 @@ fun ProfileScreen(
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is UiEvent.LoggedOut    -> onLogout()
+                is UiEvent.SessionExpired -> onLogout()
                 is UiEvent.ShowSnackbar -> snackbar.showSnackbar(event.message)
                 else -> Unit
             }

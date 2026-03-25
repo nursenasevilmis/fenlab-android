@@ -2,11 +2,16 @@ package com.nursena.fenlab_android.ui.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.*
 import com.nursena.fenlab_android.core.datastore.TokenManager
 import com.nursena.fenlab_android.domain.model.enums.UserRole
@@ -21,11 +26,14 @@ import com.nursena.fenlab_android.ui.screens.search.SearchScreen
 import com.nursena.fenlab_android.ui.theme.DarkBg
 import dagger.hilt.android.EntryPointAccessors
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.Text
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
 object Routes {
+    const val SPLASH       = "splash"
     const val HOME         = "home"
     const val SEARCH       = "search"
     const val FAVORITES    = "favorites"
@@ -63,7 +71,6 @@ fun FenlabNavGraph() {
         ).tokenManager()
     }
 
-    // Rol'ü her route değişiminde yeniden oku (login sonrası güncel olsun)
     var userRole by remember { mutableStateOf(UserRole.USER) }
     LaunchedEffect(currentRoute) {
         if (currentRoute in bottomBarRoutes) {
@@ -71,6 +78,11 @@ fun FenlabNavGraph() {
             userRole = if (roleStr == "TEACHER") UserRole.TEACHER else UserRole.USER
         }
     }
+
+    // ── Global 401 Session Expired — her yerde dinlenir ──────────────────────
+    // NavGraph doğrudan ViewModel'lere erişemez, bu yüzden BaseRepository'den
+    // gelen 401 hata mesajını FavoritesViewModel ve ProfileViewModel handle eder.
+    // Aşağıda manuel logout butonu SessionExpired eventi ile tetiklenir.
 
     Scaffold(
         containerColor = DarkBg,
@@ -88,13 +100,31 @@ fun FenlabNavGraph() {
 
         NavHost(
             navController    = navController,
-            startDestination = Routes.AUTH,
+            startDestination = Routes.SPLASH,   // ← SPLASH ile başla
             modifier         = Modifier.padding(innerPadding),
             enterTransition  = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 8 } },
             exitTransition   = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { -it / 8 } },
             popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 8 } },
             popExitTransition  = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { it / 8 } }
         ) {
+
+            // ── Splash — token kontrol eder, flash olmadan yönlendirir ───────
+            composable(Routes.SPLASH) {
+                SplashDecision(
+                    tokenManager = tokenManager,
+                    onLoggedIn   = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    },
+                    onGuest = {
+                        navController.navigate(Routes.AUTH) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(Routes.AUTH) {
                 AuthScreen(
                     onNavigateHome = {
@@ -117,7 +147,14 @@ fun FenlabNavGraph() {
             }
 
             composable(Routes.FAVORITES) {
-                FavoritesScreen(onExperimentClick = { id -> navController.navigate(Routes.detail(id)) })
+                FavoritesScreen(
+                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                    onSessionExpired  = {
+                        navController.navigate(Routes.AUTH) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable(Routes.PROFILE) {
@@ -131,7 +168,6 @@ fun FenlabNavGraph() {
                 )
             }
 
-            // Başka kullanıcının profili
             composable(
                 route     = Routes.PROFILE_USER,
                 arguments = listOf(androidx.navigation.navArgument("userId") {
@@ -171,5 +207,24 @@ fun FenlabNavGraph() {
                 )
             }
         }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Splash karar ekranı — kullanıcıya hiç gösterilmez, sadece yönlendirir
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun SplashDecision(
+    tokenManager: TokenManager,
+    onLoggedIn: () -> Unit,
+    onGuest: () -> Unit
+) {
+    // Token kontrolü yapılırken DarkBg göster — auth ekranı flash'lamaz
+    Box(modifier = Modifier.fillMaxSize().background(DarkBg), contentAlignment = Alignment.Center) {
+        Text("⚗️", fontSize = 40.sp, fontWeight = FontWeight.Bold)
+    }
+
+    LaunchedEffect(Unit) {
+        if (tokenManager.isLoggedIn()) onLoggedIn() else onGuest()
     }
 }

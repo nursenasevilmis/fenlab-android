@@ -17,6 +17,7 @@ sealed class UiEvent {
     data class Navigate(val route: String)       : UiEvent()
     object NavigateBack                          : UiEvent()
     object LoggedOut                             : UiEvent()
+    object SessionExpired                        : UiEvent()  // 401 — token süresi doldu
 }
 
 // ── Genel UI durumu ───────────────────────────────────────────────────────
@@ -53,8 +54,12 @@ abstract class BaseViewModel : ViewModel() {
                 }
                 is ApiResult.Error -> {
                     _isLoading.value = false
-                    onError?.invoke(result.message)
-                        ?: sendEvent(UiEvent.ShowSnackbar(result.message))
+                    if (result.code == 401) {
+                        sendEvent(UiEvent.SessionExpired)
+                    } else {
+                        onError?.invoke(result.message)
+                            ?: sendEvent(UiEvent.ShowSnackbar(result.message))
+                    }
                 }
                 is ApiResult.Loading -> Unit
             }

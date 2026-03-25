@@ -84,7 +84,10 @@ class ProfileViewModel @Inject constructor(
                     if (user.isTeacher) loadUserExperiments(user.id)
                     if (userId == null) { loadNotifications(); loadUnreadCount() }
                 }
-                is ApiResult.Error -> _uiState.update { it.copy(isLoading = false, error = result.message) }
+                is ApiResult.Error -> {
+                    if (result.code == 401) sendEvent(UiEvent.SessionExpired)
+                    else _uiState.update { it.copy(isLoading = false, error = result.message) }
+                }
                 is ApiResult.Loading -> Unit
             }
         }

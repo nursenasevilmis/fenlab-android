@@ -26,9 +26,11 @@ class TokenManager @Inject constructor(
         private val KEY_FULL_NAME     = stringPreferencesKey("full_name")
         private val KEY_ROLE          = stringPreferencesKey("role")
         private val KEY_PROFILE_IMAGE = stringPreferencesKey("profile_image_url")
+        private const val MAX_RECENT = 10
+        // Son aramalar kullanıcı ID'sine göre ayrı key
+        private fun recentSearchesKey(userId: Long) = stringPreferencesKey("recent_searches_$userId")
     }
 
-    // ── Flow (sürekli izleme) ──────────────────────────────────────────────
     val tokenFlow: Flow<String?> = context.dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { it[KEY_TOKEN] }
@@ -41,22 +43,16 @@ class TokenManager @Inject constructor(
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { it[KEY_ROLE] }
 
-    // ── Tek seferlik okuma (suspend) ───────────────────────────────────────
-    suspend fun getToken(): String?   = context.dataStore.data.first()[KEY_TOKEN]
-    suspend fun getUserId(): Long?    = context.dataStore.data.first()[KEY_USER_ID]
+    suspend fun getToken(): String?    = context.dataStore.data.first()[KEY_TOKEN]
+    suspend fun getUserId(): Long?     = context.dataStore.data.first()[KEY_USER_ID]
     suspend fun getUsername(): String? = context.dataStore.data.first()[KEY_USERNAME]
     suspend fun getFullName(): String? = context.dataStore.data.first()[KEY_FULL_NAME]
-    suspend fun getRole(): String?    = context.dataStore.data.first()[KEY_ROLE]
-    suspend fun isLoggedIn(): Boolean = getToken() != null
+    suspend fun getRole(): String?     = context.dataStore.data.first()[KEY_ROLE]
+    suspend fun isLoggedIn(): Boolean  = getToken() != null
 
-    // ── Kaydet (login/register sonrası) ───────────────────────────────────
     suspend fun saveSession(
-        token: String,
-        userId: Long,
-        username: String,
-        fullName: String,
-        role: String,
-        profileImageUrl: String? = null
+        token: String, userId: Long, username: String,
+        fullName: String, role: String, profileImageUrl: String? = null
     ) {
         context.dataStore.edit { prefs ->
             prefs[KEY_TOKEN]     = token
@@ -68,8 +64,42 @@ class TokenManager @Inject constructor(
         }
     }
 
-    // ── Temizle (logout) ───────────────────────────────────────────────────
+    // Logout — arama geçmişi kullanıcıya özel saklandığı için korunur
     suspend fun clearSession() {
-        context.dataStore.edit { it.clear() }
+        context.dataStore.edit { prefs ->
+            prefs.remove(KEY_TOKEN)
+            prefs.remove(KEY_USER_ID)
+            prefs.remove(KEY_USERNAME)
+            prefs.remove(KEY_FULL_NAME)
+            prefs.remove(KEY_ROLE)
+            prefs.remove(KEY_PROFILE_IMAGE)
+        }
+    }
+
+    // ── Son aramalar (kullanıcıya özel) ──────────────────────────────────────
+    suspend fun getRecentSearches(): List<String> {
+        val userId = getUserId() ?: return emptyList()
+        val raw = context.dataStore.data.first()[recentSearchesKey(userId)] ?: return emptyList()
+        return raw.split("|||").filter { it.isNotBlank() }
+    }
+
+    suspend fun addRecentSearch(query: String) {
+        val userId = getUserId() ?: return
+        val current = getRecentSearches().toMutableList()
+        current.remove(query)
+        current.add(0, query)
+        val updated = current.take(MAX_RECENT).joinToString("|||")
+        context.dataStore.edit { it[recentSearchesKey(userId)] = updated }
+    }
+
+    suspend fun removeRecentSearch(query: String) {
+        val userId = getUserId() ?: return
+        val updated = getRecentSearches().filter { it != query }.joinToString("|||")
+        context.dataStore.edit { it[recentSearchesKey(userId)] = updated }
+    }
+
+    suspend fun clearRecentSearches() {
+        val userId = getUserId() ?: return
+        context.dataStore.edit { it[recentSearchesKey(userId)] = "" }
     }
 }

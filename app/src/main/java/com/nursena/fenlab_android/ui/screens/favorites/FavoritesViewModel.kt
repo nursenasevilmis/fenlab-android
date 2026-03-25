@@ -2,6 +2,7 @@ package com.nursena.fenlab_android.ui.screens.favorites
 
 import androidx.lifecycle.viewModelScope
 import com.nursena.fenlab_android.core.base.BaseViewModel
+import com.nursena.fenlab_android.core.base.UiEvent
 import com.nursena.fenlab_android.core.network.ApiResult
 import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.domain.repository.FavoriteRepository
