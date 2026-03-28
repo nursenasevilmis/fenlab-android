@@ -73,7 +73,7 @@ fun ProfileScreen(
     }
     LaunchedEffect(uiState.unreadCount) { onUnreadCountChange(uiState.unreadCount) }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = DarkBg) { pad ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = Color.Transparent) { pad ->
         when {
             uiState.isLoading && uiState.user == null -> LoadingIndicator()
             uiState.error != null && uiState.user == null ->
@@ -186,7 +186,7 @@ private fun ProfileHeader(
 ) {
     Box(
         modifier = Modifier.fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Color(0xFF0A2820), Color(0xFF0D1B2A), DarkBg)))
+            .background(Color.Transparent)
             .statusBarsPadding()
             .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 20.dp)
@@ -200,19 +200,19 @@ private fun ProfileHeader(
                 Box {
                     Box(
                         modifier = Modifier.size(32.dp).clip(CircleShape)
-                            .background(DarkSurface2).clickable(onClick = onNotifClick),
+                            .background(Color(0xFFECEFF1)).clickable(onClick = onNotifClick),
                         contentAlignment = Alignment.Center
                     ) { Icon(Icons.Outlined.Notifications, null, tint = TextSecondary, modifier = Modifier.size(16.dp)) }
                     if (unreadCount > 0) {
                         Box(
                             modifier = Modifier.align(Alignment.TopEnd).size(7.dp)
-                                .background(Orange400, CircleShape)
+                                .background(LabOrange, CircleShape)
                         )
                     }
                 }
                 Box(
                     modifier = Modifier.size(32.dp).clip(CircleShape)
-                        .background(DarkSurface2).clickable(onClick = onSettingsClick),
+                        .background(Color(0xFFECEFF1)).clickable(onClick = onSettingsClick),
                     contentAlignment = Alignment.Center
                 ) { Icon(Icons.Outlined.Settings, null, tint = TextSecondary, modifier = Modifier.size(16.dp)) }
             }
@@ -228,12 +228,12 @@ private fun ProfileHeader(
             Box(modifier = Modifier.size(72.dp)) {
                 Box(
                     modifier = Modifier.fillMaxSize().clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(Teal400.copy(0.6f), Color(0xFF006EFF).copy(0.4f))))
-                        .border(2.dp, Teal400.copy(0.4f), CircleShape),
+                        .background(Brush.linearGradient(listOf(Color(0x9964B5F6), Color(0x661E88E5))))
+                        .border(2.dp, Color(0x661E88E5), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isUploadingPhoto) {
-                        CircularProgressIndicator(color = Teal400, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(color = FrostAccent, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     } else if (user?.profileImageUrl != null) {
                         AsyncImage(
                             model            = user.profileImageUrl,
@@ -252,7 +252,7 @@ private fun ProfileHeader(
                 if (isOwn) {
                     Box(
                         modifier = Modifier.size(22.dp).align(Alignment.BottomEnd)
-                            .clip(CircleShape).background(Teal400).clickable(onClick = onPhotoClick),
+                            .clip(CircleShape).background(FrostAccent).clickable(onClick = onPhotoClick),
                         contentAlignment = Alignment.Center
                     ) { Icon(Icons.Default.CameraAlt, null, tint = Color.White, modifier = Modifier.size(13.dp)) }
                 }
@@ -270,9 +270,7 @@ private fun ProfileHeader(
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     RoleBadge(user = user)
-                    if (user?.isTeacher == true && user.branch != null) {
-                        BranchBadge(branch = user.branch)
-                    }
+
                 }
             }
         }
@@ -284,8 +282,8 @@ private fun RoleBadge(user: User?) {
     val isTeacher = user?.isTeacher == true
     Row(
         modifier = Modifier.clip(RoundedCornerShape(20.dp))
-            .background(if (isTeacher) Color(0xFF1A3A25) else Color(0xFF1A2A3A))
-            .border(1.dp, if (isTeacher) Teal400.copy(0.4f) else Color(0xFF3A5A7A), RoundedCornerShape(20.dp))
+            .background(GlassSurface2)
+            .border(1.dp, if (isTeacher) Color(0x661E88E5) else Color(0x4090A4AE), RoundedCornerShape(20.dp))
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -293,7 +291,7 @@ private fun RoleBadge(user: User?) {
         Text(if (isTeacher) "👨‍🏫" else "🎓", fontSize = 11.sp)
         Text(
             if (isTeacher) "Öğretmen" else "Öğrenci",
-            color = if (isTeacher) Teal400 else Color(0xFF7AB8E8),
+            color = if (isTeacher) FrostAccent else LabOrange,
             fontSize = 11.sp, fontWeight = FontWeight.SemiBold
         )
     }
@@ -304,7 +302,7 @@ private fun BranchBadge(branch: String) {
     Text(
         branch,
         modifier = Modifier.clip(RoundedCornerShape(20.dp))
-            .background(DarkSurface2).padding(horizontal = 8.dp, vertical = 3.dp),
+            .background(Color(0xFFECEFF1)).padding(horizontal = 8.dp, vertical = 3.dp),
         color = TextSecondary, fontSize = 11.sp
     )
 }
@@ -316,11 +314,11 @@ private fun BranchBadge(branch: String) {
 private fun TeacherStats(experimentCount: Int, totalFavorites: Long, experienceYears: Int?) {
     Row(
         modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp)).background(DarkSurface)
+            .clip(RoundedCornerShape(12.dp)).background(Color(0xFFF8F9FB))
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatColumn(value = experimentCount.toString(), label = "Deney", color = Teal400)
+        StatColumn(value = experimentCount.toString(), label = "Deney", color = FrostAccent)
         StatDivider()
         StatColumn(value = formatCount(totalFavorites), label = "Beğeni", color = Red400)
         if (experienceYears != null) {
@@ -335,11 +333,11 @@ private fun StudentStats(user: User?) {
     val memberSince = user?.createdAt?.take(10) ?: "-"
     Row(
         modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp)).background(DarkSurface)
+            .clip(RoundedCornerShape(12.dp)).background(Color(0xFFF8F9FB))
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatColumn(value = "🎓", label = "Öğrenci", color = Color(0xFF7AB8E8), isEmoji = true)
+        StatColumn(value = "🎓", label = "Öğrenci", color = FrostAccent, isEmoji = true)
         StatDivider()
         StatColumn(value = memberSince, label = "Üye Tarihi", color = TextSecondary, smallValue = true)
     }
@@ -361,7 +359,7 @@ private fun StatColumn(value: String, label: String, color: Color, isEmoji: Bool
 
 @Composable
 private fun RowScope.StatDivider() {
-    Box(Modifier.width(1.dp).height(28.dp).align(Alignment.CenterVertically).background(DarkSurface3))
+    Box(Modifier.width(1.dp).height(28.dp).align(Alignment.CenterVertically).background(Color(0xFFCFD8DC)))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -370,7 +368,7 @@ private fun RowScope.StatDivider() {
 @Composable
 private fun ProfileTabBar(selected: Int, tabs: List<String>, onSelect: (Int) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().background(DarkBg)
+        modifier = Modifier.fillMaxWidth().background(Color(0xFFF5F7FA))
             .padding(horizontal = 16.dp).padding(top = 8.dp)
     ) {
         tabs.forEachIndexed { i, label ->
@@ -380,17 +378,17 @@ private fun ProfileTabBar(selected: Int, tabs: List<String>, onSelect: (Int) -> 
             ) {
                 Text(
                     label,
-                    color      = if (selected == i) Teal400 else TextSecondary,
+                    color      = if (selected == i) FrostAccentDark else TextSecondary,
                     fontSize   = 13.sp,
                     fontWeight = if (selected == i) FontWeight.SemiBold else FontWeight.Normal,
                     modifier   = Modifier.padding(vertical = 10.dp)
                 )
                 Box(Modifier.fillMaxWidth().height(2.dp)
-                    .background(if (selected == i) Teal400 else Color.Transparent))
+                    .background(if (selected == i) FrostAccentDark else Color.Transparent))
             }
         }
     }
-    HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+    HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
 }
 
 @Composable
@@ -400,7 +398,7 @@ private fun SectionDivider(label: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Box(Modifier.size(width = 3.dp, height = 16.dp).clip(RoundedCornerShape(2.dp)).background(Teal400))
+        Box(Modifier.size(width = 3.dp, height = 16.dp).clip(RoundedCornerShape(2.dp)).background(FrostAccent))
         Text(label, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -420,7 +418,7 @@ private fun TeacherExperimentCard(
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },
-            containerColor   = DarkSurface,
+            containerColor = Color(0xFFF8F9FB),
             title = { Text("Deneyi Sil", color = TextPrimary) },
             text  = { Text("Bu deneyi kalıcı olarak silmek istediğinizden emin misiniz?", color = TextSecondary, fontSize = 13.sp) },
             confirmButton = {
@@ -435,7 +433,7 @@ private fun TeacherExperimentCard(
     Card(
         modifier  = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clickable(onClick = onCardClick),
         shape     = RoundedCornerShape(10.dp),
-        colors    = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors    = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
@@ -446,7 +444,7 @@ private fun TeacherExperimentCard(
             // Thumbnail
             Box(
                 modifier = Modifier.size(width = 64.dp, height = 52.dp).clip(RoundedCornerShape(8.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFF0D2D28), Color(0xFF1A2235))))
+                    .background(Brush.linearGradient(listOf(GlassSurface2, GlassSurface3)))
             ) {
                 if (exp.thumbnailUrl != null || exp.videoUrl != null) {
                     AsyncImage(
@@ -473,7 +471,7 @@ private fun TeacherExperimentCard(
                         Text(exp.averageRating?.let { "%.1f".format(it) } ?: "-", color = TextSecondary, fontSize = 11.sp)
                     }
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Icon(Icons.Outlined.FavoriteBorder, null, tint = Red400.copy(0.7f), modifier = Modifier.size(12.dp))
+                        Icon(Icons.Outlined.FavoriteBorder, null, tint = Color(0xB3EF5350), modifier = Modifier.size(12.dp))
                         Text(formatCount(exp.favoriteCount), color = TextSecondary, fontSize = 11.sp)
                     }
                     exp.subject?.let { SubjectChip(subject = it) }
@@ -481,7 +479,7 @@ private fun TeacherExperimentCard(
             }
             if (isOwn) {
                 IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.DeleteOutline, null, tint = Red400.copy(0.5f), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.DeleteOutline, null, tint = Color(0x80EF5350), modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -508,7 +506,7 @@ private fun AboutCard(user: User?, isOwn: Boolean, isTeacher: Boolean, onEdit: (
     Card(
         modifier  = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         shape     = RoundedCornerShape(12.dp),
-        colors    = CardDefaults.cardColors(containerColor = DarkSurface)
+        colors    = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB))
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // Bio
@@ -520,35 +518,35 @@ private fun AboutCard(user: User?, isOwn: Boolean, isTeacher: Boolean, onEdit: (
 
             // E-posta (sadece kendi profili)
             if (isOwn) {
-                HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+                HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
                 InfoRow(icon = Icons.Default.Email, label = "E-posta", value = user?.email ?: "-")
             }
 
             // Üyelik tarihi
-            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
             InfoRow(icon = Icons.Default.CalendarToday, label = "Üyelik", value = user?.createdAt?.take(10) ?: "-")
 
             // Öğretmen ekstra
             if (isTeacher) {
                 if (user?.branch != null) {
-                    HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+                    HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
                     InfoRow(icon = Icons.Default.School, label = "Branş", value = user.branch)
                 }
                 if (user?.experienceYears != null) {
-                    HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+                    HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
                     InfoRow(icon = Icons.Default.WorkHistory, label = "Deneyim", value = "${user.experienceYears} yıl")
                 }
             }
 
             // Düzenle butonu
             if (isOwn) {
-                HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+                HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
                 OutlinedButton(
                     onClick  = onEdit,
                     modifier = Modifier.fillMaxWidth().height(38.dp),
                     shape    = RoundedCornerShape(8.dp),
-                    border   = BorderStroke(1.dp, Teal400.copy(0.4f)),
-                    colors   = ButtonDefaults.outlinedButtonColors(contentColor = Teal400)
+                    border   = BorderStroke(1.dp, Color(0x661E88E5)),
+                    colors   = ButtonDefaults.outlinedButtonColors(contentColor = FrostAccent)
                 ) {
                     Icon(Icons.Default.Edit, null, modifier = Modifier.size(13.dp))
                     Spacer(Modifier.width(6.dp))
@@ -562,7 +560,7 @@ private fun AboutCard(user: User?, isOwn: Boolean, isTeacher: Boolean, onEdit: (
 @Composable
 private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Icon(icon, null, tint = Teal400, modifier = Modifier.size(16.dp).padding(top = 1.dp))
+        Icon(icon, null, tint = FrostAccent, modifier = Modifier.size(16.dp).padding(top = 1.dp))
         Column {
             Text(label, color = TextSecondary, fontSize = 11.sp)
             Spacer(Modifier.height(1.dp))
@@ -579,11 +577,11 @@ private fun EditFormCard(state: ProfileUiState, vm: ProfileViewModel) {
     Card(
         modifier  = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         shape     = RoundedCornerShape(12.dp),
-        colors    = CardDefaults.cardColors(containerColor = DarkSurface2)
+        colors    = CardDefaults.cardColors(containerColor = Color(0xFFECEFF1))
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Profili Düzenle", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
             ProfileTextField(value = state.editFullName, onChange = vm::onFullNameChange, label = "Ad Soyad", icon = Icons.Default.Person)
             ProfileTextField(value = state.editBio, onChange = vm::onBioChange, label = "Biyografi", icon = Icons.Default.Edit, minLines = 3)
             if (state.user?.isTeacher == true) {
@@ -595,7 +593,7 @@ private fun EditFormCard(state: ProfileUiState, vm: ProfileViewModel) {
                     onClick  = vm::toggleEdit,
                     modifier = Modifier.weight(1f).height(38.dp),
                     shape    = RoundedCornerShape(8.dp),
-                    border   = BorderStroke(1.dp, DarkSurface3),
+                    border   = BorderStroke(1.dp, Color(0xFFCFD8DC)),
                     colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
                 ) { Text("İptal", fontSize = 13.sp) }
                 Button(
@@ -603,10 +601,10 @@ private fun EditFormCard(state: ProfileUiState, vm: ProfileViewModel) {
                     enabled  = !state.isSaving,
                     modifier = Modifier.weight(1f).height(38.dp),
                     shape    = RoundedCornerShape(8.dp),
-                    colors   = ButtonDefaults.buttonColors(containerColor = Teal400)
+                    colors   = ButtonDefaults.buttonColors(containerColor = FrostAccent)
                 ) {
-                    if (state.isSaving) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = DarkBg)
-                    else Text("Kaydet", color = DarkBg, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    if (state.isSaving) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = Color.White)
+                    else Text("Kaydet", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -621,16 +619,16 @@ private fun ProfileTextField(
     OutlinedTextField(
         value = value, onValueChange = onChange,
         label = { Text(label, fontSize = 11.sp) },
-        leadingIcon = { Icon(icon, null, tint = Teal400, modifier = Modifier.size(16.dp)) },
+        leadingIcon = { Icon(icon, null, tint = FrostAccent, modifier = Modifier.size(16.dp)) },
         modifier   = Modifier.fillMaxWidth().then(if (minLines > 1) Modifier.height(80.dp) else Modifier),
         shape      = RoundedCornerShape(8.dp),
         maxLines   = minLines,
         textStyle  = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = TextPrimary),
         colors     = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = Teal400, unfocusedBorderColor = DarkSurface3,
-            focusedContainerColor = DarkSurface, unfocusedContainerColor = DarkSurface,
-            focusedLabelColor    = Teal400, unfocusedLabelColor = TextSecondary,
-            cursorColor          = Teal400
+            focusedBorderColor   = FrostAccent, unfocusedBorderColor = Color(0xFFCFD8DC),
+            focusedContainerColor = Color(0xFFF8F9FB), unfocusedContainerColor = Color(0xFFF8F9FB),
+            focusedLabelColor    = FrostAccent, unfocusedLabelColor = TextSecondary,
+            cursorColor          = FrostAccent
         )
     )
 }
@@ -644,7 +642,7 @@ private fun NotificationsSheet(
     notifications: List<Notification>, isLoading: Boolean,
     onMarkRead: (Long) -> Unit, onMarkAllRead: () -> Unit, onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = DarkSurface, dragHandle = { SheetHandle() }) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color(0xFFF8F9FB), dragHandle = { SheetHandle() }) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
             Row(
                 modifier              = Modifier.fillMaxWidth(),
@@ -654,7 +652,7 @@ private fun NotificationsSheet(
                 Text("Bildirimler", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                 Row {
                     if (notifications.any { !it.isRead }) {
-                        TextButton(onClick = onMarkAllRead) { Text("Tümünü Oku", color = Teal400, fontSize = 12.sp) }
+                        TextButton(onClick = onMarkAllRead) { Text("Tümünü Oku", color = FrostAccent, fontSize = 12.sp) }
                     }
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, null, tint = TextSecondary)
@@ -663,7 +661,7 @@ private fun NotificationsSheet(
             }
             if (isLoading) {
                 Box(Modifier.fillMaxWidth().padding(20.dp), Alignment.Center) {
-                    CircularProgressIndicator(color = Teal400, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(color = FrostAccent, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 }
             } else if (notifications.isEmpty()) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -675,21 +673,21 @@ private fun NotificationsSheet(
                 notifications.forEach { notif ->
                     Row(
                         modifier              = Modifier.fillMaxWidth().clickable { if (!notif.isRead) onMarkRead(notif.id) }
-                            .background(if (!notif.isRead) Teal400.copy(0.05f) else Color.Transparent)
+                            .background(if (!notif.isRead) Color(0x0DF06292) else Color.Transparent)
                             .padding(vertical = 10.dp),
                         verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(DarkSurface3), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFECEFF1)), contentAlignment = Alignment.Center) {
                             Text(notif.icon, fontSize = 13.sp)
                         }
                         Column(Modifier.weight(1f)) {
                             Text(notif.message, fontSize = 12.sp, color = TextPrimary, lineHeight = 16.sp)
                             Text(notif.createdAt.take(10), fontSize = 11.sp, color = TextSecondary)
                         }
-                        if (!notif.isRead) Box(Modifier.size(6.dp).background(Teal400, CircleShape))
+                        if (!notif.isRead) Box(Modifier.size(6.dp).background(FrostAccent, CircleShape))
                     }
-                    if (notif != notifications.last()) HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+                    if (notif != notifications.last()) HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
                 }
             }
         }
@@ -710,7 +708,7 @@ private fun SettingsSheet(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            containerColor   = DarkSurface,
+            containerColor = Color(0xFFF8F9FB),
             title = { Text("Hesabı Sil", color = Red400, fontWeight = FontWeight.Bold) },
             text  = { Text("Tüm deneyler ve verileriniz kalıcı olarak silinecek. Bu işlem geri alınamaz.", color = TextSecondary, fontSize = 13.sp) },
             confirmButton = {
@@ -722,7 +720,7 @@ private fun SettingsSheet(
         )
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = DarkSurface, dragHandle = { SheetHandle() }) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color(0xFFF8F9FB), dragHandle = { SheetHandle() }) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp)) {
             Row(
                 modifier              = Modifier.fillMaxWidth(),
@@ -735,13 +733,13 @@ private fun SettingsSheet(
             Spacer(Modifier.height(4.dp))
             SettingsItem(icon = Icons.Default.Person, title = "Hesap Bilgileri",
                 subtitle = "${user?.email ?: ""}", onClick = onEditProfile)
-            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
             SettingsItem(icon = Icons.Default.AlternateEmail, title = "Kullanıcı Adı",
                 subtitle = "@${user?.username ?: ""}", onClick = {})
-            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
             SettingsItem(icon = Icons.Default.CalendarToday, title = "Üyelik Tarihi",
                 subtitle = user?.createdAt?.take(10) ?: "", onClick = {})
-            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
             Spacer(Modifier.height(4.dp))
             // Çıkış
             Row(
@@ -749,23 +747,23 @@ private fun SettingsSheet(
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Red400.copy(0.1f)), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0x1AEF5350)), contentAlignment = Alignment.Center) {
                     Icon(Icons.AutoMirrored.Filled.Logout, null, tint = Red400, modifier = Modifier.size(15.dp))
                 }
                 Text("Çıkış Yap", fontSize = 13.sp, color = Red400, fontWeight = FontWeight.SemiBold)
             }
-            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
             // Hesap sil
             Row(
                 modifier              = Modifier.fillMaxWidth().clickable { showDeleteConfirm = true }.padding(vertical = 10.dp),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Red400.copy(0.06f)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.DeleteForever, null, tint = Red400.copy(0.7f), modifier = Modifier.size(15.dp))
+                Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0x0FEF5350)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.DeleteForever, null, tint = Color(0xB3EF5350), modifier = Modifier.size(15.dp))
                 }
                 Column {
-                    Text("Hesabı Sil", fontSize = 13.sp, color = Red400.copy(0.8f), fontWeight = FontWeight.SemiBold)
+                    Text("Hesabı Sil", fontSize = 13.sp, color = Color(0xCCEF5350), fontWeight = FontWeight.SemiBold)
                     Text("Tüm veriler kalıcı olarak silinir", fontSize = 11.sp, color = TextSecondary)
                 }
             }
@@ -783,20 +781,20 @@ private fun SettingsItem(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(DarkSurface2), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = Teal400, modifier = Modifier.size(14.dp))
+        Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFECEFF1)), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = FrostAccent, modifier = Modifier.size(14.dp))
         }
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 13.sp, color = TextPrimary)
             if (subtitle.isNotBlank()) Text(subtitle, fontSize = 11.sp, color = TextSecondary)
         }
-        Icon(Icons.Default.ChevronRight, null, tint = DarkSurface3, modifier = Modifier.size(14.dp))
+        Icon(Icons.Default.ChevronRight, null, tint = Color(0xFFB0BEC5), modifier = Modifier.size(14.dp))
     }
 }
 
 @Composable
 private fun SheetHandle() {
     Box(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp), Alignment.Center) {
-        Box(Modifier.size(width = 32.dp, height = 3.dp).background(DarkSurface3, RoundedCornerShape(2.dp)))
+        Box(Modifier.size(width = 32.dp, height = 3.dp).background(Color(0xFFB0BEC5), RoundedCornerShape(2.dp)))
     }
 }

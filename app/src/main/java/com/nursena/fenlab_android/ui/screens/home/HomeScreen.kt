@@ -81,7 +81,7 @@ fun HomeScreen(
     ).count { it != null }
 
     Scaffold(
-        containerColor = DarkBg,
+        containerColor = Color.Transparent,
         topBar = {
             FenlabTopBar(
                 activeFilterCount = activeFilterCount,
@@ -135,7 +135,7 @@ fun HomeScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier.width(3.dp).height(18.dp)
-                                .background(Teal400, RoundedCornerShape(2.dp))
+                                .background(FrostAccent, RoundedCornerShape(2.dp))
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("Tüm Deneyler", fontSize = 18.sp,
@@ -159,7 +159,7 @@ fun HomeScreen(
                             contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                color = Teal400, strokeWidth = 2.dp
+                                color = FrostAccent, strokeWidth = 2.dp
                             )
                         }
                     }
@@ -172,12 +172,12 @@ fun HomeScreen(
     if (showFilterSheet) {
         ModalBottomSheet(
             onDismissRequest    = { showFilterSheet = false },
-            containerColor      = DarkSurface,
+            containerColor = Color.Transparent,
             dragHandle          = {
                 Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center) {
                     Box(Modifier.size(width = 40.dp, height = 4.dp)
-                        .background(DarkSurface3, RoundedCornerShape(2.dp)))
+                        .background(Color(0xFFCFD8DC), RoundedCornerShape(2.dp)))
                 }
             }
         ) {
@@ -211,12 +211,12 @@ fun HomeScreen(
     if (showSortSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSortSheet = false },
-            containerColor   = DarkSurface,
+            containerColor = Color(0xFFF8F9FB),
             dragHandle = {
                 Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center) {
                     Box(Modifier.size(width = 40.dp, height = 4.dp)
-                        .background(DarkSurface3, RoundedCornerShape(2.dp)))
+                        .background(Color(0xFFCFD8DC), RoundedCornerShape(2.dp)))
                 }
             }
         ) {
@@ -244,18 +244,20 @@ fun FenlabTopBar(
     onSortClick: () -> Unit
 ) {
     TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBg),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier.size(30.dp)
-                        .background(Brush.linearGradient(listOf(Teal400, Teal500)),
-                            androidx.compose.foundation.shape.CircleShape),
+                        .background(
+                            Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)),
+                            androidx.compose.foundation.shape.CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) { Text("⚗", fontSize = 15.sp) }
                 Spacer(Modifier.width(8.dp))
-                Text("Fen", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
-                Text("lab", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Teal400)
+                Text("Fen", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = FrostAccent)
+                Text("Lab", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = LabOrange)
             }
         },
         actions = {
@@ -264,7 +266,7 @@ fun FenlabTopBar(
                 badge = {
                     if (activeFilterCount > 0) {
                         Badge(containerColor = Orange400) {
-                            Text("$activeFilterCount", fontSize = 9.sp, color = DarkBg)
+                            Text("$activeFilterCount", fontSize = 9.sp, color = Color.White)
                         }
                     }
                 }
@@ -273,11 +275,11 @@ fun FenlabTopBar(
                     onClick  = onFilterClick,
                     shape    = RoundedCornerShape(20.dp),
                     colors   = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (activeFilterCount > 0) Teal400 else TextSecondary,
-                        containerColor = if (activeFilterCount > 0) Teal400.copy(alpha = 0.1f) else Color.Transparent
+                        contentColor = if (activeFilterCount > 0) FrostAccent else TextSecondary,
+                        containerColor = if (activeFilterCount > 0) Color(0x1AF06292) else Color.Transparent
                     ),
                     border   = androidx.compose.foundation.BorderStroke(
-                        1.dp, if (activeFilterCount > 0) Teal400 else DarkSurface3
+                        1.dp, if (activeFilterCount > 0) FrostAccent else Color(0xFFCFD8DC)
                     ),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                     modifier = Modifier.height(32.dp)
@@ -294,7 +296,7 @@ fun FenlabTopBar(
                 onClick  = onSortClick,
                 shape    = RoundedCornerShape(20.dp),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, DarkSurface3),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCFD8DC)),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                 modifier = Modifier.height(32.dp)
             ) {
@@ -315,7 +317,7 @@ fun WelcomeBanner(fullName: String) {
     Box(
         modifier = Modifier.fillMaxWidth()
             .background(
-                Brush.horizontalGradient(listOf(Color(0xFF0D2D28), Color(0xFF0A1A2E))),
+                Color.White.copy(alpha = 0.5f),
                 RoundedCornerShape(16.dp)
             )
             .padding(horizontal = 16.dp, vertical = 14.dp)
@@ -380,14 +382,14 @@ private fun ActiveChip(label: String, onRemove: () -> Unit) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(Teal400.copy(alpha = 0.15f))
-            .border(1.dp, Teal400.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+            .background(Color(0x26F06292))
+            .border(1.dp, Color(0x80F06292), RoundedCornerShape(20.dp))
             .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(label, color = Teal400, fontSize = 12.sp)
-        Icon(Icons.Default.Close, null, tint = Teal400, modifier = Modifier.size(12.dp)
+        Text(label, color = FrostAccent, fontSize = 12.sp)
+        Icon(Icons.Default.Close, null, tint = FrostAccent, modifier = Modifier.size(12.dp)
             .clickable(onClick = onRemove))
     }
 }
@@ -484,15 +486,15 @@ private fun FilterSheetContent(
                 modifier = Modifier.weight(1f).height(46.dp),
                 shape    = RoundedCornerShape(12.dp),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, DarkSurface3)
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCFD8DC))
             ) { Text("Sıfırla") }
 
             Button(
                 onClick  = onApply,
                 modifier = Modifier.weight(1f).height(46.dp),
                 shape    = RoundedCornerShape(12.dp),
-                colors   = ButtonDefaults.buttonColors(containerColor = Teal400)
-            ) { Text("Uygula", color = DarkBg, fontWeight = FontWeight.SemiBold) }
+                colors   = ButtonDefaults.buttonColors(containerColor = FrostAccent)
+            ) { Text("Uygula", color = Color.White, fontWeight = FontWeight.SemiBold) }
         }
     }
 }
@@ -520,15 +522,15 @@ private fun <T> FilterChipRow(
         items.forEach { item ->
             val isSelected = selected == item
             val bgColor by animateColorAsState(
-                if (isSelected) Teal400.copy(alpha = 0.15f) else DarkSurface2,
+                if (isSelected) Color(0x26F06292) else Color(0xFFECEFF1),
                 label = "chip_bg"
             )
             val borderColor by animateColorAsState(
-                if (isSelected) Teal400 else DarkSurface3,
+                if (isSelected) FrostAccent else Color(0xFFCFD8DC),
                 label = "chip_border"
             )
             val textColor by animateColorAsState(
-                if (isSelected) Teal400 else TextSecondary,
+                if (isSelected) FrostAccent else TextSecondary,
                 label = "chip_text"
             )
 
@@ -595,11 +597,11 @@ private fun SortSheetContent(
                     .padding(vertical = 4.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        if (isSelected) Teal400.copy(alpha = 0.1f) else Color.Transparent
+                        if (isSelected) Color(0x1AF06292) else Color.Transparent
                     )
                     .border(
                         1.dp,
-                        if (isSelected) Teal400.copy(alpha = 0.5f) else Color.Transparent,
+                        if (isSelected) Color(0x80F06292) else Color.Transparent,
                         RoundedCornerShape(12.dp)
                     )
                     .clickable { onSelect(option.type) }
@@ -610,13 +612,13 @@ private fun SortSheetContent(
                 // Text(option.emoji, fontSize = 18.sp)
                 Text(
                     text       = option.label,
-                    color      = if (isSelected) Teal400 else TextPrimary,
+                    color      = if (isSelected) FrostAccent else TextPrimary,
                     fontSize   = 15.sp,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier   = Modifier.weight(1f)
                 )
                 if (isSelected) {
-                    Icon(Icons.Default.Check, null, tint = Teal400, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Check, null, tint = FrostAccent, modifier = Modifier.size(18.dp))
                 }
             }
         }

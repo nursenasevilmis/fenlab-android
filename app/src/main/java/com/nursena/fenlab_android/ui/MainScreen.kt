@@ -35,9 +35,13 @@ sealed class BottomNavItem(
     object Profile   : BottomNavItem("profile",   "Profil",    Icons.Filled.Person,   Icons.Outlined.Person)
 }
 
-private val GlassBg     = Color(0xFF1A2235).copy(alpha = 0.95f)
-private val GlassBorder = Color(0xFF2E3D5C).copy(alpha = 0.5f)
-private val IconInactive = Color(0xFF6B7A99)
+// Modern Frost bottom bar — temaya tam uyumlu, ne çok açık ne çok koyu
+private val BarBg         = Color(0xDDF5F7FA)   // %87 GradientStart — buzlu cam
+private val BarBorder     = Color(0xE6FFFFFF)   // %90 beyaz — parlak kenar
+private val BarShadow     = Color(0x14000000)   // hafif gölge
+private val IconActive    = Color(0xFF1E88E5)   // FrostAccentDark — seçili ikon
+private val IconBgActive  = Color(0x1A64B5F6)   // %10 FrostAccent highlight
+private val IconInactive  = Color(0xFF90A4AE)   // Blue Gray 300 — seçilmemiş
 
 @Composable
 fun FenlabBottomBar(
@@ -65,25 +69,25 @@ fun FenlabBottomBar(
             .height(if (isTeacher) 88.dp else 76.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // ── Glass pill ──────────────────────────────────────────────────────
+        // ── Frosted pill ────────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 10.dp)
                 .fillMaxWidth()
                 .height(62.dp)
-                .shadow(20.dp, RoundedCornerShape(31.dp))
+                .shadow(12.dp, RoundedCornerShape(31.dp), ambientColor = Color(0x1A000000))
                 .clip(RoundedCornerShape(31.dp))
-                .background(GlassBg)
+                .background(BarBg)
         ) {
-            // Üst kenarlık — glass parlaması
+            // Üst parlak kenar — frost efekti
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color.Transparent, GlassBorder, GlassBorder, Color.Transparent)
+                            listOf(Color.Transparent, BarBorder, BarBorder, Color.Transparent)
                         )
                     )
             )
@@ -93,18 +97,23 @@ fun FenlabBottomBar(
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                GlassNavItem(icon = if (currentRoute == "home") Icons.Filled.Home else Icons.Outlined.Home,
-                    isSelected = currentRoute == "home", onClick = { goTo("home") })
-
-                GlassNavItem(icon = if (currentRoute == "search") Icons.Filled.Search else Icons.Outlined.Search,
-                    isSelected = currentRoute == "search", onClick = { goTo("search") })
-
+                FrostNavItem(
+                    icon       = if (currentRoute == "home") Icons.Filled.Home else Icons.Outlined.Home,
+                    isSelected = currentRoute == "home",
+                    onClick    = { goTo("home") }
+                )
+                FrostNavItem(
+                    icon       = if (currentRoute == "search") Icons.Filled.Search else Icons.Outlined.Search,
+                    isSelected = currentRoute == "search",
+                    onClick    = { goTo("search") }
+                )
                 if (isTeacher) Spacer(Modifier.width(52.dp))
-
-                GlassNavItem(icon = if (currentRoute == "favorites") Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    isSelected = currentRoute == "favorites", onClick = { goTo("favorites") })
-
-                GlassNavItem(
+                FrostNavItem(
+                    icon       = if (currentRoute == "favorites") Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    isSelected = currentRoute == "favorites",
+                    onClick    = { goTo("favorites") }
+                )
+                FrostNavItem(
                     icon       = if (currentRoute == "profile") Icons.Filled.Person else Icons.Outlined.Person,
                     isSelected = currentRoute == "profile",
                     onClick    = { goTo("profile") },
@@ -113,16 +122,16 @@ fun FenlabBottomBar(
             }
         }
 
-        // ── FAB — teacher only, tam ortada ──────────────────────────────────
+        // ── FAB — teacher only ───────────────────────────────────────────────
         if (isTeacher) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .size(54.dp)
-                    .shadow(16.dp, CircleShape)
+                    .shadow(10.dp, CircleShape)
                     .clip(CircleShape)
                     .background(
-                        Brush.linearGradient(listOf(Teal400, Color(0xFF00A896)))
+                        Brush.linearGradient(listOf(FrostAccent, FrostAccentDark))
                     )
                     .clickable(onClick = onAddClick),
                 contentAlignment = Alignment.Center
@@ -130,7 +139,7 @@ fun FenlabBottomBar(
                 Icon(
                     imageVector        = Icons.Default.Add,
                     contentDescription = "Deney Ekle",
-                    tint               = DarkBg,
+                    tint               = Color.White,
                     modifier           = Modifier.size(24.dp)
                 )
             }
@@ -139,7 +148,7 @@ fun FenlabBottomBar(
 }
 
 @Composable
-private fun GlassNavItem(
+private fun FrostNavItem(
     icon: ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -149,23 +158,22 @@ private fun GlassNavItem(
         modifier         = Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .background(if (isSelected) Teal400.copy(alpha = 0.15f) else Color.Transparent)
+            .background(if (isSelected) IconBgActive else Color.Transparent)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector        = icon,
             contentDescription = null,
-            tint               = if (isSelected) Teal400 else IconInactive,
+            tint               = if (isSelected) IconActive else IconInactive,
             modifier           = Modifier.size(22.dp)
         )
-        // Bildirim noktası
         if (badge) {
             Box(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFFF4444))
+                    .background(Red400)
                     .align(Alignment.TopEnd)
                     .offset(x = (-8).dp, y = 8.dp)
             )

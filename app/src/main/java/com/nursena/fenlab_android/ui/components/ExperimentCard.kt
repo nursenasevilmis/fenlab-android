@@ -59,8 +59,8 @@
                         Brush.verticalGradient(
                             0.0f to Color.Transparent,
                             0.25f to Color.Transparent,
-                            0.55f to Color.Black.copy(alpha = 0.5f),
-                            1.0f  to Color.Black.copy(alpha = 0.92f)
+                            0.55f to Color(0x80000000),
+                            1.0f  to Color(0xEB000000)
                         )
                     )
             )
@@ -71,11 +71,11 @@
                     modifier = Modifier
                         .align(Alignment.Center)
                         .size(48.dp)
-                        .background(Color.White.copy(alpha = 0.18f), CircleShape),
+                        .background(Color(0x2EFFFFFF), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.PlayArrow, null,
-                        tint = Color.White, modifier = Modifier.size(28.dp))
+                        tint = TextPrimary, modifier = Modifier.size(28.dp))
                 }
             }
 
@@ -85,7 +85,7 @@
                     .align(Alignment.TopEnd)
                     .padding(10.dp)
                     .size(30.dp)
-                    .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+                    .background(Color(0x59000000), CircleShape)
                     .clickable(onClick = onFavoriteClick),
                 contentAlignment = Alignment.Center
             ) {
@@ -122,7 +122,7 @@
                     Icon(Icons.Default.Star, null, tint = Yellow400, modifier = Modifier.size(13.dp))
                     Text(
                         text  = experiment.averageRating?.let { "%.1f".format(it) } ?: "—",
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = Color(0xE6FFFFFF),
                         fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                     )
                 }

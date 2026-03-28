@@ -57,17 +57,17 @@ fun AuthScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // ── Arka plan — yeşil teal gradient ──────────────────────────────────
+
         Box(modifier = Modifier.fillMaxSize().background(
-            Brush.verticalGradient(listOf(Color(0xFF2D6A5F), Color(0xFF1A4A42), Color(0xFF0F3530)))
+            Brush.verticalGradient(listOf(GradientStart, GradientMid, GradientEnd))
         ))
         // Dekoratif daireler (resimdeki gibi subtle)
         Box(modifier = Modifier.size(500.dp).offset((-150).dp, (-180).dp)
-            .background(Brush.radialGradient(listOf(Color.White.copy(0.06f), Color.Transparent)), CircleShape))
+            .background(Brush.radialGradient(listOf(Color(0x0FFFFFFF), Color.Transparent)), CircleShape))
         Box(modifier = Modifier.size(350.dp).align(Alignment.BottomEnd).offset(100.dp, 120.dp)
-            .background(Brush.radialGradient(listOf(Color.White.copy(0.05f), Color.Transparent)), CircleShape))
+            .background(Brush.radialGradient(listOf(Color(0x0DFFFFFF), Color.Transparent)), CircleShape))
         Box(modifier = Modifier.size(200.dp).align(Alignment.TopEnd).offset(60.dp, 40.dp)
-            .background(Brush.radialGradient(listOf(Color(0xFF4DB6AC).copy(0.15f), Color.Transparent)), CircleShape))
+            .background(Brush.radialGradient(listOf(Color(0x2664B5F6), Color.Transparent)), CircleShape))
 
         AnimatedContent(
             targetState = mode,
@@ -118,19 +118,19 @@ private fun SplashPage(onLogin: () -> Unit, onRegister: () -> Unit) {
         // Logo ve slogan — ortada
         Spacer(Modifier.weight(1f))
         Box(modifier = Modifier.size(80.dp).clip(RoundedCornerShape(22.dp))
-            .background(Color.White.copy(0.15f)).border(1.dp, Color.White.copy(0.25f), RoundedCornerShape(22.dp)),
+            .background(Color(0x26FFFFFF)).border(1.dp, Color(0x40FFFFFF), RoundedCornerShape(22.dp)),
             contentAlignment = Alignment.Center) {
             Text("⚗️", fontSize = 38.sp)
         }
         Spacer(Modifier.height(28.dp))
         Row {
-            Text("Fen", color = Color.White, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
-            Text("lab", color = Color(0xFFB2DFDB), fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Fen", color = FrostAccent, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Lab", color = LabOrange, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
         }
         Spacer(Modifier.height(14.dp))
         Text(
             "Deneyleri keşfet, öğren\nve bilimi paylaş.",
-            color = Color.White.copy(0.75f), fontSize = 15.sp,
+            color = TextSecondary, fontSize = 15.sp,
             textAlign = TextAlign.Center, lineHeight = 22.sp
         )
         Spacer(Modifier.weight(1f))
@@ -140,17 +140,17 @@ private fun SplashPage(onLogin: () -> Unit, onRegister: () -> Unit) {
             onClick = onLogin,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+            colors = ButtonDefaults.buttonColors(containerColor = FrostAccent)
         ) {
-            Text("Giriş Yap", color = Color(0xFF1A4A42), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Giriş Yap", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
         }
         Spacer(Modifier.height(12.dp))
         OutlinedButton(
             onClick = onRegister,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.White.copy(0.5f)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0x80FFFFFF)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
         ) {
             Text("Hesap Oluştur", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         }
@@ -176,7 +176,7 @@ private fun LoginPage(
         // Küçük üst alan
         Spacer(Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(0.15f))
+            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(FrostAccent)
                 .clickable(onClick = onBack), contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.ArrowBackIosNew, null, tint = Color.White, modifier = Modifier.size(14.dp))
             }
@@ -185,11 +185,11 @@ private fun LoginPage(
 
         // Beyaz kart
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
-            .clip(RoundedCornerShape(24.dp)).background(Color.White).padding(28.dp)) {
+            .clip(RoundedCornerShape(24.dp)).background(GlassSurface3).padding(28.dp)) {
             Column {
-                Text("Giriş Yap", color = Color(0xFF1A3A35), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Giriş Yap", color = TextSecondary, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
                 Spacer(Modifier.height(4.dp))
-                Text("Seni bekliyorduk!", color = Color(0xFF5A7A75), fontSize = 13.sp)
+                Text("Seni bekliyorduk!", color = TextSecondary, fontSize = 13.sp)
                 Spacer(Modifier.height(24.dp))
 
                 LightField(
@@ -205,7 +205,7 @@ private fun LoginPage(
                 )
 
                 AnimatedVisibility(visible = uiState.error != null) {
-                    Text(uiState.error ?: "", color = Color(0xFFE53935), fontSize = 12.sp,
+                    Text(uiState.error ?: "", color = Red400, fontSize = 12.sp,
                         modifier = Modifier.padding(top = 8.dp))
                 }
 
@@ -213,8 +213,8 @@ private fun LoginPage(
                 GreenButton(text = "Giriş Yap", isLoading = uiState.isLoading, onClick = viewModel::login)
                 Spacer(Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    Text("Hesabın yok mu? ", color = Color(0xFF5A7A75), fontSize = 13.sp)
-                    Text("Kayıt Ol", color = Color(0xFF2D6A5F), fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    Text("Hesabın yok mu? ", color = TextSecondary, fontSize = 13.sp)
+                    Text("Kayıt Ol", color = FrostAccentDark, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable(onClick = onGoSignup))
                 }
             }
@@ -256,29 +256,29 @@ private fun RegisterFlow(
         // Üst bar
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(0.15f))
+            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(FrostAccent)
                 .clickable(onClick = if (uiState.registerStep == RegisterStep.ROLE) onBack else viewModel::prevStep),
                 contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.ArrowBackIosNew, null, tint = Color.White, modifier = Modifier.size(14.dp))
             }
             Spacer(Modifier.weight(1f))
-            Text("${currentIndex + 1} / ${steps.size}", color = Color.White.copy(0.7f), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text("${currentIndex + 1} / ${steps.size}", color = FrostAccent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
 
         Spacer(Modifier.height(10.dp))
 
         // İnce progress bar
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(3.dp)
-            .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(0.15f))) {
+            .clip(RoundedCornerShape(2.dp)).background(GlassSurface3)) {
             Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(progress)
-                .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(0.8f)))
+                .clip(RoundedCornerShape(2.dp)).background(FrostAccent))
         }
 
         Spacer(Modifier.height(28.dp))
 
         // Beyaz kart içinde adım içeriği
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
-            .clip(RoundedCornerShape(24.dp)).background(Color.White).padding(28.dp)) {
+            .clip(RoundedCornerShape(24.dp)).background(GlassSurface3).padding(28.dp)) {
             AnimatedContent(
                 targetState = uiState.registerStep,
                 transitionSpec = {
@@ -292,14 +292,14 @@ private fun RegisterFlow(
                     RegisterStep.ROLE       -> RoleStep(uiState, viewModel, onGoLogin)
                     RegisterStep.REQUIRED   -> RequiredStep(uiState, viewModel)
                     RegisterStep.BRANCH     -> OptionalStep(
-                        title = "Branşın nedir?", subtitle = "İsteğe bağlı, istersen atlayabilirsin.",
+                        title = "Branşın nedir?", subtitle = "",
                         value = uiState.registerBranch, onValueChange = viewModel::onRegisterBranchChange,
                         placeholder = "Fen Bilimleri, Fizik, Kimya...",
                         icon = Icons.Default.School, keyboardType = KeyboardType.Text,
                         error = uiState.error, onNext = viewModel::nextStep, onSkip = viewModel::skipStep
                     )
                     RegisterStep.EXPERIENCE -> OptionalStep(
-                        title = "Kaç yıllık deneyimin var?", subtitle = "İsteğe bağlı, istersen atlayabilirsin.",
+                        title = "Kaç yıllık deneyimin var?", subtitle = "",
                         value = uiState.registerExperienceYears, onValueChange = viewModel::onRegisterExperienceYearsChange,
                         placeholder = "Örn: 5",
                         icon = Icons.Default.WorkHistory, keyboardType = KeyboardType.Number,
@@ -321,9 +321,9 @@ private fun RegisterFlow(
 @Composable
 private fun RoleStep(uiState: AuthUiState, viewModel: AuthViewModel, onGoLogin: () -> Unit) {
     Column {
-        Text("Nasıl kullanacaksın?", color = Color(0xFF1A3A35), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Nasıl kullanacaksın?", color = TextSecondary, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         Spacer(Modifier.height(4.dp))
-        Text("Sana özel deneyim için hesap türünü seç.", color = Color(0xFF5A7A75), fontSize = 13.sp)
+        Text("Sana özel deneyim için hesap türünü seç.", color = TextSecondary, fontSize = 13.sp)
         Spacer(Modifier.height(20.dp))
 
         RoleCard(
@@ -343,8 +343,8 @@ private fun RoleStep(uiState: AuthUiState, viewModel: AuthViewModel, onGoLogin: 
         GreenButton("Devam Et", false, viewModel::nextStep)
         Spacer(Modifier.height(12.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Text("Zaten hesabın var mı? ", color = Color(0xFF5A7A75), fontSize = 13.sp)
-            Text("Giriş Yap", color = Color(0xFF2D6A5F), fontSize = 13.sp, fontWeight = FontWeight.Bold,
+            Text("Zaten hesabın var mı? ", color = TextSecondary, fontSize = 13.sp)
+            Text("Giriş Yap", color = FrostAccentDark, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable(onClick = onGoLogin))
         }
     }
@@ -353,15 +353,15 @@ private fun RoleStep(uiState: AuthUiState, viewModel: AuthViewModel, onGoLogin: 
 @Composable
 private fun RoleCard(emoji: String, title: String, bullets: List<String>, selected: Boolean, onClick: () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-        .background(if (selected) Color(0xFFE8F5E9) else Color(0xFFF5F9F8))
-        .border(1.5.dp, if (selected) Color(0xFF2D6A5F) else Color(0xFFDDE8E6), RoundedCornerShape(14.dp))
+        .background(if (selected) FrostAccentLight else Color(0xFFECEFF1))
+        .border(1.5.dp, if (selected) FrostAccentDark else Color(0xFFCFD8DC), RoundedCornerShape(14.dp))
         .clickable(onClick = onClick).padding(14.dp)) {
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(10.dp))
-                .background(if (selected) Color(0xFF2D6A5F).copy(0.12f) else Color.White),
+                .background(if (selected) Color(0x1A64B5F6) else Color.White),
                 contentAlignment = Alignment.Center) { Text(emoji, fontSize = 20.sp) }
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = if (selected) Color(0xFF1A3A35) else Color(0xFF2A4A45),
+                Text(title, color = if (selected) TextPrimary else TextSecondary,
                     fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(4.dp))
                 bullets.forEach { b ->
@@ -369,12 +369,12 @@ private fun RoleCard(emoji: String, title: String, bullets: List<String>, select
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                         modifier = Modifier.padding(vertical = 1.dp)) {
                         Box(modifier = Modifier.size(3.dp).clip(CircleShape)
-                            .background(if (selected) Color(0xFF2D6A5F) else Color(0xFF8AADA8)))
-                        Text(b, color = Color(0xFF5A7A75), fontSize = 11.sp, lineHeight = 15.sp)
+                            .background(if (selected) FrostAccentDark else TextSecondary))
+                        Text(b, color = TextSecondary, fontSize = 11.sp, lineHeight = 15.sp)
                     }
                 }
             }
-            if (selected) Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(Color(0xFF2D6A5F)),
+            if (selected) Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(FrostAccentDark),
                 contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
             }
@@ -403,7 +403,7 @@ private fun RequiredStep(uiState: AuthUiState, viewModel: AuthViewModel) {
         LightPasswordField(uiState.registerPassword, viewModel::onRegisterPasswordChange,
             "Şifre (en az 6 karakter)", ImeAction.Done) { focusManager.clearFocus() }
         AnimatedVisibility(visible = uiState.error != null) {
-            Text(uiState.error ?: "", color = Color(0xFFE53935), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+            Text(uiState.error ?: "", color = Red400, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
         }
         Spacer(Modifier.height(20.dp))
         GreenButton("Devam Et", false, viewModel::nextStep)
@@ -426,13 +426,13 @@ private fun OptionalStep(
         Spacer(Modifier.height(18.dp))
         LightField(value, onValueChange, placeholder, icon, ImeAction.Done, keyboardType) { focusManager.clearFocus() }
         AnimatedVisibility(visible = error != null) {
-            Text(error ?: "", color = Color(0xFFE53935), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+            Text(error ?: "", color = Red400, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
         }
         Spacer(Modifier.height(20.dp))
         GreenButton("Devam Et", false, onNext)
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
-            Text("Şimdi atla →", color = Color(0xFF8AADA8), fontSize = 13.sp)
+            Text("Şimdi atla →", color = TextSecondary, fontSize = 13.sp)
         }
     }
 }
@@ -443,17 +443,17 @@ private fun OptionalStep(
 @Composable
 private fun BioStep(uiState: AuthUiState, viewModel: AuthViewModel) {
     Column {
-        StepHeader("Kendini Tanıt", "İsteğe bağlı, atayabilirsin.")
+        StepHeader("Kendini Tanıt", "")
         Spacer(Modifier.height(18.dp))
         TextField(
             value = uiState.registerBio, onValueChange = viewModel::onRegisterBioChange,
-            placeholder = { Text("Merhaba! Fen bilimlerine meraklıyım...", color = Color(0xFFAAC4C0), fontSize = 13.sp) },
+            placeholder = { Text("Merhaba! Fen bilimlerine meraklıyım...", color = TextTertiary, fontSize = 13.sp) },
             modifier = Modifier.fillMaxWidth().height(110.dp),
             maxLines = 6, shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFFF0F7F5), unfocusedContainerColor = Color(0xFFF0F7F5),
-                focusedTextColor = Color(0xFF1A3A35), unfocusedTextColor = Color(0xFF1A3A35),
-                cursorColor = Color(0xFF2D6A5F), focusedIndicatorColor = Color(0xFF2D6A5F),
+                focusedContainerColor = Color(0xFFECEFF1), unfocusedContainerColor = Color(0xFFECEFF1),
+                focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+                cursorColor = FrostAccentDark, focusedIndicatorColor = FrostAccentDark,
                 unfocusedIndicatorColor = Color.Transparent
             )
         )
@@ -461,7 +461,7 @@ private fun BioStep(uiState: AuthUiState, viewModel: AuthViewModel) {
         GreenButton("Devam Et", false, viewModel::nextStep)
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = viewModel::skipStep, modifier = Modifier.fillMaxWidth()) {
-            Text("Şimdi atla →", color = Color(0xFF8AADA8), fontSize = 13.sp)
+            Text("Şimdi atla →", color = TextSecondary, fontSize = 13.sp)
         }
     }
 }
@@ -475,32 +475,32 @@ private fun PhotoStep(uiState: AuthUiState, viewModel: AuthViewModel, onLaunchPi
         StepHeader("Profil Fotoğrafı", "İsteğe bağlı, daha sonra da ekleyebilirsin.")
         Spacer(Modifier.height(24.dp))
         Box(modifier = Modifier.size(100.dp).clip(CircleShape)
-            .background(Color(0xFFF0F7F5))
-            .border(2.dp, if (uiState.registerPhotoUri != null) Color(0xFF2D6A5F) else Color(0xFFDDE8E6), CircleShape)
+            .background(Color(0xFFECEFF1))
+            .border(2.dp, if (uiState.registerPhotoUri != null) FrostAccentDark else Color(0xFFCFD8DC), CircleShape)
             .clickable(onClick = onLaunchPicker), contentAlignment = Alignment.Center) {
             when {
-                uiState.isUploadingPhoto -> CircularProgressIndicator(color = Color(0xFF2D6A5F), modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                uiState.isUploadingPhoto -> CircularProgressIndicator(color = FrostAccentDark, modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
                 uiState.registerPhotoUri != null -> AsyncImage(
                     model = uiState.registerPhotoUri, contentDescription = null,
                     contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
                 else -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.CameraAlt, null, tint = Color(0xFF2D6A5F), modifier = Modifier.size(26.dp))
+                    Icon(Icons.Default.CameraAlt, null, tint = FrostAccentDark, modifier = Modifier.size(26.dp))
                     Spacer(Modifier.height(3.dp))
-                    Text("Ekle", color = Color(0xFF2D6A5F), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Ekle", color = FrostAccentDark, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
         if (uiState.registerPhotoUri != null && !uiState.isUploadingPhoto) {
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF2D6A5F), modifier = Modifier.size(14.dp))
-                Text("Fotoğraf yüklendi", color = Color(0xFF2D6A5F), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Icon(Icons.Default.CheckCircle, null, tint = FrostAccentDark, modifier = Modifier.size(14.dp))
+                Text("Fotoğraf yüklendi", color = FrostAccentDark, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text("Fotoğrafına dokunarak seç", color = Color(0xFF8AADA8), fontSize = 12.sp, textAlign = TextAlign.Center)
+        Text("Fotoğrafına dokunarak seç", color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
         AnimatedVisibility(visible = uiState.error != null) {
-            Text(uiState.error ?: "", color = Color(0xFFE53935), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+            Text(uiState.error ?: "", color = Red400, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
         }
         Spacer(Modifier.height(24.dp))
         GreenButton(
@@ -510,7 +510,7 @@ private fun PhotoStep(uiState: AuthUiState, viewModel: AuthViewModel, onLaunchPi
         )
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = viewModel::skipStep, modifier = Modifier.fillMaxWidth()) {
-            Text("Fotoğrafsız devam et", color = Color(0xFF8AADA8), fontSize = 13.sp)
+            Text("Fotoğrafsız devam et", color = TextSecondary, fontSize = 13.sp)
         }
     }
 }
@@ -521,9 +521,9 @@ private fun PhotoStep(uiState: AuthUiState, viewModel: AuthViewModel, onLaunchPi
 @Composable
 private fun StepHeader(title: String, subtitle: String) {
     Column {
-        Text(title, color = Color(0xFF1A3A35), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+        Text(title, color = TextSecondary, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         Spacer(Modifier.height(3.dp))
-        Text(subtitle, color = Color(0xFF5A7A75), fontSize = 13.sp)
+        Text(subtitle, color = TextSecondary, fontSize = 13.sp)
     }
 }
 
@@ -536,17 +536,17 @@ private fun LightField(
     onIme: () -> Unit = {}
 ) {
     TextField(value = value, onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = Color(0xFFAAC4C0), fontSize = 14.sp) },
-        leadingIcon = { Icon(icon, null, tint = Color(0xFF8AADA8), modifier = Modifier.size(18.dp)) },
+        placeholder = { Text(placeholder, color = TextTertiary, fontSize = 14.sp) },
+        leadingIcon = { Icon(icon, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
         keyboardActions = KeyboardActions(onNext = { onIme() }, onDone = { onIme() }),
         shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFFF0F7F5), unfocusedContainerColor = Color(0xFFF0F7F5),
-            focusedTextColor = Color(0xFF1A3A35), unfocusedTextColor = Color(0xFF1A3A35),
-            cursorColor = Color(0xFF2D6A5F), focusedIndicatorColor = Color(0xFF2D6A5F),
-            unfocusedIndicatorColor = Color.Transparent, focusedLeadingIconColor = Color(0xFF2D6A5F)
+            focusedContainerColor = Color(0xFFECEFF1), unfocusedContainerColor = Color(0xFFECEFF1),
+            focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+            cursorColor = FrostAccentDark, focusedIndicatorColor = FrostAccentDark,
+            unfocusedIndicatorColor = Color.Transparent, focusedLeadingIconColor = FrostAccentDark
         ), modifier = Modifier.fillMaxWidth())
 }
 
@@ -557,11 +557,11 @@ private fun LightPasswordField(
 ) {
     var visible by remember { mutableStateOf(false) }
     TextField(value = value, onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = Color(0xFFAAC4C0), fontSize = 14.sp) },
-        leadingIcon = { Icon(Icons.Default.Lock, null, tint = Color(0xFF8AADA8), modifier = Modifier.size(18.dp)) },
+        placeholder = { Text(placeholder, color = TextTertiary, fontSize = 14.sp) },
+        leadingIcon = { Icon(Icons.Default.Lock, null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
         trailingIcon = { IconButton(onClick = { visible = !visible }) {
             Icon(if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility, null,
-                tint = Color(0xFF8AADA8), modifier = Modifier.size(18.dp))
+                tint = TextSecondary, modifier = Modifier.size(18.dp))
         }},
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         singleLine = true,
@@ -569,10 +569,10 @@ private fun LightPasswordField(
         keyboardActions = KeyboardActions(onDone = { onIme() }),
         shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFFF0F7F5), unfocusedContainerColor = Color(0xFFF0F7F5),
-            focusedTextColor = Color(0xFF1A3A35), unfocusedTextColor = Color(0xFF1A3A35),
-            cursorColor = Color(0xFF2D6A5F), focusedIndicatorColor = Color(0xFF2D6A5F),
-            unfocusedIndicatorColor = Color.Transparent, focusedLeadingIconColor = Color(0xFF2D6A5F)
+            focusedContainerColor = Color(0xFFECEFF1), unfocusedContainerColor = Color(0xFFECEFF1),
+            focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+            cursorColor = FrostAccentDark, focusedIndicatorColor = FrostAccentDark,
+            unfocusedIndicatorColor = Color.Transparent, focusedLeadingIconColor = FrostAccentDark
         ), modifier = Modifier.fillMaxWidth())
 }
 
@@ -582,7 +582,7 @@ private fun GreenButton(text: String, isLoading: Boolean, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().height(50.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF2D6A5F), disabledContainerColor = Color(0xFFB0CEC9)
+            containerColor = FrostAccent, disabledContainerColor = FrostAccentLight
         )
     ) {
         if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)

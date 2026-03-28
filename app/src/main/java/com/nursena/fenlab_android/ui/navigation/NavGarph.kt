@@ -28,6 +28,12 @@ import dagger.hilt.android.EntryPointAccessors
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.nursena.fenlab_android.ui.theme.GradientEnd
+import com.nursena.fenlab_android.ui.theme.GradientMid
+import com.nursena.fenlab_android.ui.theme.GradientStart
+import com.nursena.fenlab_android.ui.theme.LightBg
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
@@ -85,7 +91,7 @@ fun FenlabNavGraph() {
     // Aşağıda manuel logout butonu SessionExpired eventi ile tetiklenir.
 
     Scaffold(
-        containerColor = DarkBg,
+        containerColor = Color.Transparent,
         bottomBar = {
             if (currentRoute in bottomBarRoutes) {
                 FenlabBottomBar(
@@ -97,118 +103,128 @@ fun FenlabNavGraph() {
         },
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
-
-        NavHost(
-            navController    = navController,
-            startDestination = Routes.SPLASH,   // ← SPLASH ile başla
-            modifier         = Modifier.padding(innerPadding),
-            enterTransition  = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 8 } },
-            exitTransition   = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { -it / 8 } },
-            popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 8 } },
-            popExitTransition  = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { it / 8 } }
-        ) {
-
-            // ── Splash — token kontrol eder, flash olmadan yönlendirir ───────
-            composable(Routes.SPLASH) {
-                SplashDecision(
-                    tokenManager = tokenManager,
-                    onLoggedIn   = {
-                        navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
-                    },
-                    onGuest = {
-                        navController.navigate(Routes.AUTH) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
-                    }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(GradientStart, GradientMid, GradientEnd)
+                    )
                 )
-            }
-
-            composable(Routes.AUTH) {
-                AuthScreen(
-                    onNavigateHome = {
-                        navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.AUTH) { inclusive = true }
-                        }
-                    }
-                )
-            }
-
-            composable(Routes.HOME) {
-                HomeScreen(onExperimentClick = { id -> navController.navigate(Routes.detail(id)) })
-            }
-
-            composable(Routes.SEARCH) {
-                SearchScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
-                    onUserClick       = { userId -> navController.navigate(Routes.profile(userId)) }
-                )
-            }
-
-            composable(Routes.FAVORITES) {
-                FavoritesScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
-                    onSessionExpired  = {
-                        navController.navigate(Routes.AUTH) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                )
-            }
-
-            composable(Routes.PROFILE) {
-                ProfileScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
-                    onLogout = {
-                        navController.navigate(Routes.AUTH) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                )
-            }
-
-            composable(
-                route     = Routes.PROFILE_USER,
-                arguments = listOf(androidx.navigation.navArgument("userId") {
-                    type = androidx.navigation.NavType.LongType
-                })
+        )
+        {
+            NavHost(
+                navController = navController,
+                startDestination = Routes.SPLASH,   // ← SPLASH ile başla
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 8 } },
+                exitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { -it / 8 } },
+                popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 8 } },
+                popExitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { it / 8 } }
             ) {
-                ProfileScreen(
-                    onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
-                    onLogout = {
-                        navController.navigate(Routes.AUTH) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                )
-            }
 
-            composable(
-                route     = Routes.DETAIL,
-                arguments = listOf(androidx.navigation.navArgument("experimentId") {
-                    type = androidx.navigation.NavType.LongType
-                })
-            ) {
-                ExperimentDetailScreen(
-                    onBack        = { navController.popBackStack() },
-                    onAuthorClick = { userId -> navController.navigate(Routes.profile(userId)) }
-                )
-            }
-
-            composable(Routes.ADD) {
-                AddExperimentScreen(
-                    onBack = { navController.popBackStack() },
-                    onPublished = { id ->
-                        navController.navigate(Routes.detail(id)) {
-                            popUpTo(Routes.ADD) { inclusive = true }
+                // ── Splash — token kontrol eder, flash olmadan yönlendirir ───────
+                composable(Routes.SPLASH) {
+                    SplashDecision(
+                        tokenManager = tokenManager,
+                        onLoggedIn = {
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.SPLASH) { inclusive = true }
+                            }
+                        },
+                        onGuest = {
+                            navController.navigate(Routes.AUTH) {
+                                popUpTo(Routes.SPLASH) { inclusive = true }
+                            }
                         }
-                    }
-                )
+                    )
+                }
+
+                composable(Routes.AUTH) {
+                    AuthScreen(
+                        onNavigateHome = {
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.AUTH) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(Routes.HOME) {
+                    HomeScreen(onExperimentClick = { id -> navController.navigate(Routes.detail(id)) })
+                }
+
+                composable(Routes.SEARCH) {
+                    SearchScreen(
+                        onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                        onUserClick = { userId -> navController.navigate(Routes.profile(userId)) }
+                    )
+                }
+
+                composable(Routes.FAVORITES) {
+                    FavoritesScreen(
+                        onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                        onSessionExpired = {
+                            navController.navigate(Routes.AUTH) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(Routes.PROFILE) {
+                    ProfileScreen(
+                        onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                        onLogout = {
+                            navController.navigate(Routes.AUTH) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(
+                    route = Routes.PROFILE_USER,
+                    arguments = listOf(androidx.navigation.navArgument("userId") {
+                        type = androidx.navigation.NavType.LongType
+                    })
+                ) {
+                    ProfileScreen(
+                        onExperimentClick = { id -> navController.navigate(Routes.detail(id)) },
+                        onLogout = {
+                            navController.navigate(Routes.AUTH) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(
+                    route = Routes.DETAIL,
+                    arguments = listOf(androidx.navigation.navArgument("experimentId") {
+                        type = androidx.navigation.NavType.LongType
+                    })
+                ) {
+                    ExperimentDetailScreen(
+                        onBack = { navController.popBackStack() },
+                        onAuthorClick = { userId -> navController.navigate(Routes.profile(userId)) }
+                    )
+                }
+
+                composable(Routes.ADD) {
+                    AddExperimentScreen(
+                        onBack = { navController.popBackStack() },
+                        onPublished = { id ->
+                            navController.navigate(Routes.detail(id)) {
+                                popUpTo(Routes.ADD) { inclusive = true }
+                            }
+                        }
+                    )
+                }
             }
         }
-    }
 }
+    }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Splash karar ekranı — kullanıcıya hiç gösterilmez, sadece yönlendirir
@@ -220,7 +236,7 @@ private fun SplashDecision(
     onGuest: () -> Unit
 ) {
     // Token kontrolü yapılırken DarkBg göster — auth ekranı flash'lamaz
-    Box(modifier = Modifier.fillMaxSize().background(DarkBg), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA)), contentAlignment = Alignment.Center) {
         Text("⚗️", fontSize = 40.sp, fontWeight = FontWeight.Bold)
     }
 

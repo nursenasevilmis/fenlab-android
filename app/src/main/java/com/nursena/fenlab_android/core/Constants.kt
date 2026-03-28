@@ -2,6 +2,6 @@ package com.nursena.fenlab_android.core
 
 
 object Constants {
-    // Backend base URL - emülatör için 10.0.2.2
-    const val BASE_URL = "http://172.20.10.3:8080"
+    const val BASE_URL = "http://10.50.232.160:8080"
+    const val MINIO_URL = "http://10.50.232.160:9000"  // ← ekle
 }

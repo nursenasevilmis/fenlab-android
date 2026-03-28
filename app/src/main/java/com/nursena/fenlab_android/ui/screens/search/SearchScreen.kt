@@ -51,11 +51,10 @@ fun SearchScreen(
     }
     val keyboard = LocalSoftwareKeyboardController.current
 
-    Column(modifier = Modifier.fillMaxSize().background(DarkBg)) {
+    Column(modifier = Modifier.fillMaxSize()) {
 
         // ── Header + Arama kutusu ────────────────────────────────────────────
         Box(modifier = Modifier.fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Color(0xFF0A2820), DarkBg)))
             .statusBarsPadding()
             .padding(horizontal = 16.dp).padding(top = 16.dp, bottom = 14.dp)
         ) {
@@ -78,9 +77,9 @@ fun SearchScreen(
                     keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                     shape = RoundedCornerShape(14.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurface2, unfocusedContainerColor = DarkSurface2,
+                        focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
                         focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
-                        cursorColor = Teal400, focusedIndicatorColor = Color.Transparent,
+                        cursorColor = FrostAccent, focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
                     ),
                     modifier = Modifier.fillMaxWidth()
@@ -149,7 +148,7 @@ private fun HintContent(
                     Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
                     Text("Son Aramalar", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
-                Text("Temizle", color = Teal400, fontSize = 12.sp,
+                Text("Temizle", color = FrostAccent, fontSize = 12.sp,
                     modifier = Modifier.clickable(onClick = onClearAll))
             }
         }
@@ -158,17 +157,17 @@ private fun HintContent(
                 .padding(horizontal = 16.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(modifier = Modifier.size(32.dp).background(DarkSurface, CircleShape),
+                Box(modifier = Modifier.size(32.dp).background(GlassSurface, CircleShape),
                     contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.History, null, tint = TextSecondary, modifier = Modifier.size(14.dp))
                 }
                 Text(term, color = TextPrimary, fontSize = 14.sp, modifier = Modifier.weight(1f))
                 IconButton(onClick = { onRemoveRecent(term) }, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.Close, null, tint = DarkSurface3, modifier = Modifier.size(13.dp))
+                    Icon(Icons.Default.Close, null, tint = Color(0xFFCFD8DC), modifier = Modifier.size(13.dp))
                 }
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
-                thickness = 0.5.dp, color = DarkSurface)
+                thickness = 0.5.dp, color = Color(0xFFF8F9FB))
         }
     }
 }
@@ -192,7 +191,7 @@ private fun ResultsContent(
             items(items = userResults, key = { "u${it.id}" }) { user ->
                 UserRow(user = user, onClick = { onUserClick(user.id) })
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
-                    thickness = 0.5.dp, color = DarkSurface)
+                    thickness = 0.5.dp, color = Color(0xFFF8F9FB))
             }
         }
 
@@ -209,7 +208,7 @@ private fun ResultsContent(
                     onFavoriteClick = { onFavoriteClick(exp) }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
-                    thickness = 0.5.dp, color = DarkSurface)
+                    thickness = 0.5.dp, color = Color(0xFFF8F9FB))
             }
         }
     }
@@ -236,7 +235,7 @@ private fun UserRow(user: User, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(modifier = Modifier.size(42.dp).clip(CircleShape)
-            .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
+            .background(Brush.linearGradient(listOf(Color(0x80F06292), Color(0x66EC407A)))),
             contentAlignment = Alignment.Center) {
             if (user.profileImageUrl != null) {
                 AsyncImage(model = user.profileImageUrl, contentDescription = null,
@@ -250,9 +249,9 @@ private fun UserRow(user: User, onClick: () -> Unit) {
             Text("@${user.username}", color = TextSecondary, fontSize = 11.sp)
         }
         Box(modifier = Modifier
-            .background(if (user.isTeacher) Teal400.copy(0.12f) else DarkSurface, RoundedCornerShape(10.dp))
+            .background(if (user.isTeacher) Color(0x1FF06292) else Color(0xFFF8F9FB), RoundedCornerShape(10.dp))
             .padding(horizontal = 8.dp, vertical = 3.dp)) {
-            Text(user.displayRole, color = if (user.isTeacher) Teal400 else TextSecondary, fontSize = 10.sp)
+            Text(user.displayRole, color = if (user.isTeacher) FrostAccent else TextSecondary, fontSize = 10.sp)
         }
     }
 }
@@ -271,14 +270,14 @@ private fun ExperimentRow(
 
         Box(modifier = Modifier.size(width = 88.dp, height = 70.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Brush.linearGradient(listOf(Color(0xFF0D2D28), Color(0xFF1A2235))))) {
+            .background(Brush.linearGradient(listOf(Color(0xFFF8F9FB), Color(0xFFF8F9FB))))) {
             AsyncImage(model = experiment.thumbnailUrl ?: experiment.videoUrl,
                 contentDescription = null, contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize())
             if (experiment.videoUrl != null) {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.2f)),
+                Box(modifier = Modifier.fillMaxSize().background(Color(0x33000000)),
                     contentAlignment = Alignment.Center) {
-                    Box(modifier = Modifier.size(26.dp).background(Color.White.copy(0.2f), CircleShape),
+                    Box(modifier = Modifier.size(26.dp).background(Color(0x33FFFFFF), CircleShape),
                         contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(14.dp))
                     }
@@ -292,7 +291,7 @@ private fun ExperimentRow(
                 overflow = TextOverflow.Ellipsis, lineHeight = 18.sp)
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Box(modifier = Modifier.size(15.dp).background(Teal500, CircleShape),
+                Box(modifier = Modifier.size(15.dp).background(FrostAccentDark, CircleShape),
                     contentAlignment = Alignment.Center) {
                     Text(experiment.author.displayName.take(1).uppercase(),
                         color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Bold)
@@ -309,9 +308,9 @@ private fun ExperimentRow(
                     }
                 }
                 experiment.subject?.let { subject ->
-                    Box(modifier = Modifier.background(Teal400.copy(0.1f), RoundedCornerShape(6.dp))
+                    Box(modifier = Modifier.background(Color(0x1AF06292), RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)) {
-                        Text(subject.toDisplayString(), color = Teal400, fontSize = 10.sp)
+                        Text(subject.toDisplayString(), color = FrostAccent, fontSize = 10.sp)
                     }
                 }
             }

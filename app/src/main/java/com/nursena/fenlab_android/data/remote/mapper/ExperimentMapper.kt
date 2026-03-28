@@ -10,12 +10,15 @@ import com.nursena.fenlab_android.domain.model.enums.SubjectType
 
 private fun String.fixMinioUrl(): String =
     this
-        .replace("10.0.3.2", "172.20.10.3")
-        .replace("10.0.2.2", "172.20.10.3")
-        .replace("localhost", "172.20.10.3")
-        .replace("127.0.0.1", "172.20.10.3")
-        .replace("192.168.1.50", "172.20.10.3")
-        .replace("192.168.1.108", "172.20.10.3")
+        .replace("10.0.3.2", "10.50.232.160")
+        .replace("10.0.2.2", "10.50.232.160")
+        .replace("localhost", "10.50.232.160")
+        .replace("127.0.0.1", "10.50.232.160")
+        .replace("192.168.1.50", "10.50.232.160")
+        .replace("192.168.1.108", "10.50.232.160")
+        .replace("172.20.10.3", "10.50.232.160")
+        .replace("192.168.1.140", "10.50.232.160")
+        .replace("172.17.19.194", "10.50.232.160")
 
 fun ExperimentSummaryResponse.toDomain(): Experiment = Experiment(
     id                       = id,

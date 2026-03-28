@@ -58,14 +58,14 @@ fun FavoritesScreen(
 
     Column(modifier = Modifier
         .fillMaxSize()
-        .background(DarkBg)
+        .background(Brush.verticalGradient(listOf(GradientStart, GradientMid, GradientEnd)))
     ) {
 
         // ── Header ─────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color(0xFF0A2820), DarkBg)))
+                //.background(Brush.verticalGradient(listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2))))
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
@@ -125,7 +125,7 @@ private fun EmptyFavorites() {
             modifier = Modifier
                 .size(90.dp)
                 .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(Red400.copy(0.15f), DarkSurface))),
+                .background(Brush.radialGradient(listOf(Color(0x26EF5350), Color(0xFFF8F9FB)))),
             contentAlignment = Alignment.Center
         ) {
             Text("❤️", fontSize = 40.sp)
@@ -160,7 +160,7 @@ private fun FavoriteCard(
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },
-            containerColor = DarkSurface,
+            containerColor = Color(0xFFF8F9FB),
             title = { Text("Favoriden Kaldır", color = TextPrimary, fontWeight = FontWeight.SemiBold) },
             text = { Text("Bu deneyi favorilerden kaldırmak istiyor musun?", color = TextSecondary, fontSize = 13.sp) },
             confirmButton = {
@@ -179,7 +179,7 @@ private fun FavoriteCard(
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onCardClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
@@ -191,7 +191,7 @@ private fun FavoriteCard(
             Box(
                 modifier = Modifier.size(width = 88.dp, height = 72.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFF0D2D28), Color(0xFF1A2235))))
+                    .background(Brush.linearGradient(listOf(Color(0xFFF8F9FB), Color(0xFFF8F9FB))))
             ) {
                 AsyncImage(
                     model = experiment.thumbnailUrl ?: experiment.videoUrl,
@@ -201,11 +201,11 @@ private fun FavoriteCard(
                 )
                 if (experiment.videoUrl != null) {
                     Box(
-                        modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.25f)),
+                        modifier = Modifier.fillMaxSize().background(Color(0x40000000)),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
-                            modifier = Modifier.size(26.dp).background(Color.White.copy(0.2f), CircleShape),
+                            modifier = Modifier.size(26.dp).background(Color(0x33FFFFFF), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(15.dp))
@@ -231,7 +231,7 @@ private fun FavoriteCard(
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Box(
-                        modifier = Modifier.size(16.dp).background(Teal500, CircleShape),
+                        modifier = Modifier.size(16.dp).background(FrostAccentDark, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -263,10 +263,10 @@ private fun FavoriteCard(
                     experiment.subject?.let { subject ->
                         Box(
                             modifier = Modifier
-                                .background(Teal400.copy(0.12f), RoundedCornerShape(6.dp))
+                                .background(Color(0x1FF06292), RoundedCornerShape(6.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Text(subject.toDisplayString(), color = Teal400, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                            Text(subject.toDisplayString(), color = FrostAccent, fontSize = 10.sp, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -276,7 +276,7 @@ private fun FavoriteCard(
             Box(
                 modifier = Modifier.size(34.dp)
                     .clip(CircleShape)
-                    .background(Red400.copy(0.1f))
+                    .background(Color(0x1AEF5350))
                     .clickable { showConfirm = true },
                 contentAlignment = Alignment.Center
             ) {

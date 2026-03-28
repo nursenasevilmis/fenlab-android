@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.nursena.fenlab_android.core.toMinioUrl
 import com.nursena.fenlab_android.domain.model.UserSummary
 import com.nursena.fenlab_android.domain.model.enums.DifficultyLevel
 import com.nursena.fenlab_android.domain.model.enums.EnvironmentType
@@ -49,9 +50,9 @@ fun SubjectChip(subject: SubjectType, modifier: Modifier = Modifier) {
 @Composable
 fun DifficultyChip(difficulty: DifficultyLevel, modifier: Modifier = Modifier) {
     val (bg, fg) = when (difficulty) {
-        DifficultyLevel.EASY   -> Color(0xFF0D3020) to Green400
-        DifficultyLevel.MEDIUM -> Color(0xFF3D2C00) to Yellow400
-        DifficultyLevel.HARD   -> Color(0xFF3D0F0F) to Red400
+        DifficultyLevel.EASY   -> ChipScience to Green400
+        DifficultyLevel.MEDIUM -> LabOrangeLight to Yellow400
+        DifficultyLevel.HARD   -> LabOrangeLight to Red400
     }
     Surface(modifier = modifier, color = bg, shape = RoundedCornerShape(8.dp)) {
         Text(
@@ -65,7 +66,7 @@ fun DifficultyChip(difficulty: DifficultyLevel, modifier: Modifier = Modifier) {
 // ── EnvironmentChip ───────────────────────────────────────────────────────────
 @Composable
 fun EnvironmentChip(environment: EnvironmentType, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, color = DarkSurface3, shape = RoundedCornerShape(8.dp)) {
+    Surface(modifier = modifier, color = Color(0xFFCFD8DC), shape = RoundedCornerShape(8.dp)) {
         Text(
             text = environment.toDisplayString(),
             color = TextSecondary, fontSize = 11.sp,
@@ -77,7 +78,7 @@ fun EnvironmentChip(environment: EnvironmentType, modifier: Modifier = Modifier)
 // ── TagChip ───────────────────────────────────────────────────────────────────
 @Composable
 fun TagChip(text: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, color = DarkSurface3, shape = RoundedCornerShape(8.dp)) {
+    Surface(modifier = modifier, color = Color(0xFFCFD8DC), shape = RoundedCornerShape(8.dp)) {
         Text(
             text = text, fontSize = 11.sp, color = TextSecondary,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -90,7 +91,7 @@ fun TagChip(text: String, modifier: Modifier = Modifier) {
 fun RoleBadge(displayRole: String, modifier: Modifier = Modifier) {
     Surface(modifier = modifier, color = Teal100, shape = RoundedCornerShape(4.dp)) {
         Text(
-            text = displayRole, color = Teal400,
+            text = displayRole, color = FrostAccent,
             fontSize = 10.sp, fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
         )
@@ -101,12 +102,12 @@ fun RoleBadge(displayRole: String, modifier: Modifier = Modifier) {
 @Composable
 fun UserAvatar(user: UserSummary, size: Dp = 36.dp, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.size(size).background(Teal500, CircleShape),
+        modifier = modifier.size(size).background(FrostAccentDark, CircleShape),
         contentAlignment = Alignment.Center
     ) {
         if (user.profileImageUrl != null) {
             AsyncImage(
-                model = user.profileImageUrl, contentDescription = user.displayName,
+                model = user.profileImageUrl.toMinioUrl(), contentDescription = user.displayName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize().clip(CircleShape)
             )
@@ -153,7 +154,7 @@ fun FavoriteButton(isFavorited: Boolean, onClick: () -> Unit, modifier: Modifier
         onClick = onClick,
         modifier = modifier
             .size(34.dp)
-            .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+            .background(Color(0x73000000), CircleShape)
     ) {
         Icon(
             imageVector = if (isFavorited) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -168,7 +169,7 @@ fun FavoriteButton(isFavorited: Boolean, onClick: () -> Unit, modifier: Modifier
 @Composable
 fun LoadingIndicator(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = Teal400, strokeWidth = 2.dp)
+        CircularProgressIndicator(color = FrostAccent, strokeWidth = 2.dp)
     }
 }
 
@@ -187,8 +188,8 @@ fun ErrorMessage(message: String, onRetry: (() -> Unit)? = null, modifier: Modif
             Spacer(Modifier.height(12.dp))
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = Teal400)
-            ) { Text("Tekrar Dene", color = DarkBg) }
+                colors = ButtonDefaults.buttonColors(containerColor = FrostAccent)
+            ) { Text("Tekrar Dene", color = Color.White) }
         }
     }
 }

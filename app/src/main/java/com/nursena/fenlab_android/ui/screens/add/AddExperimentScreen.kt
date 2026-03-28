@@ -70,7 +70,7 @@ fun AddExperimentScreen(
         return
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(DarkBg)) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
         AddTopBar(
             currentStep = uiState.currentStep,
             onBack      = { if (uiState.currentStep == 0) onBack() else viewModel.prevStep() }
@@ -139,7 +139,7 @@ private fun AddTopBar(currentStep: Int, onBack: () -> Unit) {
         Spacer(Modifier.width(8.dp))
         Text("Deney Ekle", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.width(4.dp))
-        Text("+", color = Teal400, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text("+", color = FrostAccent, fontSize = 18.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -149,7 +149,7 @@ private fun AddTopBar(currentStep: Int, onBack: () -> Unit) {
 @Composable
 private fun StepIndicator(currentStep: Int) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(DarkSurface)
+        modifier = Modifier.fillMaxWidth().background(Color(0xFFF8F9FB))
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -161,11 +161,11 @@ private fun StepIndicator(currentStep: Int) {
                 )
                 Box(
                     modifier = Modifier.weight(1f).height(3.dp).clip(RoundedCornerShape(2.dp))
-                        .background(DarkSurface3)
+                        .background(Color(0xFFCFD8DC))
                 ) {
                     Box(
                         modifier = Modifier.fillMaxHeight().fillMaxWidth(progress)
-                            .background(Brush.horizontalGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(2.dp))
+                            .background(Brush.horizontalGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(2.dp))
                     )
                 }
             }
@@ -175,7 +175,7 @@ private fun StepIndicator(currentStep: Int) {
             stepLabels.forEachIndexed { i, label ->
                 Text(
                     text      = label,
-                    color     = if (i <= currentStep) Teal400 else TextSecondary,
+                    color     = if (i <= currentStep) FrostAccent else TextSecondary,
                     fontSize  = 9.sp,
                     fontWeight = if (i == currentStep) FontWeight.Bold else FontWeight.Normal,
                     modifier  = Modifier.weight(1f),
@@ -244,7 +244,7 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
     Spacer(Modifier.height(12.dp))
 
     // Beklenen Sonuç
-    SectionCard(title = "🎯 Beklenen Sonuç") {
+    SectionCard(title = "Beklenen Sonuç") {
         AddTextField(
             value         = state.expectedResult,
             onValueChange = vm::onExpectedResultChange,
@@ -256,7 +256,7 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
     Spacer(Modifier.height(12.dp))
 
     // Güvenlik Notları
-    SectionCard(title = "⚠️ Güvenlik Notları") {
+    SectionCard(title = "Güvenlik Notları") {
         AddTextField(
             value         = state.safetyNotes,
             onValueChange = vm::onSafetyNotesChange,
@@ -271,7 +271,7 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewModel) {
-    SectionCard(title = "🧪 Malzemeler") {
+    SectionCard(title = "Malzemeler") {
         state.materials.forEachIndexed { index, mat ->
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
@@ -279,7 +279,7 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
                 modifier              = Modifier.padding(bottom = 8.dp)
             ) {
                 Box(
-                    modifier = Modifier.size(26.dp).background(DarkSurface3, CircleShape),
+                    modifier = Modifier.size(26.dp).background(Color(0xFFCFD8DC), CircleShape),
                     contentAlignment = Alignment.Center
                 ) { Text("${index + 1}", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
 
@@ -291,7 +291,7 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
                     modifier = Modifier.size(30.dp)
                 ) {
                     Icon(Icons.Default.Close, null,
-                        tint     = if (state.materials.size > 1) Red400 else DarkSurface3,
+                        tint     = if (state.materials.size > 1) Red400 else Color(0xFFCFD8DC),
                         modifier = Modifier.size(14.dp))
                 }
             }
@@ -302,7 +302,7 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
 
     Spacer(Modifier.height(12.dp))
 
-    SectionCard(title = "📋 Adımlar") {
+    SectionCard(title = "Adımlar") {
         state.steps.forEachIndexed { index, step ->
             Row(
                 verticalAlignment     = Alignment.Top,
@@ -311,7 +311,7 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
             ) {
                 Box(
                     modifier = Modifier.size(26.dp).clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896)))),
+                        .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark))),
                     contentAlignment = Alignment.Center
                 ) { Text("${index + 1}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
 
@@ -348,7 +348,7 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
     }
 
     // ── Video ──────────────────────────────────────────────────────────────────
-    SectionCard(title = "🎬 Deney Videosu") {
+    SectionCard(title = "Deney Videosu") {
         UploadBox(
             isUploading = state.isUploadingVideo,
             doneUrl     = state.videoUrl,
@@ -368,14 +368,14 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
     Spacer(Modifier.height(12.dp))
 
     // ── Kapak Görseli ─────────────────────────────────────────────────────────
-    SectionCard(title = "🖼️ Kapak Görseli") {
+    SectionCard(title = "Kapak Görseli") {
         if (state.coverImageUrl != null) {
             Box(modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(10.dp))) {
                 AsyncImage(model = state.coverImageUrl, contentDescription = null,
                     contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 Box(
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
-                        .size(26.dp).clip(CircleShape).background(Color.Black.copy(0.6f))
+                        .size(26.dp).clip(CircleShape).background(Color(0x99000000))
                         .clickable { vm.clearCoverImage() },
                     contentAlignment = Alignment.Center
                 ) { Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(13.dp)) }
@@ -396,7 +396,7 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
     Spacer(Modifier.height(12.dp))
 
     // ── Ek Görseller ─────────────────────────────────────────────────────────
-    SectionCard(title = "📸 Ek Görseller (${state.additionalImages.size}/10)") {
+    SectionCard(title = "Ek Görseller (${state.additionalImages.size}/10)") {
         if (state.additionalImages.isNotEmpty() || state.isUploadingAdditional) {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -408,22 +408,22 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
                             contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                         Box(
                             modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
-                                .size(22.dp).clip(CircleShape).background(Color.Black.copy(0.65f))
+                                .size(22.dp).clip(CircleShape).background(Color(0xA6000000))
                                 .clickable { vm.removeAdditionalImage(index) },
                             contentAlignment = Alignment.Center
                         ) { Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(11.dp)) }
                         Box(
                             modifier = Modifier.align(Alignment.BottomStart).padding(4.dp)
-                                .background(Color.Black.copy(0.5f), RoundedCornerShape(4.dp))
+                                .background(Color(0x80000000), RoundedCornerShape(4.dp))
                                 .padding(horizontal = 4.dp, vertical = 2.dp)
                         ) { Text("${index + 1}", color = Color.White, fontSize = 9.sp) }
                     }
                 }
                 if (state.isUploadingAdditional) {
                     item {
-                        Box(modifier = Modifier.size(110.dp).clip(RoundedCornerShape(10.dp)).background(DarkSurface2),
+                        Box(modifier = Modifier.size(110.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFECEFF1)),
                             contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Teal400, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(color = FrostAccent, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
                         }
                     }
                 }
@@ -431,15 +431,15 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
                     item {
                         Box(
                             modifier = Modifier.size(110.dp).clip(RoundedCornerShape(10.dp))
-                                .background(DarkSurface2)
-                                .border(1.dp, Brush.linearGradient(listOf(Teal400.copy(0.4f), Color(0xFF00A896).copy(0.3f))), RoundedCornerShape(10.dp))
+                                .background(Color(0xFFECEFF1))
+                                .border(1.dp, Brush.linearGradient(listOf(Color(0x66F06292), Color(0x4DEC407A))), RoundedCornerShape(10.dp))
                                 .clickable { additionalLauncher.launch("image/*") },
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.Add, null, tint = Teal400, modifier = Modifier.size(22.dp))
+                                Icon(Icons.Default.Add, null, tint = FrostAccent, modifier = Modifier.size(22.dp))
                                 Spacer(Modifier.height(3.dp))
-                                Text("Ekle", color = Teal400, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                                Text("Ekle", color = FrostAccent, fontSize = 10.sp, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -448,13 +448,13 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
         } else {
             Box(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                    .border(1.dp, Brush.linearGradient(listOf(DarkSurface3, Teal400.copy(0.3f))), RoundedCornerShape(12.dp))
-                    .background(DarkSurface2).clickable { additionalLauncher.launch("image/*") }
+                    .border(1.dp, Brush.linearGradient(listOf(Color(0xFFCFD8DC), Color(0x4DF06292))), RoundedCornerShape(12.dp))
+                    .background(Color(0xFFECEFF1)).clickable { additionalLauncher.launch("image/*") }
                     .padding(vertical = 22.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Add, null, tint = Teal400, modifier = Modifier.size(26.dp))
+                    Icon(Icons.Default.Add, null, tint = FrostAccent, modifier = Modifier.size(26.dp))
                     Spacer(Modifier.height(5.dp))
                     Text("Ek Görsel Yükle", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     Text("Deneyin farklı aşamalarını göster", color = TextSecondary, fontSize = 10.sp)
@@ -478,18 +478,18 @@ private fun UploadBox(
     Box(
         modifier = Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Brush.linearGradient(listOf(DarkSurface3, Teal400.copy(0.3f))), RoundedCornerShape(12.dp))
-            .background(DarkSurface2)
+            .border(1.dp, Brush.linearGradient(listOf(Color(0xFFCFD8DC), Color(0x4DF06292))), RoundedCornerShape(12.dp))
+            .background(Color(0xFFECEFF1))
             .clickable(enabled = !isUploading) { onSelect() }
             .padding(vertical = 24.dp),
         contentAlignment = Alignment.Center
     ) {
         if (isUploading) {
-            CircularProgressIndicator(color = Teal400, modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+            CircularProgressIndicator(color = FrostAccent, modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
         } else if (doneUrl != null) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.CheckCircle, null, tint = Teal400, modifier = Modifier.size(18.dp))
-                Text("Yüklendi ✓", color = Teal400, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.CheckCircle, null, tint = FrostAccent, modifier = Modifier.size(18.dp))
+                Text("Yüklendi ✓", color = FrostAccent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -501,9 +501,9 @@ private fun UploadBox(
                     Spacer(Modifier.height(10.dp))
                     Button(
                         onClick = onSelect, shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Teal400),
+                        colors = ButtonDefaults.buttonColors(containerColor = FrostAccent),
                         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp)
-                    ) { Text(buttonText, color = DarkBg, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                    ) { Text(buttonText, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
                 }
             }
         }
@@ -517,7 +517,7 @@ private fun UploadBox(
 private fun Step3Preview(state: AddExperimentUiState) {
     Box(
         modifier = Modifier.fillMaxWidth().height(170.dp)
-            .clip(RoundedCornerShape(14.dp)).background(DarkSurface)
+            .clip(RoundedCornerShape(14.dp)).background(Color(0xFFF8F9FB))
     ) {
         if (state.coverImageUrl != null) {
             AsyncImage(state.coverImageUrl, null, contentScale = ContentScale.Crop,
@@ -529,13 +529,13 @@ private fun Step3Preview(state: AddExperimentUiState) {
             }
         }
         Box(modifier = Modifier.fillMaxSize().background(
-            Brush.verticalGradient(listOf(Color.Transparent, DarkBg.copy(0.7f)))
+            Brush.verticalGradient(listOf(Color.Transparent, Color(0xB30D1642)))
         ))
     }
 
     Spacer(Modifier.height(12.dp))
 
-    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = DarkSurface)) {
+    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB))) {
         Column(Modifier.padding(14.dp)) {
             Text(state.title.ifBlank { "Deney Başlığı" },
                 color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -551,10 +551,10 @@ private fun Step3Preview(state: AddExperimentUiState) {
 
     Spacer(Modifier.height(8.dp))
 
-    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = DarkSurface)) {
+    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB))) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text("📊 Özet", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
             SummaryRow("🧪", "${state.materials.count { it.name.isNotBlank() }} malzeme")
             SummaryRow("📌", "${state.steps.count { it.text.isNotBlank() }} adım")
             SummaryRow("📚", "${state.subject?.toDisplayString() ?: "—"} · ${state.difficulty.toDisplayString()} · ${state.environment?.toDisplayString() ?: "—"}")
@@ -583,7 +583,7 @@ private fun SuccessScreen(
     onNewExperiment: () -> Unit,
     onHome: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize().background(DarkBg)) {
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
         // Sol üst geri
         IconButton(
             onClick  = onHome,
@@ -618,12 +618,12 @@ private fun SuccessScreen(
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize()
-                        .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(12.dp)),
+                        .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.Visibility, null, tint = DarkBg, modifier = Modifier.size(16.dp))
-                        Text("Deneyi Görüntüle", color = DarkBg, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Visibility, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Text("Deneyi Görüntüle", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -634,8 +634,8 @@ private fun SuccessScreen(
             OutlinedButton(
                 onClick  = onNewExperiment,
                 shape    = RoundedCornerShape(12.dp),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, Teal400.copy(0.5f)),
-                colors   = ButtonDefaults.outlinedButtonColors(contentColor = Teal400),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0x80F06292)),
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = FrostAccent),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
             ) {
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
@@ -666,7 +666,7 @@ private fun BottomButtons(
     onBack: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().background(DarkSurface)
+        modifier = Modifier.fillMaxWidth().background(Color(0xFFF8F9FB))
             .padding(horizontal = 16.dp, vertical = 10.dp).navigationBarsPadding(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -675,7 +675,7 @@ private fun BottomButtons(
                 onClick = onBack,
                 modifier = Modifier.weight(1f).height(44.dp),
                 shape    = RoundedCornerShape(12.dp),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, DarkSurface3),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCFD8DC)),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
             ) {
                 Icon(Icons.Default.ArrowBackIosNew, null, modifier = Modifier.size(13.dp))
@@ -694,20 +694,20 @@ private fun BottomButtons(
         ) {
             Box(
                 modifier = Modifier.fillMaxSize()
-                    .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(12.dp)),
+                    .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(color = DarkBg, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                         if (currentStep == 3) Text("🚀", fontSize = 14.sp)
                         Text(
                             if (currentStep < 3) "İleri" else "Yayınla",
-                            color = DarkBg, fontSize = 14.sp, fontWeight = FontWeight.Bold
+                            color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold
                         )
                         if (currentStep < 3) Icon(Icons.Default.ArrowForward, null,
-                            tint = DarkBg, modifier = Modifier.size(15.dp))
+                            tint = Color.White, modifier = Modifier.size(15.dp))
                     }
                 }
             }
@@ -723,11 +723,11 @@ private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Un
     Card(
         modifier  = Modifier.fillMaxWidth(),
         shape     = RoundedCornerShape(12.dp),
-        colors    = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors    = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(Modifier.padding(14.dp)) {
-            Text(title, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(10.dp))
             content()
         }
@@ -736,7 +736,7 @@ private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Un
 
 @Composable
 private fun AddLabel(text: String) {
-    Text(text, color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+    Text(text, color = TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Medium,
         modifier = Modifier.padding(bottom = 4.dp))
 }
 
@@ -751,18 +751,18 @@ private fun AddTextField(
 ) {
     TextField(
         value = value, onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = Color(0xFF3D5070), fontSize = 12.sp) },
+        placeholder = { Text(placeholder, color = TextTertiary, fontSize = 12.sp) },
         modifier = modifier,
         minLines = minLines, maxLines = maxLines,
         textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
         shape = RoundedCornerShape(10.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor   = DarkSurface2,
-            unfocusedContainerColor = DarkSurface2,
+            focusedContainerColor   = Color(0xFFECEFF1),
+            unfocusedContainerColor = Color(0xFFECEFF1),
             focusedTextColor        = TextPrimary,
             unfocusedTextColor      = TextPrimary,
-            cursorColor             = Teal400,
-            focusedIndicatorColor   = Teal400,
+            cursorColor             = FrostAccent,
+            focusedIndicatorColor   = FrostAccent,
             unfocusedIndicatorColor = Color.Transparent
         )
     )
@@ -780,23 +780,23 @@ private fun <T> DropdownSelector(
     Box {
         Row(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                .background(DarkSurface2)
-                .border(1.dp, if (selected != null) Teal400.copy(0.4f) else Color.Transparent, RoundedCornerShape(10.dp))
+                .background(Color(0xFFECEFF1))
+                .border(1.dp, if (selected != null) Color(0x66F06292) else Color.Transparent, RoundedCornerShape(10.dp))
                 .clickable { expanded = true }
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment     = Alignment.CenterVertically
         ) {
-            Text(label, color = if (selected != null) TextPrimary else Color(0xFF3D5070), fontSize = 12.sp, modifier = Modifier.weight(1f))
+            Text(label, color = if (selected != null) TextPrimary else TextTertiary, fontSize = 12.sp, modifier = Modifier.weight(1f))
             Icon(Icons.Default.ExpandMore, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false },
-            modifier = Modifier.background(DarkSurface2)) {
+            modifier = Modifier.background(Color(0xFFECEFF1))) {
             items.forEach { item ->
                 DropdownMenuItem(
-                    text = { Text(display(item), color = if (item == selected) Teal400 else TextPrimary, fontSize = 12.sp) },
+                    text = { Text(display(item), color = if (item == selected) FrostAccent else TextPrimary, fontSize = 12.sp) },
                     onClick = { onSelect(item); expanded = false },
-                    trailingIcon = { if (item == selected) Icon(Icons.Default.Check, null, tint = Teal400, modifier = Modifier.size(13.dp)) }
+                    trailingIcon = { if (item == selected) Icon(Icons.Default.Check, null, tint = FrostAccent, modifier = Modifier.size(13.dp)) }
                 )
             }
         }
@@ -815,12 +815,12 @@ private fun <T> ChipGroup(
             val isSel = item == selected
             Box(
                 modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                    .background(if (isSel) Teal400.copy(0.15f) else DarkSurface2)
-                    .border(1.dp, if (isSel) Teal400 else Color.Transparent, RoundedCornerShape(20.dp))
+                    .background(if (isSel) Color(0xFFECEFF1) else Color(0xFFECEFF1))
+                    .border(1.dp, if (isSel) FrostAccent else Color.Transparent, RoundedCornerShape(20.dp))
                     .clickable { onSelect(if (isSel) null else item) }
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
-                Text(display(item), color = if (isSel) Teal400 else TextSecondary, fontSize = 11.sp,
+                Text(display(item), color = if (isSel) FrostAccent else TextSecondary, fontSize = 11.sp,
                     fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal)
             }
         }
@@ -834,13 +834,13 @@ private fun GradeSelector(selected: Int, onSelect: (Int) -> Unit) {
             val isSel = selected in grade until grade + 4
             Box(
                 modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
-                    .background(if (isSel) Teal400.copy(0.15f) else DarkSurface2)
-                    .border(1.dp, if (isSel) Teal400 else Color.Transparent, RoundedCornerShape(10.dp))
+                    .background(if (isSel) Color(0xFFECEFF1) else Color(0xFFECEFF1))
+                    .border(1.dp, if (isSel) FrostAccent else Color.Transparent, RoundedCornerShape(10.dp))
                     .clickable { onSelect(grade) }
                     .padding(vertical = 9.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(label, color = if (isSel) Teal400 else TextSecondary, fontSize = 12.sp,
+                Text(label, color = if (isSel) FrostAccent else TextSecondary, fontSize = 12.sp,
                     fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal)
             }
         }
@@ -852,11 +852,11 @@ private fun AddOutlinedButton(text: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, Brush.linearGradient(listOf(Teal400.copy(0.5f), Color(0xFF00A896).copy(0.5f))), RoundedCornerShape(10.dp))
+            .border(1.dp, Brush.linearGradient(listOf(Color(0x80F06292), Color(0x80EC407A))), RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(text, color = Teal400, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, color = FrostAccent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }

@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -138,7 +139,7 @@ fun ExperimentDetailScreen(
                     .padding(8.dp)
             ) {
                 Box(
-                    modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.Black.copy(0.65f)),
+                    modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xA6000000)),
                     contentAlignment = Alignment.Center
                 ) { Icon(Icons.Default.FullscreenExit, null, tint = Color.White, modifier = Modifier.size(22.dp)) }
             }
@@ -149,7 +150,7 @@ fun ExperimentDetailScreen(
     // NORMAL EKRAN
     Scaffold(
         snackbarHost   = { SnackbarHost(snackbarHostState) },
-        containerColor = DarkBg
+        containerColor = Color.Transparent
     ) { padding ->
         when {
             uiState.isLoading && uiState.experiment == null -> LoadingIndicator()
@@ -260,7 +261,7 @@ private fun MediaSection(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            containerColor   = DarkSurface,
+            containerColor = Color(0xFFF8F9FB),
             title = { Text("Deneyi Sil", color = TextPrimary, fontWeight = FontWeight.Bold) },
             text  = { Text("Bu deneyi kalıcı olarak silmek istediğinizden emin misiniz?", color = TextSecondary, fontSize = 13.sp) },
             confirmButton = {
@@ -313,7 +314,7 @@ private fun MediaSection(
             // Sol üst — videoyu durdur (← GERI butonu yok, çakışma yok)
             Box(
                 modifier = Modifier.statusBarsPadding().padding(10.dp).size(36.dp)
-                    .clip(CircleShape).background(Color.Black.copy(0.65f))
+                    .clip(CircleShape).background(Color(0xA6000000))
                     .clickable { isVideoPlaying = false; exoPlayer.pause() }
                     .align(Alignment.TopStart),
                 contentAlignment = Alignment.Center
@@ -322,7 +323,7 @@ private fun MediaSection(
             // Sağ üst — tam ekran
             Box(
                 modifier = Modifier.statusBarsPadding().padding(10.dp).size(36.dp)
-                    .clip(CircleShape).background(Color.Black.copy(0.65f))
+                    .clip(CircleShape).background(Color(0xA6000000))
                     .clickable { onFullscreen() }
                     .align(Alignment.TopEnd),
                 contentAlignment = Alignment.Center
@@ -336,7 +337,7 @@ private fun MediaSection(
             }
 
             Box(modifier = Modifier.fillMaxSize()
-                .background(Brush.linearGradient(listOf(Color(0xFF0D2D28), Color(0xFF1A2235))))) {
+                .background(Brush.linearGradient(listOf(Color(0xFFF8F9FB), Color(0xFFF8F9FB))))) {
                 if (displayUrl != null) {
                     AsyncImage(model = displayUrl, contentDescription = null,
                         contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
@@ -344,15 +345,15 @@ private fun MediaSection(
             }
 
             Box(modifier = Modifier.fillMaxSize().background(
-                Brush.verticalGradient(listOf(Color.Black.copy(0.35f), Color.Transparent, Color.Black.copy(0.55f)))
+                Brush.verticalGradient(listOf(Color(0x59000000), Color.Transparent, Color(0x8C000000)))
             ))
 
             // Video oynat
             if (isVideoPage) {
                 Box(
                     modifier = Modifier.size(64.dp).clip(CircleShape)
-                        .background(Color.Black.copy(0.5f))
-                        .border(2.dp, Color.White.copy(0.6f), CircleShape)
+                        .background(Color(0x80000000))
+                        .border(2.dp, Color(0x99FFFFFF), CircleShape)
                         .clickable { isVideoPlaying = true; exoPlayer?.playWhenReady = true }
                         .align(Alignment.Center),
                     contentAlignment = Alignment.Center
@@ -360,7 +361,7 @@ private fun MediaSection(
 
                 Box(
                     modifier = Modifier.align(Alignment.BottomStart).padding(10.dp)
-                        .background(Color.Black.copy(0.6f), RoundedCornerShape(6.dp))
+                        .background(Color(0x99000000), RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) { Text("▶ Video", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Medium) }
             }
@@ -375,7 +376,7 @@ private fun MediaSection(
                         Box(modifier = Modifier
                             .size(if (i == currentPage) 8.dp else 5.dp)
                             .clip(CircleShape)
-                            .background(if (i == currentPage) Teal400 else Color.White.copy(0.5f)))
+                            .background(if (i == currentPage) FrostAccent else Color(0x80FFFFFF)))
                     }
                 }
             }
@@ -384,7 +385,7 @@ private fun MediaSection(
             // Sol üst: Geri (video durdurulduğunda tekrar görünür)
             Box(
                 modifier = Modifier.statusBarsPadding().padding(10.dp).size(38.dp)
-                    .clip(CircleShape).background(Color.Black.copy(0.45f))
+                    .clip(CircleShape).background(Color(0x73000000))
                     .clickable(onClick = onBack).align(Alignment.TopStart),
                 contentAlignment = Alignment.Center
             ) { Icon(Icons.Default.ArrowBackIosNew, null, tint = Color.White, modifier = Modifier.size(16.dp)) }
@@ -400,7 +401,7 @@ private fun MediaSection(
             ) {
                 Box(
                     modifier = Modifier.size(38.dp).clip(CircleShape)
-                        .background(Color.Black.copy(0.45f)).clickable(onClick = onFavorite),
+                        .background(Color(0x73000000)).clickable(onClick = onFavorite),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -414,14 +415,14 @@ private fun MediaSection(
                 Box {
                     Box(
                         modifier = Modifier.size(38.dp).clip(CircleShape)
-                            .background(Color.Black.copy(0.45f)).clickable { showMenu = true },
+                            .background(Color(0x73000000)).clickable { showMenu = true },
                         contentAlignment = Alignment.Center
                     ) { Icon(Icons.Default.MoreVert, null, tint = Color.White, modifier = Modifier.size(18.dp)) }
 
                     DropdownMenu(
                         expanded         = showMenu,
                         onDismissRequest = { showMenu = false },
-                        modifier         = Modifier.background(DarkSurface)
+                        modifier         = Modifier.background(Color(0xFFF8F9FB))
                     ) {
                         DropdownMenuItem(
                             text        = { Text("Paylaş", color = TextPrimary, fontSize = 13.sp) },
@@ -429,7 +430,7 @@ private fun MediaSection(
                             onClick     = { showMenu = false }
                         )
                         if (isOwner) {
-                            HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+                            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
                             DropdownMenuItem(
                                 text        = { Text("Deneyi Sil", color = Red400, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) },
                                 leadingIcon = { Icon(Icons.Default.DeleteOutline, null, tint = Red400, modifier = Modifier.size(16.dp)) },
@@ -450,7 +451,7 @@ private fun InfoSection(
     onAuthorClick: (Long) -> Unit = {},
     onRate: (Int) -> Unit, onDownloadPdf: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().background(DarkBg).padding(horizontal = 16.dp, vertical = 14.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
 
         // ── Başlık ────────────────────────────────────────────────────────────
         Text(exp.title, color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
@@ -459,14 +460,14 @@ private fun InfoSection(
         // ── Meta: sınıf, zorluk, ders, ortam ─────────────────────────────────
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("${exp.gradeLevel}. Sınıf", color = TextSecondary, fontSize = 12.sp)
-            Text("·", color = DarkSurface3, fontSize = 12.sp)
+            Text("·", color = Color(0xFFCFD8DC), fontSize = 12.sp)
             Text(exp.displayDifficulty, color = TextSecondary, fontSize = 12.sp)
             if (exp.subject != null) {
-                Text("·", color = DarkSurface3, fontSize = 12.sp)
-                Text(exp.displaySubject, color = Orange400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Text("·", color = Color(0xFFCFD8DC), fontSize = 12.sp)
+                Text(exp.displaySubject, color = TextSecondary, fontSize = 12.sp)
             }
             if (exp.environment != null) {
-                Text("·", color = DarkSurface3, fontSize = 12.sp)
+                Text("·", color = Color(0xFFCFD8DC), fontSize = 12.sp)
                 Text(exp.displayEnvironment, color = TextSecondary, fontSize = 12.sp)
             }
         }
@@ -476,14 +477,14 @@ private fun InfoSection(
         // ── Yazar — tıklanabilir kart ─────────────────────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp)).background(DarkSurface)
+                .clip(RoundedCornerShape(10.dp)).background(Color(0xFFF8F9FB))
                 .clickable { onAuthorClick(exp.author.id) }
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Box(modifier = Modifier.size(36.dp).clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
+                .background(Brush.linearGradient(listOf(Color(0x80F06292), Color(0x66EC407A)))),
                 contentAlignment = Alignment.Center) {
                 if (exp.author.profileImageUrl != null)
                     AsyncImage(model = exp.author.profileImageUrl, contentDescription = null,
@@ -525,12 +526,12 @@ private fun InfoSection(
             modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), contentPadding = PaddingValues(0.dp)) {
             Box(modifier = Modifier.fillMaxSize()
-                .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(12.dp)),
+                .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center) {
-                if (isPdfLoading) CircularProgressIndicator(color = DarkBg, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                if (isPdfLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.PictureAsPdf, null, tint = DarkBg, modifier = Modifier.size(18.dp))
-                    Text("PDF Olarak İndir", color = DarkBg, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Icon(Icons.Default.PictureAsPdf, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Text("PDF Olarak İndir", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -551,18 +552,18 @@ private fun InfoSection(
 
 @Composable private fun DetailTabBar(selected: Int, commentCount: Int, questionCount: Int, onSelect: (Int) -> Unit) {
     val tabs = listOf("Malzemeler", "Adımlar", "Yorum & S/C (${commentCount + questionCount})")
-    Column(modifier = Modifier.fillMaxWidth().background(DarkBg)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row {
             tabs.forEachIndexed { i, label ->
                 Column(modifier = Modifier.weight(1f).clickable { onSelect(i) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(label, color = if (selected == i) Teal400 else TextSecondary, fontSize = 12.sp,
+                    Text(label, color = if (selected == i) FrostAccent else TextSecondary, fontSize = 12.sp,
                         fontWeight = if (selected == i) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier.padding(vertical = 11.dp), textAlign = TextAlign.Center)
-                    Box(Modifier.fillMaxWidth().height(2.dp).background(if (selected == i) Teal400 else Color.Transparent))
+                    Box(Modifier.fillMaxWidth().height(2.dp).background(if (selected == i) FrostAccent else Color.Transparent))
                 }
             }
         }
-        HorizontalDivider(thickness = 0.5.dp, color = DarkSurface3)
+        HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
     }
 }
 
@@ -570,11 +571,11 @@ private fun InfoSection(
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
         // Açıklama
         Box(modifier = Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp)).background(DarkSurface)
-            .border(1.dp, Brush.horizontalGradient(listOf(Teal400.copy(0.5f), Color.Transparent)), RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp)).background(Color(0xFFF8F9FB))
+            .border(1.dp, Brush.horizontalGradient(listOf(Color(0xFFF8F9FB), Color.Transparent)), RoundedCornerShape(10.dp))
             .padding(12.dp)) {
             Column {
-                Text("AÇIKLAMA", color = Teal400, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("AÇIKLAMA", color = FrostAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Spacer(Modifier.height(6.dp))
                 Text(description, color = TextSecondary, fontSize = 13.sp, lineHeight = 19.sp)
             }
@@ -583,14 +584,14 @@ private fun InfoSection(
         if (!safetyNotes.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF3D1A00)).border(1.dp, Orange400.copy(0.3f), RoundedCornerShape(10.dp))
+                .background(Color(0xFFF8F9FB)).border(1.dp, Color(0xFFF8F9FB), RoundedCornerShape(10.dp))
                 .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.Warning, null, tint = Orange400, modifier = Modifier.size(15.dp))
+
                 Column {
-                    Text("GÜVENLİK NOTU", color = Orange400, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                    Text("GÜVENLİK NOTU", color = FrostAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                     Spacer(Modifier.height(3.dp))
-                    Text(safetyNotes, color = Orange400.copy(0.85f), fontSize = 12.sp, lineHeight = 17.sp)
+                    Text(safetyNotes, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
                 }
             }
         }
@@ -598,12 +599,12 @@ private fun InfoSection(
         if (!expectedResult.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                .background(Teal400.copy(0.06f)).border(1.dp, Teal400.copy(0.2f), RoundedCornerShape(10.dp))
+                .background(Color(0xFFF8F9FB)).border(1.dp, Color(0xFFF8F9FB), RoundedCornerShape(10.dp))
                 .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.EmojiObjects, null, tint = Teal400, modifier = Modifier.size(15.dp))
+
                 Column {
-                    Text("BEKLENEN SONUÇ", color = Teal400, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                    Text("BEKLENEN SONUÇ", color = FrostAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                     Spacer(Modifier.height(3.dp))
                     Text(expectedResult, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
                 }
@@ -614,13 +615,13 @@ private fun InfoSection(
 
 @Composable private fun MaterialRow(index: Int, material: Material) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-        .clip(RoundedCornerShape(10.dp)).background(DarkSurface).padding(horizontal = 14.dp, vertical = 12.dp),
+        .clip(RoundedCornerShape(10.dp)).background(Color(0xFFF8F9FB)).padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(modifier = Modifier.size(28.dp).background(DarkSurface3, CircleShape), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size(28.dp).background(Color(0xFFCFD8DC), CircleShape), contentAlignment = Alignment.Center) {
             Text("$index", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
         Text(material.materialName, color = TextPrimary, fontSize = 13.sp, modifier = Modifier.weight(1f))
-        if (material.quantity.isNotBlank()) Text(material.quantity, color = Teal400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        if (material.quantity.isNotBlank()) Text(material.quantity, color = FrostAccent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -628,10 +629,10 @@ private fun InfoSection(
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp),
         verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(modifier = Modifier.size(28.dp).clip(CircleShape)
-            .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896)))), contentAlignment = Alignment.Center) {
+            .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark))), contentAlignment = Alignment.Center) {
             Text("${step.stepOrder}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
-        Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(DarkSurface).padding(12.dp)) {
+        Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(Color(0xFFF8F9FB)).padding(12.dp)) {
             Text(step.stepText, color = TextPrimary, fontSize = 13.sp, lineHeight = 19.sp)
         }
     }
@@ -646,34 +647,34 @@ private fun InfoSection(
     val text = if (isQuestionMode) questionInput else commentInput
     val onChange = if (isQuestionMode) onQuestionChange else onCommentChange
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-        shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = DarkSurface)) {
+        shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB))) {
         Column(Modifier.padding(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(DarkSurface2)) {
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFECEFF1))) {
                 listOf("💬 Yorum" to false, "❓ Soru" to true).forEach { (lbl, isQ) ->
                     Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp))
-                        .background(if (isQuestionMode == isQ) Teal400.copy(0.18f) else Color.Transparent)
+                        .background(if (isQuestionMode == isQ) Color(0xFF64B5F6) else Color.Transparent)
                         .clickable { isQuestionMode = isQ }.padding(vertical = 9.dp),
                         contentAlignment = Alignment.Center) {
-                        Text(lbl, color = if (isQuestionMode == isQ) Teal400 else TextSecondary, fontSize = 12.sp,
+                        Text(lbl, color = if (isQuestionMode == isQ) Color.White else TextSecondary, fontSize = 12.sp,
                             fontWeight = if (isQuestionMode == isQ) FontWeight.SemiBold else FontWeight.Normal)
                     }
                 }
             }
             Spacer(Modifier.height(10.dp))
             TextField(value = text, onValueChange = onChange,
-                placeholder = { Text(if (isQuestionMode) "Sorunuzu yazın..." else "Yorumunuzu yazın...", color = Color(0xFF3D5070), fontSize = 12.sp) },
+                placeholder = { Text(if (isQuestionMode) "Sorunuzu yazın..." else "Yorumunuzu yazın...", color = TextTertiary, fontSize = 12.sp) },
                 modifier = Modifier.fillMaxWidth().height(80.dp), maxLines = 4, shape = RoundedCornerShape(8.dp),
-                colors = TextFieldDefaults.colors(focusedContainerColor = DarkSurface2, unfocusedContainerColor = DarkSurface2,
+                colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFFECEFF1), unfocusedContainerColor = Color(0xFFECEFF1),
                     focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
-                    cursorColor = Teal400, focusedIndicatorColor = Teal400, unfocusedIndicatorColor = Color.Transparent))
+                    cursorColor = FrostAccent, focusedIndicatorColor = FrostAccent, unfocusedIndicatorColor = Color.Transparent))
             Spacer(Modifier.height(8.dp))
             Button(onClick = { if (isQuestionMode) onAskQuestion() else onAddComment() },
                 modifier = Modifier.fillMaxWidth().height(40.dp), shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), contentPadding = PaddingValues(0.dp)) {
                 Box(modifier = Modifier.fillMaxSize()
-                    .background(Brush.linearGradient(listOf(Teal400, Color(0xFF00A896))), RoundedCornerShape(10.dp)),
+                    .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center) {
-                    Text(if (isQuestionMode) "Soruyu Gönder" else "Yorum Ekle", color = DarkBg, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(if (isQuestionMode) "Soruyu Gönder" else "Yorum Ekle", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -683,7 +684,7 @@ private fun InfoSection(
 @Composable private fun CommentItem(comment: Comment, onDelete: () -> Unit) {
     var showConfirm by remember { mutableStateOf(false) }
     if (showConfirm) {
-        AlertDialog(onDismissRequest = { showConfirm = false }, containerColor = DarkSurface,
+        AlertDialog(onDismissRequest = { showConfirm = false }, containerColor = Color(0xFFF8F9FB),
             title = { Text("Yorumu Sil", color = TextPrimary) },
             text  = { Text("Bu yorumu silmek istediğinizden emin misiniz?", color = TextSecondary, fontSize = 13.sp) },
             confirmButton = { TextButton(onClick = { showConfirm = false; onDelete() }) { Text("Sil", color = Red400, fontWeight = FontWeight.Bold) } },
@@ -701,11 +702,11 @@ private fun InfoSection(
         }
         if (comment.isOwner) {
             IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(28.dp)) {
-                Icon(Icons.Default.DeleteOutline, null, tint = Red400.copy(0.7f), modifier = Modifier.size(15.dp))
+                Icon(Icons.Default.DeleteOutline, null, tint = Color(0xB3EF5350), modifier = Modifier.size(15.dp))
             }
         }
     }
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), thickness = 0.5.dp, color = DarkSurface3)
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), thickness = 0.5.dp, color = Color(0xFFCFD8DC))
 }
 
 @Composable private fun QuestionItem(question: Question, canDelete: Boolean = false, onAnswer: (String) -> Unit, onDelete: () -> Unit) {
@@ -713,7 +714,7 @@ private fun InfoSection(
     var showAnswerInput by remember { mutableStateOf(false) }
     var showConfirm by remember { mutableStateOf(false) }
     if (showConfirm) {
-        AlertDialog(onDismissRequest = { showConfirm = false }, containerColor = DarkSurface,
+        AlertDialog(onDismissRequest = { showConfirm = false }, containerColor = Color(0xFFF8F9FB),
             title = { Text("Soruyu Sil", color = TextPrimary) },
             text  = { Text("Bu soruyu silmek istediğinizden emin misiniz?", color = TextSecondary, fontSize = 13.sp) },
             confirmButton = { TextButton(onClick = { showConfirm = false; onDelete() }) { Text("Sil", color = Red400, fontWeight = FontWeight.Bold) } },
@@ -725,7 +726,7 @@ private fun InfoSection(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(question.asker.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Box(modifier = Modifier.background(Orange400.copy(0.15f), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
+                    Box(modifier = Modifier.background(Color(0x26FFD54F), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
                         Text("❓ Soru", color = Orange400, fontSize = 12.sp)
                     }
                     Text(question.createdAt.take(10), color = TextSecondary, fontSize = 12.sp)
@@ -733,13 +734,13 @@ private fun InfoSection(
                 Spacer(Modifier.height(3.dp))
                 Text(question.questionText, color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
                 if (question.canAnswer && !question.isAnswered) {
-                    Text("Yanıtla", color = Teal400, fontSize = 11.sp,
+                    Text("Yanıtla", color = FrostAccent, fontSize = 11.sp,
                         modifier = Modifier.clickable { showAnswerInput = !showAnswerInput }.padding(top = 4.dp))
                 }
             }
             if (canDelete) {
                 IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.DeleteOutline, null, tint = Red400.copy(0.7f), modifier = Modifier.size(15.dp))
+                    Icon(Icons.Default.DeleteOutline, null, tint = Color(0xB3EF5350), modifier = Modifier.size(15.dp))
                 }
             }
         }
@@ -747,37 +748,37 @@ private fun InfoSection(
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.padding(start = 44.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 TextField(value = answerInput, onValueChange = { answerInput = it },
-                    placeholder = { Text("Yanıtınızı yazın...", color = Color(0xFF3D5070), fontSize = 12.sp) },
+                    placeholder = { Text("Yanıtınızı yazın...", color = TextTertiary, fontSize = 12.sp) },
                     modifier = Modifier.weight(1f), shape = RoundedCornerShape(8.dp), singleLine = true,
-                    colors = TextFieldDefaults.colors(focusedContainerColor = DarkSurface2, unfocusedContainerColor = DarkSurface2,
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFFECEFF1), unfocusedContainerColor = Color(0xFFECEFF1),
                         focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
-                        cursorColor = Teal400, focusedIndicatorColor = Teal400, unfocusedIndicatorColor = Color.Transparent))
+                        cursorColor = FrostAccent, focusedIndicatorColor = FrostAccent, unfocusedIndicatorColor = Color.Transparent))
                 IconButton(onClick = { if (answerInput.isNotBlank()) { onAnswer(answerInput); answerInput = ""; showAnswerInput = false } },
-                    modifier = Modifier.size(38.dp).clip(CircleShape).background(Teal400)) {
-                    Icon(Icons.AutoMirrored.Filled.Send, null, tint = DarkBg, modifier = Modifier.size(16.dp))
+                    modifier = Modifier.size(38.dp).clip(CircleShape).background(FrostAccent)) {
+                    Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color.White, modifier = Modifier.size(16.dp))
                 }
             }
         }
         if (question.isAnswered && question.answerText != null) {
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.padding(start = 44.dp).clip(RoundedCornerShape(10.dp))
-                .background(Teal400.copy(0.08f)).border(1.dp, Teal400.copy(0.2f), RoundedCornerShape(10.dp)).padding(10.dp),
+                .background(Color(0x14F06292)).border(1.dp, Color(0x33F06292), RoundedCornerShape(10.dp)).padding(10.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.School, null, tint = Teal400, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.School, null, tint = FrostAccent, modifier = Modifier.size(16.dp))
                 Column {
-                    Text("ÖĞRETMEN YANITI", color = Teal400, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+                    Text("ÖĞRETMEN YANITI", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
                     Spacer(Modifier.height(3.dp))
                     Text(question.answerText, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
                 }
             }
         }
     }
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), thickness = 0.5.dp, color = DarkSurface3)
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), thickness = 0.5.dp, color = Color(0xFFCFD8DC))
 }
 
 @Composable private fun AuthorAvatar(initials: String, size: Int) {
     Box(modifier = Modifier.size(size.dp).clip(CircleShape)
-        .background(Brush.linearGradient(listOf(Teal400.copy(0.5f), Teal500.copy(0.4f)))),
+        .background(Brush.linearGradient(listOf(Color(0x80F06292), Color(0x66EC407A)))),
         contentAlignment = Alignment.Center) {
         Text(initials, color = Color.White, fontSize = (size / 3).sp, fontWeight = FontWeight.Bold)
     }

@@ -45,9 +45,6 @@ android {
 }
 
 dependencies {
-    // ── AppCompat (UCrop için gerekli) ────────────────────────────────────────
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.github.yalantis:ucrop:2.2.8")
 
     // ── Core ──────────────────────────────────────────────────────────────────
     implementation("androidx.core:core-ktx:1.13.1")
@@ -60,6 +57,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
     implementation("androidx.compose.material:material-icons-extended")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
