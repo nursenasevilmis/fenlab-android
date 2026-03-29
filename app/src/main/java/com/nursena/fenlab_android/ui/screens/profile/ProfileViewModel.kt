@@ -144,6 +144,20 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun deleteNotification(id: Long) {
+        viewModelScope.launch {
+            notificationRepository.deleteNotification(id)
+            _uiState.update { it.copy(notifications = it.notifications.filter { n -> n.id != id }) }
+        }
+    }
+
+    fun deleteAllNotifications() {
+        viewModelScope.launch {
+            notificationRepository.deleteAllNotifications()
+            _uiState.update { it.copy(notifications = emptyList(), unreadCount = 0L) }
+        }
+    }
+
     // ── Profil fotoğrafı ─────────────────────────────────────────────────────
     fun uploadProfilePhoto(context: Context, uri: Uri) {
         viewModelScope.launch {

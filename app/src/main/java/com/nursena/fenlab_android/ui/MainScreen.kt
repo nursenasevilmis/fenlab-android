@@ -66,7 +66,8 @@ fun FenlabBottomBar(
         modifier         = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .height(if (isTeacher) 88.dp else 76.dp),
+            .height(if (isTeacher) 88.dp else 76.dp)
+            .background(Color.Transparent),
         contentAlignment = Alignment.BottomCenter
     ) {
         // ── Frosted pill ────────────────────────────────────────────────────

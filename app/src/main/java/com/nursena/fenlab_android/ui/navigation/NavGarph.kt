@@ -4,10 +4,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,38 +88,24 @@ fun FenlabNavGraph() {
     // gelen 401 hata mesajını FavoritesViewModel ve ProfileViewModel handle eder.
     // Aşağıda manuel logout butonu SessionExpired eventi ile tetiklenir.
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        bottomBar = {
-            if (currentRoute in bottomBarRoutes) {
-                FenlabBottomBar(
-                    navController   = navController,
-                    currentUserRole = userRole,
-                    onAddClick      = { navController.navigate(Routes.ADD) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(GradientStart, GradientMid, GradientEnd)
                 )
-            }
-        },
-        contentWindowInsets = WindowInsets(0)
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(GradientStart, GradientMid, GradientEnd)
-                    )
-                )
-        )
-        {
-            NavHost(
-                navController = navController,
-                startDestination = Routes.SPLASH,   // ← SPLASH ile başla
-                modifier = Modifier.padding(innerPadding),
-                enterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 8 } },
-                exitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { -it / 8 } },
-                popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 8 } },
-                popExitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { it / 8 } }
-            ) {
+            )
+    ) {
+        NavHost(
+            navController    = navController,
+            startDestination = Routes.SPLASH,   // ← SPLASH ile başla
+            modifier           = Modifier.fillMaxSize(),
+            enterTransition    = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 8 } },
+            exitTransition     = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { -it / 8 } },
+            popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 8 } },
+            popExitTransition  = { fadeOut(tween(160)) + slideOutHorizontally(tween(160)) { it / 8 } }
+        ) {
 
                 // ── Splash — token kontrol eder, flash olmadan yönlendirir ───────
                 composable(Routes.SPLASH) {
@@ -221,10 +205,23 @@ fun FenlabNavGraph() {
                         }
                     )
                 }
+        }
+
+        // ── Bottom Bar overlay — gradient üstünde, tam transparan zemin ──────
+        if (currentRoute in bottomBarRoutes) {
+            Box(
+                modifier         = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                FenlabBottomBar(
+                    navController   = navController,
+                    currentUserRole = userRole,
+                    onAddClick      = { navController.navigate(Routes.ADD) }
+                )
             }
         }
-}
     }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Splash karar ekranı — kullanıcıya hiç gösterilmez, sadece yönlendirir

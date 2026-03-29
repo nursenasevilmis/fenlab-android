@@ -116,9 +116,9 @@ fun HomeScreen(
             else -> LazyColumn(
                 state          = listState,
                 contentPadding = PaddingValues(
-                    top    = padding.calculateTopPadding() + 8.dp,
-                    bottom = padding.calculateBottomPadding() + 96.dp,
-                    start  = 16.dp, end = 16.dp
+                    top    = 72.dp,
+                    bottom = 100.dp,
+                    start  = 16.dp, end  = 16.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -172,7 +172,7 @@ fun HomeScreen(
     if (showFilterSheet) {
         ModalBottomSheet(
             onDismissRequest    = { showFilterSheet = false },
-            containerColor = Color.Transparent,
+            containerColor = Color(0xFFF8F9FB),
             dragHandle          = {
                 Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center) {
@@ -244,7 +244,10 @@ fun FenlabTopBar(
     onSortClick: () -> Unit
 ) {
     TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color(0xFFF5F7FA),
+            scrolledContainerColor = Color(0xFFF5F7FA)
+        ),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
@@ -276,7 +279,7 @@ fun FenlabTopBar(
                     shape    = RoundedCornerShape(20.dp),
                     colors   = ButtonDefaults.outlinedButtonColors(
                         contentColor = if (activeFilterCount > 0) FrostAccent else TextSecondary,
-                        containerColor = if (activeFilterCount > 0) Color(0x1AF06292) else Color.Transparent
+                        containerColor = Color.Transparent
                     ),
                     border   = androidx.compose.foundation.BorderStroke(
                         1.dp, if (activeFilterCount > 0) FrostAccent else Color(0xFFCFD8DC)
@@ -522,7 +525,7 @@ private fun <T> FilterChipRow(
         items.forEach { item ->
             val isSelected = selected == item
             val bgColor by animateColorAsState(
-                if (isSelected) Color(0x26F06292) else Color(0xFFECEFF1),
+                if (isSelected) Color(0xFFE3F2FD) else Color(0xFFECEFF1),
                 label = "chip_bg"
             )
             val borderColor by animateColorAsState(
@@ -597,11 +600,11 @@ private fun SortSheetContent(
                     .padding(vertical = 4.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        if (isSelected) Color(0x1AF06292) else Color.Transparent
+                        if (isSelected) Color(0xFFE3F2FD) else Color.Transparent
                     )
                     .border(
                         1.dp,
-                        if (isSelected) Color(0x80F06292) else Color.Transparent,
+                        if (isSelected) Color(0xFFBBDEFB) else Color.Transparent,
                         RoundedCornerShape(12.dp)
                     )
                     .clickable { onSelect(option.type) }

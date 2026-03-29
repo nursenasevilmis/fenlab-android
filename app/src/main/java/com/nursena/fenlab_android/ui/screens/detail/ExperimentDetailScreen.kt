@@ -451,91 +451,95 @@ private fun InfoSection(
     onAuthorClick: (Long) -> Unit = {},
     onRate: (Int) -> Unit, onDownloadPdf: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
 
         // ── Başlık ────────────────────────────────────────────────────────────
         Text(exp.title, color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
 
-        // ── Meta: sınıf, zorluk, ders, ortam ─────────────────────────────────
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("${exp.gradeLevel}. Sınıf", color = TextSecondary, fontSize = 12.sp)
-            Text("·", color = Color(0xFFCFD8DC), fontSize = 12.sp)
-            Text(exp.displayDifficulty, color = TextSecondary, fontSize = 12.sp)
-            if (exp.subject != null) {
-                Text("·", color = Color(0xFFCFD8DC), fontSize = 12.sp)
-                Text(exp.displaySubject, color = TextSecondary, fontSize = 12.sp)
+        // ── Yazar satırı + istatistikler (tek satır, kompakt) ─────────────────
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable { onAuthorClick(exp.author.id) },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(modifier = Modifier.size(28.dp).clip(CircleShape)
+                .background(FrostAccent.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center) {
+                if (exp.author.profileImageUrl != null)
+                    AsyncImage(model = exp.author.profileImageUrl, contentDescription = null,
+                        contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
+                else Text(exp.author.initials, color = FrostAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
-            if (exp.environment != null) {
-                Text("·", color = Color(0xFFCFD8DC), fontSize = 12.sp)
-                Text(exp.displayEnvironment, color = TextSecondary, fontSize = 12.sp)
+            Text(exp.author.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            if (exp.author.isTeacher) {
+                Text("· Öğretmen", color = TextTertiary, fontSize = 12.sp)
+            }
+            Spacer(Modifier.weight(1f))
+            // ⭐ Puan
+            if (exp.averageRating != null) {
+                Icon(Icons.Default.Star, null, tint = Orange400, modifier = Modifier.size(14.dp))
+                Text("%.1f".format(exp.averageRating), color = Orange400, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.width(6.dp))
+            }
+            // ❤ Beğeni
+            Icon(Icons.Default.Favorite, null, tint = Red400, modifier = Modifier.size(13.dp))
+            Text(exp.favoriteCount.toString(), color = Red400, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // ── Meta chips (tek satır) ────────────────────────────────────────────
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            MetaTag("${exp.gradeLevel}. Sınıf")
+            MetaTag(exp.displayDifficulty)
+            if (exp.subject != null) MetaTag(exp.displaySubject)
+            if (exp.environment != null) MetaTag(exp.displayEnvironment)
+        }
+
+        // ── Konu etiketi ──────────────────────────────────────────────────────
+        if (!exp.topic.isNullOrBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Default.Tag, null, tint = TextTertiary, modifier = Modifier.size(12.dp))
+                Text(exp.topic!!, color = TextTertiary, fontSize = 12.sp)
             }
         }
 
         Spacer(Modifier.height(12.dp))
 
-        // ── Yazar — tıklanabilir kart ─────────────────────────────────────────
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp)).background(Color(0xFFF8F9FB))
-                .clickable { onAuthorClick(exp.author.id) }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Box(modifier = Modifier.size(36.dp).clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Color(0x80F06292), Color(0x66EC407A)))),
-                contentAlignment = Alignment.Center) {
-                if (exp.author.profileImageUrl != null)
-                    AsyncImage(model = exp.author.profileImageUrl, contentDescription = null,
-                        contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(CircleShape))
-                else Text(exp.author.initials, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(exp.author.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                Text(if (exp.author.isTeacher) "Öğretmen" else "Kullanıcı", color = TextSecondary, fontSize = 11.sp)
-            }
-            // Puan + Beğeni
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(exp.averageRating?.let { "%.1f".format(it) } ?: "-",
-                        color = if (exp.averageRating != null) Orange400 else TextSecondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text("Puan", color = TextSecondary, fontSize = 11.sp)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(exp.favoriteCount.toString(), color = Red400, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text("Beğeni", color = TextSecondary, fontSize = 11.sp)
-                }
-            }
-        }
-
-        // ── Konu etiketi ──────────────────────────────────────────────────────
-        if (!exp.topic.isNullOrBlank()) {
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Icon(Icons.Default.Tag, null, tint = TextSecondary, modifier = Modifier.size(13.dp))
-                Text(exp.topic!!, color = TextSecondary, fontSize = 12.sp)
-            }
-        }
-
-        Spacer(Modifier.height(14.dp))
-        RatingBar(currentRating = currentRating, onRate = onRate)
-        Spacer(Modifier.height(14.dp))
-
-        Button(onClick = onDownloadPdf, enabled = !isPdfLoading,
-            modifier = Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), contentPadding = PaddingValues(0.dp)) {
-            Box(modifier = Modifier.fillMaxSize()
-                .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center) {
-                if (isPdfLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.PictureAsPdf, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                    Text("PDF Olarak İndir", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        // ── Puan ver + PDF (yan yana, hafif) ──────────────────────────────────
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            RatingBar(currentRating = currentRating, onRate = onRate)
+            Spacer(Modifier.weight(1f))
+            OutlinedButton(
+                onClick  = onDownloadPdf,
+                enabled  = !isPdfLoading,
+                shape    = RoundedCornerShape(10.dp),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, FrostAccent.copy(alpha = 0.5f)),
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = FrostAccent),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                modifier = Modifier.height(36.dp)
+            ) {
+                if (isPdfLoading) CircularProgressIndicator(color = FrostAccent, modifier = Modifier.size(14.dp), strokeWidth = 1.5.dp)
+                else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Icon(Icons.Default.PictureAsPdf, null, tint = FrostAccent, modifier = Modifier.size(14.dp))
+                    Text("PDF İndir", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 }
             }
         }
     }
+}
+
+@Composable private fun MetaTag(text: String) {
+    Text(
+        text = text,
+        color = TextSecondary,
+        fontSize = 11.sp,
+        modifier = androidx.compose.ui.Modifier
+            .background(Color(0xFFECEFF1), RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
+    )
 }
 
 @Composable private fun RatingBar(currentRating: Int?, onRate: (Int) -> Unit) {
@@ -726,8 +730,8 @@ private fun InfoSection(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(question.asker.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Box(modifier = Modifier.background(Color(0x26FFD54F), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
-                        Text("❓ Soru", color = Orange400, fontSize = 12.sp)
+                    Box(modifier = Modifier.background(Color(0x1464B5F6), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
+                        Text("Soru", color = FrostAccent, fontSize = 11.sp)
                     }
                     Text(question.createdAt.take(10), color = TextSecondary, fontSize = 12.sp)
                 }
@@ -761,14 +765,26 @@ private fun InfoSection(
         }
         if (question.isAnswered && question.answerText != null) {
             Spacer(Modifier.height(8.dp))
-            Row(modifier = Modifier.padding(start = 44.dp).clip(RoundedCornerShape(10.dp))
-                .background(Color(0x14F06292)).border(1.dp, Color(0x33F06292), RoundedCornerShape(10.dp)).padding(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.School, null, tint = FrostAccent, modifier = Modifier.size(16.dp))
-                Column {
-                    Text("ÖĞRETMEN YANITI", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-                    Spacer(Modifier.height(3.dp))
+            Row(
+                modifier = Modifier.padding(start = 44.dp).fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0x0D1E88E5))
+                    .border(1.dp, Color(0x331E88E5), RoundedCornerShape(10.dp))
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Icon(Icons.Default.School, null, tint = FrostAccent, modifier = Modifier.size(15.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Öğretmen Yanıtı", color = FrostAccent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(2.dp))
                     Text(question.answerText, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
+                }
+                // Öğretmen kendi yanıtını silebilir (soruyu silerek)
+                if (canDelete) {
+                    IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.DeleteOutline, null, tint = Color(0x80EF5350), modifier = Modifier.size(13.dp))
+                    }
                 }
             }
         }
@@ -778,7 +794,7 @@ private fun InfoSection(
 
 @Composable private fun AuthorAvatar(initials: String, size: Int) {
     Box(modifier = Modifier.size(size.dp).clip(CircleShape)
-        .background(Brush.linearGradient(listOf(Color(0x80F06292), Color(0x66EC407A)))),
+        .background(Brush.linearGradient(listOf(Color(0xFFBBDEFB), Color(0xFF64B5F6)))),
         contentAlignment = Alignment.Center) {
         Text(initials, color = Color.White, fontSize = (size / 3).sp, fontWeight = FontWeight.Bold)
     }

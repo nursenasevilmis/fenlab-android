@@ -151,11 +151,14 @@ fun ProfileScreen(
     // ── Bildirim Sheet ───────────────────────────────────────────────────────
     if (showNotif) {
         NotificationsSheet(
-            notifications = uiState.notifications,
-            isLoading     = uiState.isNotifLoading,
-            onMarkRead    = viewModel::markNotificationRead,
-            onMarkAllRead = viewModel::markAllRead,
-            onDismiss     = { showNotif = false }
+            notifications          = uiState.notifications,
+            isLoading              = uiState.isNotifLoading,
+            onMarkRead             = viewModel::markNotificationRead,
+            onMarkAllRead          = viewModel::markAllRead,
+            onNavigateToExperiment = { id -> showNotif = false; onExperimentClick(id) },
+            onDeleteNotif          = viewModel::deleteNotification,
+            onDeleteAll            = viewModel::deleteAllNotifications,
+            onDismiss              = { showNotif = false }
         )
     }
 
@@ -640,7 +643,11 @@ private fun ProfileTextField(
 @Composable
 private fun NotificationsSheet(
     notifications: List<Notification>, isLoading: Boolean,
-    onMarkRead: (Long) -> Unit, onMarkAllRead: () -> Unit, onDismiss: () -> Unit
+    onMarkRead: (Long) -> Unit, onMarkAllRead: () -> Unit,
+    onNavigateToExperiment: (Long) -> Unit,
+    onDeleteNotif: (Long) -> Unit,
+    onDeleteAll: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color(0xFFF8F9FB), dragHandle = { SheetHandle() }) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
@@ -650,9 +657,16 @@ private fun NotificationsSheet(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Text("Bildirimler", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     if (notifications.any { !it.isRead }) {
-                        TextButton(onClick = onMarkAllRead) { Text("Tümünü Oku", color = FrostAccent, fontSize = 12.sp) }
+                        TextButton(onClick = onMarkAllRead) {
+                            Text("Tümünü Oku", color = FrostAccent, fontSize = 12.sp)
+                        }
+                    }
+                    if (notifications.isNotEmpty()) {
+                        TextButton(onClick = onDeleteAll) {
+                            Text("Tümünü Sil", color = Red400, fontSize = 12.sp)
+                        }
                     }
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, null, tint = TextSecondary)
@@ -672,20 +686,57 @@ private fun NotificationsSheet(
             } else {
                 notifications.forEach { notif ->
                     Row(
-                        modifier              = Modifier.fillMaxWidth().clickable { if (!notif.isRead) onMarkRead(notif.id) }
-                            .background(if (!notif.isRead) Color(0x0DF06292) else Color.Transparent)
-                            .padding(vertical = 10.dp),
-                        verticalAlignment     = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(if (!notif.isRead) Color(0x0A1E88E5) else Color.Transparent)
+                            .clickable {
+                                if (!notif.isRead) onMarkRead(notif.id)
+                                notif.experimentId?.let { onNavigateToExperiment(it) }
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFECEFF1)), contentAlignment = Alignment.Center) {
+                        // İkon
+                        Box(
+                            modifier = Modifier.size(32.dp).clip(CircleShape)
+                                .background(if (!notif.isRead) Color(0x1A64B5F6) else Color(0xFFECEFF1)),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(notif.icon, fontSize = 13.sp)
                         }
+                        // Mesaj
                         Column(Modifier.weight(1f)) {
                             Text(notif.message, fontSize = 12.sp, color = TextPrimary, lineHeight = 16.sp)
-                            Text(notif.createdAt.take(10), fontSize = 11.sp, color = TextSecondary)
+                            Text(notif.createdAt.take(10), fontSize = 11.sp, color = TextTertiary)
                         }
-                        if (!notif.isRead) Box(Modifier.size(6.dp).background(FrostAccent, CircleShape))
+                        // Aksiyonlar
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Okunmamışsa "okundu işaretle" butonu
+                            if (!notif.isRead) {
+                                IconButton(
+                                    onClick = { onMarkRead(notif.id) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.DoneAll, null,
+                                        tint = FrostAccent,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                            // Sil butonu
+                            IconButton(
+                                onClick = { onDeleteNotif(notif.id) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.DeleteOutline, null,
+                                    tint = Color(0x80EF5350),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
                     }
                     if (notif != notifications.last()) HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
                 }
