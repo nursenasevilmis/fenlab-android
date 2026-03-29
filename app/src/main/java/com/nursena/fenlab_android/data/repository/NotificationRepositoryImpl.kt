@@ -32,4 +32,12 @@ class NotificationRepositoryImpl @Inject constructor(
     override suspend fun getUnreadCount(): ApiResult<Long> = safeApiCall {
         notificationApi.getUnreadCount()["unreadCount"] ?: 0L
     }
+
+    override suspend fun deleteNotification(notificationId: Long): ApiResult<String> = safeApiCall {
+        notificationApi.deleteNotification(notificationId)["message"] ?: ""
+    }
+
+    override suspend fun deleteAllNotifications(): ApiResult<String> = safeApiCall {
+        notificationApi.deleteAllNotifications()["message"] ?: ""
+    }
 }

@@ -15,4 +15,6 @@ interface NotificationRepository {
     suspend fun markAllAsRead(): ApiResult<String>
 
     suspend fun getUnreadCount(): ApiResult<Long>
+    suspend fun deleteNotification(notificationId: Long): ApiResult<String>
+    suspend fun deleteAllNotifications(): ApiResult<String>
 }

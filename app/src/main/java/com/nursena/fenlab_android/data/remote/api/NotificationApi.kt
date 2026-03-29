@@ -2,9 +2,11 @@ package com.nursena.fenlab_android.data.remote.api
 
 import com.nursena.fenlab_android.data.remote.dto.response.NotificationResponse
 import com.nursena.fenlab_android.data.remote.dto.response.PaginatedResponse
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.Path
+
 import retrofit2.http.Query
 
 interface NotificationApi {
@@ -34,4 +36,14 @@ interface NotificationApi {
     // Dönen: {"unreadCount": 5}
     @GET("api/notifications/unread/count")
     suspend fun getUnreadCount(): Map<String, Long>
+
+    // Dönen: {"message": "Bildirim silindi."}
+    @DELETE("api/notifications/{notificationId}")
+    suspend fun deleteNotification(
+        @Path("notificationId") notificationId: Long
+    ): Map<String, String>
+
+    // Dönen: {"message": "Tüm bildirimler silindi."}
+    @DELETE("api/notifications")
+    suspend fun deleteAllNotifications(): Map<String, String>
 }
