@@ -1,6 +1,7 @@
 package com.nursena.fenlab_android.core.network
 
 import com.google.gson.GsonBuilder
+import com.nursena.fenlab_android.core.Constants
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -9,15 +10,10 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    // Emülatör → 10.0.2.2 | Fiziksel cihaz → bilgisayarın yerel IP'si
-    const val BASE_URL = "http://10.50.232.160:8080/"
-
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
-    // Backend Jackson LocalDateTime → "yyyy-MM-dd'T'HH:mm:ss" veya nanosecond'lı format gönderebilir.
-    // lenient() ile her ikisini de parse edebiliriz.
     private val gson = GsonBuilder()
         .setLenient()
         .serializeNulls()
@@ -34,7 +30,7 @@ object RetrofitClient {
 
     fun buildRetrofit(okHttpClient: OkHttpClient): Retrofit =
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(Constants.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()

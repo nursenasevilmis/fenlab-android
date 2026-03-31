@@ -1,5 +1,6 @@
 package com.nursena.fenlab_android.data.remote.mapper
 
+import com.nursena.fenlab_android.core.Constants
 import com.nursena.fenlab_android.data.remote.dto.response.ExperimentDetailResponse
 import com.nursena.fenlab_android.data.remote.dto.response.ExperimentSummaryResponse
 import com.nursena.fenlab_android.domain.model.Experiment
@@ -8,17 +9,12 @@ import com.nursena.fenlab_android.domain.model.enums.DifficultyLevel
 import com.nursena.fenlab_android.domain.model.enums.EnvironmentType
 import com.nursena.fenlab_android.domain.model.enums.SubjectType
 
+private val ipPattern = Regex(
+    """(10\.0\.[23]\.2|localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+)"""
+)
+
 private fun String.fixMinioUrl(): String =
-    this
-        .replace("10.0.3.2", "10.50.232.160")
-        .replace("10.0.2.2", "10.50.232.160")
-        .replace("localhost", "10.50.232.160")
-        .replace("127.0.0.1", "10.50.232.160")
-        .replace("192.168.1.50", "10.50.232.160")
-        .replace("192.168.1.108", "10.50.232.160")
-        .replace("172.20.10.3", "10.50.232.160")
-        .replace("192.168.1.140", "10.50.232.160")
-        .replace("172.17.19.194", "10.50.232.160")
+    ipPattern.replace(this, Constants.SERVER_IP)
 
 fun ExperimentSummaryResponse.toDomain(): Experiment = Experiment(
     id                       = id,
