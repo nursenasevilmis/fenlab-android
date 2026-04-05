@@ -2,57 +2,50 @@ package com.nursena.fenlab_android.core.util
 
 import android.app.DownloadManager
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.os.Environment
-import androidx.core.content.FileProvider
-import java.io.File
+import android.util.Log
 
 object PdfUtils {
 
-    // PDF dosyasını Downloads klasörüne kaydet yolu oluştur
-    fun getPdfSavePath(context: Context, experimentId: Long): String {
-        val downloadsDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            ?: context.filesDir
-        return File(downloadsDir, "deney_$experimentId.pdf").absolutePath
-    }
+    // ── DÜZELTME ────────────────────────────────────────────────────────────
+    // Eski fixUrl() kaldırıldı. URL artık PdfRepositoryImpl içinde
+    // toMinioUrl() ile doğru şekilde inşa ediliyor (Constants.MINIO_URL + path).
+    // Burada IP replace etmeye gerek yok.
+    // ────────────────────────────────────────────────────────────────────────
 
-    // Kaydedilen PDF'i harici uygulama ile aç (PDF viewer)
-    fun openPdf(context: Context, filePath: String): Boolean {
+    fun downloadPdfViaManager(context: Context, pdfUrl: String, fileName: String, token: String?): Long {
         return try {
-            val file = File(filePath)
-            if (!file.exists()) return false
+            Log.d("PdfUtils", "İndirilecek URL: $pdfUrl")
 
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/pdf")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (pdfUrl.isBlank()) {
+                Log.e("PdfUtils", "PDF URL boş!")
+                return -1L
             }
 
-            context.startActivity(intent)
-            true
+            val uri = Uri.parse(pdfUrl)
+
+            val request = DownloadManager.Request(uri).apply {
+                setTitle(fileName)
+                setDescription("PDF indiriliyor...")
+                setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                )
+                setDestinationInExternalFilesDir(
+                    context,
+                    Environment.DIRECTORY_DOWNLOADS,
+                    fileName
+                )
+                setMimeType("application/pdf")
+                addRequestHeader("Accept", "application/pdf")
+            }
+
+            val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            manager.enqueue(request)
+
         } catch (e: Exception) {
-            false
+            Log.e("PdfUtils", "PDF indirme hatası: ${e.message}", e)
+            -1L
         }
-    }
-
-    // PDF URL'sini DownloadManager ile indir (alternatif yöntem)
-    fun downloadPdfViaManager(context: Context, pdfUrl: String, fileName: String): Long {
-        val request = DownloadManager.Request(Uri.parse(pdfUrl)).apply {
-            setTitle(fileName)
-            setDescription("PDF indiriliyor...")
-            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-            setMimeType("application/pdf")
-        }
-
-        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        return manager.enqueue(request)
     }
 }

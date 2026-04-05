@@ -11,6 +11,7 @@ data class Experiment(
     val description: String,
     val gradeLevel: Int,
     val subject: SubjectType?,
+    val customSubject: String?,          // backend'den gelen ham ders adı (SubjectType değilse)
     val environment: EnvironmentType?,
     val topic: String?,
     val difficulty: DifficultyLevel,
@@ -22,7 +23,8 @@ data class Experiment(
     val commentCount: Long,
     val isFavoritedByCurrentUser: Boolean
 ) {
-    val displaySubject: String     get() = subject?.toDisplayString() ?: "Diğer"
+    // subject enum ise onun adını, değilse customSubject raw string'i göster
+    val displaySubject: String     get() = subject?.toDisplayString() ?: customSubject ?: "Diğer"
     val displayDifficulty: String  get() = difficulty.toDisplayString()
     val displayEnvironment: String get() = environment?.toDisplayString() ?: ""
     val displayRating: String      get() = averageRating?.let { "%.1f".format(it) } ?: "-"

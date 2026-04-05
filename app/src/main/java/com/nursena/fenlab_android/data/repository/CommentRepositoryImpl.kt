@@ -10,7 +10,7 @@ import com.nursena.fenlab_android.domain.model.Comment
 import com.nursena.fenlab_android.domain.model.PaginatedData
 import com.nursena.fenlab_android.domain.repository.CommentRepository
 import javax.inject.Inject
-
+// CommentRepositoryImpl.kt
 class CommentRepositoryImpl @Inject constructor(
     private val commentApi: CommentApi
 ) : BaseRepository(), CommentRepository {
@@ -31,7 +31,7 @@ class CommentRepositoryImpl @Inject constructor(
         commentApi.updateComment(commentId, request).toDomain()
     }
 
-    override suspend fun deleteComment(commentId: Long): ApiResult<Unit> = safeApiCall {
+    override suspend fun deleteComment(commentId: Long): ApiResult<Unit> = safeApiCallUnit {
         commentApi.deleteComment(commentId)
     }
 }

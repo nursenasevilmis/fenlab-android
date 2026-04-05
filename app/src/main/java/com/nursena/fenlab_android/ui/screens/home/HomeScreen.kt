@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +39,9 @@ import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.components.ExperimentCard
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
 import com.nursena.fenlab_android.ui.theme.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +72,18 @@ fun HomeScreen(
             last >= total - 3 && total > 0
         }
     }
+    // Detail sayfasından geri dönünce listeyi yenile
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshSilently()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) viewModel.loadNextPage()
     }
@@ -116,8 +132,8 @@ fun HomeScreen(
             else -> LazyColumn(
                 state          = listState,
                 contentPadding = PaddingValues(
-                    top    = 72.dp,
-                    bottom = 100.dp,
+                    top    = padding.calculateTopPadding() + 8.dp,
+                    bottom = padding.calculateBottomPadding() + 96.dp,
                     start  = 16.dp, end  = 16.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -135,7 +151,7 @@ fun HomeScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier.width(3.dp).height(18.dp)
-                                .background(FrostAccent, RoundedCornerShape(2.dp))
+                                .background(FenGreen, RoundedCornerShape(2.dp))
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("Tüm Deneyler", fontSize = 18.sp,
@@ -159,7 +175,7 @@ fun HomeScreen(
                             contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                color = FrostAccent, strokeWidth = 2.dp
+                                color = FenGreen, strokeWidth = 2.dp
                             )
                         }
                     }
@@ -172,12 +188,12 @@ fun HomeScreen(
     if (showFilterSheet) {
         ModalBottomSheet(
             onDismissRequest    = { showFilterSheet = false },
-            containerColor = Color(0xFFF8F9FB),
+            containerColor = Color(0xFFFFFFFF),
             dragHandle          = {
                 Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center) {
                     Box(Modifier.size(width = 40.dp, height = 4.dp)
-                        .background(Color(0xFFCFD8DC), RoundedCornerShape(2.dp)))
+                        .background(Color(0xFFDDDDDD), RoundedCornerShape(2.dp)))
                 }
             }
         ) {
@@ -211,12 +227,12 @@ fun HomeScreen(
     if (showSortSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSortSheet = false },
-            containerColor = Color(0xFFF8F9FB),
+            containerColor = Color(0xFFFFFFFF),
             dragHandle = {
                 Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center) {
                     Box(Modifier.size(width = 40.dp, height = 4.dp)
-                        .background(Color(0xFFCFD8DC), RoundedCornerShape(2.dp)))
+                        .background(Color(0xFFDDDDDD), RoundedCornerShape(2.dp)))
                 }
             }
         ) {
@@ -245,22 +261,15 @@ fun FenlabTopBar(
 ) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFFF5F7FA),
-            scrolledContainerColor = Color(0xFFF5F7FA)
+            containerColor = GradientStart,
+            scrolledContainerColor = GradientStart
         ),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier.size(30.dp)
-                        .background(
-                            Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)),
-                            androidx.compose.foundation.shape.CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) { Text("⚗", fontSize = 15.sp) }
+
                 Spacer(Modifier.width(8.dp))
-                Text("Fen", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = FrostAccent)
-                Text("Lab", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = LabOrange)
+                Text("Fen", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = FenGreen)
+                Text("Lab", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = LabOrangeNew)
             }
         },
         actions = {
@@ -268,7 +277,7 @@ fun FenlabTopBar(
             BadgedBox(
                 badge = {
                     if (activeFilterCount > 0) {
-                        Badge(containerColor = Orange400) {
+                        Badge(containerColor = FenGreen) {
                             Text("$activeFilterCount", fontSize = 9.sp, color = Color.White)
                         }
                     }
@@ -278,11 +287,11 @@ fun FenlabTopBar(
                     onClick  = onFilterClick,
                     shape    = RoundedCornerShape(20.dp),
                     colors   = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (activeFilterCount > 0) FrostAccent else TextSecondary,
+                        contentColor = if (activeFilterCount > 0) FenGreen else Color(0xFF444444),
                         containerColor = Color.Transparent
                     ),
                     border   = androidx.compose.foundation.BorderStroke(
-                        1.dp, if (activeFilterCount > 0) FrostAccent else Color(0xFFCFD8DC)
+                        1.dp, if (activeFilterCount > 0) FenGreen else Color(0xFFCCCCCC)
                     ),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                     modifier = Modifier.height(32.dp)
@@ -299,7 +308,7 @@ fun FenlabTopBar(
                 onClick  = onSortClick,
                 shape    = RoundedCornerShape(20.dp),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCFD8DC)),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDDDDDD)),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                 modifier = Modifier.height(32.dp)
             ) {
@@ -319,8 +328,7 @@ fun FenlabTopBar(
 fun WelcomeBanner(fullName: String) {
     Box(
         modifier = Modifier.fillMaxWidth()
-            .background(
-                Color.White.copy(alpha = 0.5f),
+            .background(FenGreen,
                 RoundedCornerShape(16.dp)
             )
             .padding(horizontal = 16.dp, vertical = 14.dp)
@@ -333,7 +341,7 @@ fun WelcomeBanner(fullName: String) {
             Column {
                 Text(
                     text       = "Merhaba${if (fullName.isNotBlank()) ", ${fullName.split(" ").first()}" else ""}! 👋",
-                    color      = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
+                    color      = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(4.dp))
                 val greetingMessages = remember {
@@ -349,7 +357,7 @@ fun WelcomeBanner(fullName: String) {
                     )
                 }
                 val greetingMsg = remember { greetingMessages.random() }
-                Text(greetingMsg, color = TextSecondary, fontSize = 12.sp)
+                Text(greetingMsg, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
             }
             Text("🔬", fontSize = 34.sp)
         }
@@ -385,14 +393,14 @@ private fun ActiveChip(label: String, onRemove: () -> Unit) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0x26F06292))
-            .border(1.dp, Color(0x80F06292), RoundedCornerShape(20.dp))
+            .background(Color(0x1A0D7D7C))
+            .border(1.dp, Color(0x600D7D7C), RoundedCornerShape(20.dp))
             .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(label, color = FrostAccent, fontSize = 12.sp)
-        Icon(Icons.Default.Close, null, tint = FrostAccent, modifier = Modifier.size(12.dp)
+        Text(label, color = FenGreen, fontSize = 12.sp)
+        Icon(Icons.Default.Close, null, tint = FenGreen, modifier = Modifier.size(12.dp)
             .clickable(onClick = onRemove))
     }
 }
@@ -489,14 +497,14 @@ private fun FilterSheetContent(
                 modifier = Modifier.weight(1f).height(46.dp),
                 shape    = RoundedCornerShape(12.dp),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCFD8DC))
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDDDDDD))
             ) { Text("Sıfırla") }
 
             Button(
                 onClick  = onApply,
                 modifier = Modifier.weight(1f).height(46.dp),
                 shape    = RoundedCornerShape(12.dp),
-                colors   = ButtonDefaults.buttonColors(containerColor = FrostAccent)
+                colors   = ButtonDefaults.buttonColors(containerColor = FenGreen)
             ) { Text("Uygula", color = Color.White, fontWeight = FontWeight.SemiBold) }
         }
     }
@@ -525,15 +533,15 @@ private fun <T> FilterChipRow(
         items.forEach { item ->
             val isSelected = selected == item
             val bgColor by animateColorAsState(
-                if (isSelected) Color(0xFFE3F2FD) else Color(0xFFECEFF1),
+                if (isSelected) FenGreenLight else Color(0xFFFFFFFF),
                 label = "chip_bg"
             )
             val borderColor by animateColorAsState(
-                if (isSelected) FrostAccent else Color(0xFFCFD8DC),
+                if (isSelected) FenGreen else Color(0xFFCCCCCC),
                 label = "chip_border"
             )
             val textColor by animateColorAsState(
-                if (isSelected) FrostAccent else TextSecondary,
+                if (isSelected) FenGreen else TextSecondary,
                 label = "chip_text"
             )
 
@@ -600,11 +608,11 @@ private fun SortSheetContent(
                     .padding(vertical = 4.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        if (isSelected) Color(0xFFE3F2FD) else Color.Transparent
+                        if (isSelected) FenGreenLight else Color.Transparent
                     )
                     .border(
                         1.dp,
-                        if (isSelected) Color(0xFFBBDEFB) else Color.Transparent,
+                        if (isSelected) FenGreenLight else Color.Transparent,
                         RoundedCornerShape(12.dp)
                     )
                     .clickable { onSelect(option.type) }
@@ -615,13 +623,13 @@ private fun SortSheetContent(
                 // Text(option.emoji, fontSize = 18.sp)
                 Text(
                     text       = option.label,
-                    color      = if (isSelected) FrostAccent else TextPrimary,
+                    color      = if (isSelected) FenGreen else TextPrimary,
                     fontSize   = 15.sp,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier   = Modifier.weight(1f)
                 )
                 if (isSelected) {
-                    Icon(Icons.Default.Check, null, tint = FrostAccent, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Check, null, tint = FenGreen, modifier = Modifier.size(18.dp))
                 }
             }
         }

@@ -35,6 +35,7 @@ fun SubjectChip(subject: SubjectType, modifier: Modifier = Modifier) {
         SubjectType.PHYSICS   -> ChipPhysics   to ChipPhysicsText
         SubjectType.CHEMISTRY -> ChipChemistry to ChipChemistryText
         SubjectType.BIOLOGY   -> ChipBiology   to ChipBiologyText
+        SubjectType.MATH      -> ChipMath   to ChipMathText
         SubjectType.OTHER     -> ChipOther     to ChipOtherText
     }
     Surface(modifier = modifier, color = bg, shape = RoundedCornerShape(8.dp)) {
@@ -66,7 +67,7 @@ fun DifficultyChip(difficulty: DifficultyLevel, modifier: Modifier = Modifier) {
 // ── EnvironmentChip ───────────────────────────────────────────────────────────
 @Composable
 fun EnvironmentChip(environment: EnvironmentType, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, color = Color(0xFFCFD8DC), shape = RoundedCornerShape(8.dp)) {
+    Surface(modifier = modifier, color = Color(0xFFDDDDDD), shape = RoundedCornerShape(8.dp)) {
         Text(
             text = environment.toDisplayString(),
             color = TextSecondary, fontSize = 11.sp,
@@ -78,7 +79,7 @@ fun EnvironmentChip(environment: EnvironmentType, modifier: Modifier = Modifier)
 // ── TagChip ───────────────────────────────────────────────────────────────────
 @Composable
 fun TagChip(text: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, color = Color(0xFFCFD8DC), shape = RoundedCornerShape(8.dp)) {
+    Surface(modifier = modifier, color = Color(0xFFDDDDDD), shape = RoundedCornerShape(8.dp)) {
         Text(
             text = text, fontSize = 11.sp, color = TextSecondary,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -89,9 +90,9 @@ fun TagChip(text: String, modifier: Modifier = Modifier) {
 // ── RoleBadge ─────────────────────────────────────────────────────────────────
 @Composable
 fun RoleBadge(displayRole: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, color = Teal100, shape = RoundedCornerShape(4.dp)) {
+    Surface(modifier = modifier, color = FenGreenLight, shape = RoundedCornerShape(4.dp)) {
         Text(
-            text = displayRole, color = FrostAccent,
+            text = displayRole, color = FenGreen,
             fontSize = 10.sp, fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
         )
@@ -102,7 +103,7 @@ fun RoleBadge(displayRole: String, modifier: Modifier = Modifier) {
 @Composable
 fun UserAvatar(user: UserSummary, size: Dp = 36.dp, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.size(size).background(FrostAccentDark, CircleShape),
+        modifier = modifier.size(size).background(FenGreen, CircleShape),
         contentAlignment = Alignment.Center
     ) {
         if (user.profileImageUrl != null) {
@@ -169,7 +170,7 @@ fun FavoriteButton(isFavorited: Boolean, onClick: () -> Unit, modifier: Modifier
 @Composable
 fun LoadingIndicator(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = FrostAccent, strokeWidth = 2.dp)
+        CircularProgressIndicator(color = FenGreen, strokeWidth = 2.dp)
     }
 }
 
@@ -188,7 +189,7 @@ fun ErrorMessage(message: String, onRetry: (() -> Unit)? = null, modifier: Modif
             Spacer(Modifier.height(12.dp))
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = FrostAccent)
+                colors = ButtonDefaults.buttonColors(containerColor = FenGreen)
             ) { Text("Tekrar Dene", color = Color.White) }
         }
     }

@@ -64,6 +64,13 @@ class TokenManager @Inject constructor(
         }
     }
 
+    // Profil resmi URL'ini güncelle (upload sonrası)
+    suspend fun updateProfileImageUrl(url: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_PROFILE_IMAGE] = url
+        }
+    }
+
     // Logout — arama geçmişi kullanıcıya özel saklandığı için korunur
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->

@@ -4,6 +4,7 @@ import com.nursena.fenlab_android.data.remote.dto.request.CommentCreateRequest
 import com.nursena.fenlab_android.data.remote.dto.request.CommentUpdateRequest
 import com.nursena.fenlab_android.data.remote.dto.response.CommentResponse
 import com.nursena.fenlab_android.data.remote.dto.response.PaginatedResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -36,5 +37,5 @@ interface CommentApi {
     @DELETE("api/comments/{commentId}")
     suspend fun deleteComment(
         @Path("commentId") commentId: Long
-    )
+    ): Response<Unit>
 }

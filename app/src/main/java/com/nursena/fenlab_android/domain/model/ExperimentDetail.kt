@@ -11,6 +11,7 @@ data class ExperimentDetail(
     val description: String,
     val gradeLevel: Int,
     val subject: SubjectType?,
+    val customSubject: String?,          // backend'den gelen ham ders adı
     val environment: EnvironmentType?,
     val topic: String?,
     val difficulty: DifficultyLevel,
@@ -32,7 +33,7 @@ data class ExperimentDetail(
     val sortedSteps: List<Step>      get() = steps.sortedBy { it.stepOrder }
     val videoMedia: Media?           get() = media.filter { it.isVideo }.minByOrNull { it.mediaOrder }
     val imageMediaList: List<Media>  get() = media.filter { it.isImage }.sortedBy { it.mediaOrder }
-    val displaySubject: String       get() = subject?.toDisplayString() ?: "Diğer"
+    val displaySubject: String       get() = subject?.toDisplayString() ?: customSubject ?: "Diğer"
     val displayDifficulty: String    get() = difficulty.toDisplayString()
     val displayEnvironment: String   get() = environment?.toDisplayString() ?: ""
     val displayRating: String        get() = averageRating?.let { "%.1f".format(it) } ?: "-"

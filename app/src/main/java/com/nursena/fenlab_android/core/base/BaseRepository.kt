@@ -3,6 +3,7 @@ package com.nursena.fenlab_android.core.base
 import com.nursena.fenlab_android.core.network.ApiResult
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 
 abstract class BaseRepository {
@@ -11,10 +12,8 @@ abstract class BaseRepository {
         call: suspend () -> T
     ): ApiResult<T> = try {
         ApiResult.Success(call())
-
     } catch (e: CancellationException) {
-        throw e   // coroutine iptali hata değil — sessizce yukarı fırlat
-
+        throw e
     } catch (e: HttpException) {
         val message = when (e.code()) {
             400 -> "Geçersiz istek."
@@ -27,10 +26,33 @@ abstract class BaseRepository {
             else -> "Beklenmeyen bir hata oluştu. (${e.code()})"
         }
         ApiResult.Error(message = message, code = e.code())
-
     } catch (e: IOException) {
         ApiResult.Error(message = "İnternet bağlantınızı kontrol edin.")
+    } catch (e: Exception) {
+        ApiResult.Error(message = e.message ?: "Bilinmeyen bir hata oluştu.")
+    }
 
+    protected suspend fun safeApiCallUnit(
+        call: suspend () -> Response<Unit>
+    ): ApiResult<Unit> = try {
+        val response = call()
+        if (response.isSuccessful) {
+            ApiResult.Success(Unit)
+        } else {
+            val message = when (response.code()) {
+                400 -> "Geçersiz istek."
+                401 -> "Oturum süreniz doldu."
+                403 -> "Bu işlem için yetkiniz yok."
+                404 -> "İstenen içerik bulunamadı."
+                500 -> "Sunucu hatası."
+                else -> "Beklenmeyen hata. (${response.code()})"
+            }
+            ApiResult.Error(message = message, code = response.code())
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: IOException) {
+        ApiResult.Error(message = "İnternet bağlantınızı kontrol edin.")
     } catch (e: Exception) {
         ApiResult.Error(message = e.message ?: "Bilinmeyen bir hata oluştu.")
     }

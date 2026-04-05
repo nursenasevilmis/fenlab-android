@@ -5,40 +5,40 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val FenlabFrostColorScheme = lightColorScheme(
-    primary              = FrostAccent,         // #64B5F6 — gökyüzü mavisi
-    onPrimary            = Color.White,
-    primaryContainer     = FrostAccentLight,    // #BBDEFB
-    onPrimaryContainer   = Color(0xFF0D47A1),
-    secondary            = LabOrange,           // #FF8F00 — turuncu
-    onSecondary          = Color.White,
-    secondaryContainer   = LabOrangeLight,      // #FFECB3
-    onSecondaryContainer = Color(0xFF4E2600),
-    tertiary             = Color(0xFF66BB6A),   // soft yeşil
-    onTertiary           = Color.White,
-    background           = LightBg,             // #F5F7FA
-    onBackground         = TextPrimary,         // #37474F
-    surface              = GlassSurface3,       // %70 beyaz cam
-    onSurface            = TextPrimary,
-    surfaceVariant       = GlassSurface2,       // %60 beyaz
-    onSurfaceVariant     = TextSecondary,
-    surfaceTint          = FrostAccent,
-    outline              = Color(0xFFB0BEC5),   // Blue Gray 200
-    outlineVariant       = GlassBorder,
-    error                = Red400,
-    onError              = Color.White,
+private val FenlabColorScheme = lightColorScheme(
+    primary              = Color(0xFF0D7D7C),
+    onPrimary            = Color(0xFFFFFFFF),
+    primaryContainer     = Color(0xFFE0F4F4),
+    onPrimaryContainer   = Color(0xFF064040),
+    secondary            = Color(0xFFF6A923),
+    onSecondary          = Color(0xFFFFFFFF),
+    secondaryContainer   = Color(0xFFFFF3DB),
+    onSecondaryContainer = Color(0xFF7A4500),
+    tertiary             = Color(0xFF1A9B9A),
+    onTertiary           = Color(0xFFFFFFFF),
+    background           = Color(0xFFFFFFFF),
+    onBackground         = Color(0xFF111111),
+    surface              = Color(0xFFFFFFFF),
+    onSurface            = Color(0xFF111111),
+    surfaceVariant       = Color(0xFFF5F5F5),
+    onSurfaceVariant     = Color(0xFF555555),
+    surfaceTint          = Color(0xFF0D7D7C),
+    outline              = Color(0xFFDDDDDD),
+    outlineVariant       = Color(0xFFEEEEEE),
+    error                = Color(0xFFE53935),
+    onError              = Color(0xFFFFFFFF),
     errorContainer       = Color(0xFFFFDAD6),
     onErrorContainer     = Color(0xFF410002),
-    inverseSurface       = TextPrimary,
-    inverseOnSurface     = LightBg,
-    inversePrimary       = FrostAccentLight,
+    inverseSurface       = Color(0xFF111111),
+    inverseOnSurface     = Color(0xFFFFFFFF),
+    inversePrimary       = Color(0xFF80CFCE),
     scrim                = Color(0x52000000),
 )
 
 @Composable
 fun FenlabAndroidTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = FenlabFrostColorScheme,
+        colorScheme = FenlabColorScheme,
         typography  = Typography,
         content     = content
     )

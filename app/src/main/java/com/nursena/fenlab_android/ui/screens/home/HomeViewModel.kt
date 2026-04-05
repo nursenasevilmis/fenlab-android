@@ -171,4 +171,40 @@ class HomeViewModel @Inject constructor(
         }
         loadExperiments()
     }
+
+    /**
+     * Detail sayfasından geri dönüldüğünde (ON_RESUME) çağrılır.
+     * Yükleme göstergesi açmadan listeyi arka planda günceller.
+     */
+    fun refreshSilently() {
+        val s = _uiState.value
+        if (s.isLoading || s.isLoadingMore) return
+        viewModelScope.launch {
+            when (val result = experimentRepository.getAllExperiments(
+                search        = s.searchQuery.ifBlank { null },
+                subject       = s.selectedSubject?.name,
+                environment   = s.selectedEnvironment?.name,
+                difficulty    = s.selectedDifficulty?.name,
+                minGradeLevel = s.selectedGradeGroup?.minGrade,
+                maxGradeLevel = s.selectedGradeGroup?.maxGrade,
+                sortType      = s.sortType.name,
+                page          = 0,
+                size          = 20
+            )) {
+                is ApiResult.Success -> {
+                    val data = result.data
+                    _uiState.update {
+                        it.copy(
+                            experiments = data.content,
+                            currentPage = 0,
+                            hasNextPage = data.hasNextPage,
+                            error       = null
+                        )
+                    }
+                }
+                is ApiResult.Error   -> Unit // Sessizce başarısız ol
+                is ApiResult.Loading -> Unit
+            }
+        }
+    }
 }

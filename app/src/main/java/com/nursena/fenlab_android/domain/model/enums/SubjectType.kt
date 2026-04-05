@@ -5,6 +5,7 @@ enum class SubjectType {
     PHYSICS,
     CHEMISTRY,
     BIOLOGY,
+    MATH,
     OTHER;
 
     fun toDisplayString(): String = when (this) {
@@ -12,6 +13,7 @@ enum class SubjectType {
         PHYSICS   -> "Fizik"
         CHEMISTRY -> "Kimya"
         BIOLOGY   -> "Biyoloji"
+        MATH      -> "Matematik"
         OTHER     -> "Diğer"
     }
 }

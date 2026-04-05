@@ -5,6 +5,7 @@ import com.nursena.fenlab_android.data.remote.dto.request.ExperimentUpdateReques
 import com.nursena.fenlab_android.data.remote.dto.response.ExperimentDetailResponse
 import com.nursena.fenlab_android.data.remote.dto.response.ExperimentSummaryResponse
 import com.nursena.fenlab_android.data.remote.dto.response.PaginatedResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -47,7 +48,7 @@ interface ExperimentApi {
     @DELETE("api/experiments/{experimentId}")
     suspend fun deleteExperiment(
         @Path("experimentId") experimentId: Long
-    )
+    ): Response<Unit>
 
     @GET("api/experiments/user/{userId}")
     suspend fun getUserExperiments(

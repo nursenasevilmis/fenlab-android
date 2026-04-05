@@ -16,47 +16,63 @@ private val ipPattern = Regex(
 private fun String.fixMinioUrl(): String =
     ipPattern.replace(this, Constants.SERVER_IP)
 
-fun ExperimentSummaryResponse.toDomain(): Experiment = Experiment(
-    id                       = id,
-    author                   = user.toDomain(),
-    title                    = title,
-    description              = description,
-    gradeLevel               = gradeLevel,
-    subject                  = subject?.let { runCatching { SubjectType.valueOf(it) }.getOrNull() },
-    environment              = environment?.let { runCatching { EnvironmentType.valueOf(it) }.getOrNull() },
-    topic                    = topic,
-    difficulty               = runCatching { DifficultyLevel.valueOf(difficulty) }.getOrDefault(DifficultyLevel.MEDIUM),
-    createdAt                = createdAt,
-    thumbnailUrl             = thumbnailUrl?.fixMinioUrl(),
-    videoUrl                 = videoUrl?.fixMinioUrl(),
-    favoriteCount            = favoriteCount,
-    averageRating            = averageRating,
-    commentCount             = commentCount,
-    isFavoritedByCurrentUser = isFavoritedByCurrentUser
-)
+// Subject string'i enum'a çevirir, olmazsa null döner (customSubject olarak saklanır)
+private fun parseSubject(raw: String?): SubjectType? =
+    raw?.let { runCatching { SubjectType.valueOf(it.uppercase()) }.getOrNull() }
 
-fun ExperimentDetailResponse.toDomain(): ExperimentDetail = ExperimentDetail(
-    id                       = id,
-    author                   = user.toDomain(),
-    title                    = title,
-    description              = description,
-    gradeLevel               = gradeLevel,
-    subject                  = subject?.let { runCatching { SubjectType.valueOf(it) }.getOrNull() },
-    environment              = environment?.let { runCatching { EnvironmentType.valueOf(it) }.getOrNull() },
-    topic                    = topic,
-    difficulty               = runCatching { DifficultyLevel.valueOf(difficulty) }.getOrDefault(DifficultyLevel.MEDIUM),
-    expectedResult           = expectedResult,
-    safetyNotes              = safetyNotes,
-    isPublished              = isPublished,
-    createdAt                = createdAt,
-    updatedAt                = updatedAt,
-    materials                = materials.map { it.toDomain() },
-    steps                    = steps.map { it.toDomain() },
-    media                    = media.map { it.toDomain() },
-    favoriteCount            = favoriteCount,
-    averageRating            = averageRating,
-    commentCount             = commentCount,
-    questionCount            = questionCount,
-    isFavoritedByCurrentUser = isFavoritedByCurrentUser,
-    currentUserRating        = currentUserRating
-)
+// Enum'a çevrilemiyorsa raw string'i customSubject olarak tut
+private fun customSubjectOf(raw: String?, parsed: SubjectType?): String? =
+    if (raw != null && parsed == null) raw else null
+
+fun ExperimentSummaryResponse.toDomain(): Experiment {
+    val parsedSubject = parseSubject(subject)
+    return Experiment(
+        id                       = id,
+        author                   = user.toDomain(),
+        title                    = title,
+        description              = description,
+        gradeLevel               = gradeLevel,
+        subject                  = parsedSubject,
+        customSubject            = customSubjectOf(subject, parsedSubject),
+        environment              = environment?.let { runCatching { EnvironmentType.valueOf(it) }.getOrNull() },
+        topic                    = topic,
+        difficulty               = runCatching { DifficultyLevel.valueOf(difficulty) }.getOrDefault(DifficultyLevel.MEDIUM),
+        createdAt                = createdAt,
+        thumbnailUrl             = thumbnailUrl?.fixMinioUrl(),
+        videoUrl                 = videoUrl?.fixMinioUrl(),
+        favoriteCount            = favoriteCount,
+        averageRating            = averageRating,
+        commentCount             = commentCount,
+        isFavoritedByCurrentUser = isFavoritedByCurrentUser
+    )
+}
+
+fun ExperimentDetailResponse.toDomain(): ExperimentDetail {
+    val parsedSubject = parseSubject(subject)
+    return ExperimentDetail(
+        id                       = id,
+        author                   = user.toDomain(),
+        title                    = title,
+        description              = description,
+        gradeLevel               = gradeLevel,
+        subject                  = parsedSubject,
+        customSubject            = customSubjectOf(subject, parsedSubject),
+        environment              = environment?.let { runCatching { EnvironmentType.valueOf(it) }.getOrNull() },
+        topic                    = topic,
+        difficulty               = runCatching { DifficultyLevel.valueOf(difficulty) }.getOrDefault(DifficultyLevel.MEDIUM),
+        expectedResult           = expectedResult,
+        safetyNotes              = safetyNotes,
+        isPublished              = isPublished,
+        createdAt                = createdAt,
+        updatedAt                = updatedAt,
+        materials                = materials.map { it.toDomain() },
+        steps                    = steps.map { it.toDomain() },
+        media                    = media.map { it.toDomain() },
+        favoriteCount            = favoriteCount,
+        averageRating            = averageRating,
+        commentCount             = commentCount,
+        questionCount            = questionCount,
+        isFavoritedByCurrentUser = isFavoritedByCurrentUser,
+        currentUserRating        = currentUserRating
+    )
+}

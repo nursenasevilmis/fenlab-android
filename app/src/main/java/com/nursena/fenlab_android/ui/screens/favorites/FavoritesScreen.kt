@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.nursena.fenlab_android.core.toMinioUrl
 import com.nursena.fenlab_android.core.base.UiEvent
 import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.ui.components.ErrorMessage
@@ -65,7 +66,7 @@ fun FavoritesScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                //.background(Brush.verticalGradient(listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2))))
+                //.background(Brush.verticalGradient(listOf(GradientStart, GradientEnd)))
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
@@ -125,7 +126,7 @@ private fun EmptyFavorites() {
             modifier = Modifier
                 .size(90.dp)
                 .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(Color(0x26EF5350), Color(0xFFF8F9FB)))),
+                .background(Brush.radialGradient(listOf(Color(0x26EF5350), Color(0xFFFFFFFF)))),
             contentAlignment = Alignment.Center
         ) {
             Text("❤️", fontSize = 40.sp)
@@ -160,7 +161,7 @@ private fun FavoriteCard(
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },
-            containerColor = Color(0xFFF8F9FB),
+            containerColor = Color(0xFFFFFFFF),
             title = { Text("Favoriden Kaldır", color = TextPrimary, fontWeight = FontWeight.SemiBold) },
             text = { Text("Bu deneyi favorilerden kaldırmak istiyor musun?", color = TextSecondary, fontSize = 13.sp) },
             confirmButton = {
@@ -179,8 +180,8 @@ private fun FavoriteCard(
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onCardClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB)),
-        elevation = CardDefaults.cardElevation(0.dp)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(10.dp),
@@ -191,7 +192,7 @@ private fun FavoriteCard(
             Box(
                 modifier = Modifier.size(width = 88.dp, height = 72.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFFF8F9FB), Color(0xFFF8F9FB))))
+                    .background(Brush.linearGradient(listOf(Color(0xFFFFFFFF), Color(0xFFFFFFFF))))
             ) {
                 AsyncImage(
                     model = experiment.thumbnailUrl ?: experiment.videoUrl,
@@ -231,15 +232,25 @@ private fun FavoriteCard(
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Box(
-                        modifier = Modifier.size(16.dp).background(FrostAccentDark, CircleShape),
+                        modifier = Modifier.size(16.dp).clip(CircleShape)
+                            .background(FenGreenDark),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            experiment.author.displayName.take(1).uppercase(),
-                            color = Color.White,
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        if (experiment.author.profileImageUrl != null) {
+                            AsyncImage(
+                                model              = experiment.author.profileImageUrl.toMinioUrl(),
+                                contentDescription = null,
+                                contentScale       = ContentScale.Crop,
+                                modifier           = Modifier.fillMaxSize().clip(CircleShape)
+                            )
+                        } else {
+                            Text(
+                                experiment.author.displayName.take(1).uppercase(),
+                                color      = Color.White,
+                                fontSize   = 7.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                     Text(
                         experiment.author.displayName,
@@ -266,7 +277,7 @@ private fun FavoriteCard(
                                 .background(Color(0x1FF06292), RoundedCornerShape(6.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Text(subject.toDisplayString(), color = FrostAccent, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                            Text(subject.toDisplayString(), color = FenGreen, fontSize = 10.sp, fontWeight = FontWeight.Medium)
                         }
                     }
                 }

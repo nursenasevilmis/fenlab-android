@@ -36,12 +36,12 @@ sealed class BottomNavItem(
 }
 
 // Modern Frost bottom bar — temaya tam uyumlu, ne çok açık ne çok koyu
-private val BarBg         = Color(0xDDF5F7FA)   // %87 GradientStart — buzlu cam
-private val BarBorder     = Color(0xE6FFFFFF)   // %90 beyaz — parlak kenar
+private val BarBg         = Color(0xFFFFFFFF)   // beyaz
+private val BarBorder     = Color(0xFFEEEEEE)
 private val BarShadow     = Color(0x14000000)   // hafif gölge
-private val IconActive    = Color(0xFF1E88E5)   // FrostAccentDark — seçili ikon
-private val IconBgActive  = Color(0x1A64B5F6)   // %10 FrostAccent highlight
-private val IconInactive  = Color(0xFF90A4AE)   // Blue Gray 300 — seçilmemiş
+private val IconActive    = Color(0xFF0D7D7C)
+private val IconBgActive  = Color(0x1A0D7D7C)
+private val IconInactive  = Color(0xFFAAAAAA)
 
 @Composable
 fun FenlabBottomBar(
@@ -77,7 +77,7 @@ fun FenlabBottomBar(
                 .padding(bottom = 10.dp)
                 .fillMaxWidth()
                 .height(62.dp)
-                .shadow(12.dp, RoundedCornerShape(31.dp), ambientColor = Color(0x1A000000))
+                .shadow(8.dp, RoundedCornerShape(31.dp), ambientColor = Color(0x18000000))
                 .clip(RoundedCornerShape(31.dp))
                 .background(BarBg)
         ) {
@@ -88,7 +88,7 @@ fun FenlabBottomBar(
                     .height(1.dp)
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color.Transparent, BarBorder, BarBorder, Color.Transparent)
+                            listOf(Color.Transparent, Color(0xFFEEEEEE), Color(0xFFEEEEEE), Color.Transparent)
                         )
                     )
             )
@@ -132,7 +132,7 @@ fun FenlabBottomBar(
                     .shadow(10.dp, CircleShape)
                     .clip(CircleShape)
                     .background(
-                        Brush.linearGradient(listOf(FrostAccent, FrostAccentDark))
+                        Brush.linearGradient(listOf(FenGreen, FenGreenDark))
                     )
                     .clickable(onClick = onAddClick),
                 contentAlignment = Alignment.Center

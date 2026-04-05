@@ -2,7 +2,6 @@ package com.nursena.fenlab_android.ui.screens.add
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -27,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,7 +70,7 @@ fun AddExperimentScreen(
         return
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
+    Column(modifier = Modifier.fillMaxSize().background(GradientStart)) {
         AddTopBar(
             currentStep = uiState.currentStep,
             onBack      = { if (uiState.currentStep == 0) onBack() else viewModel.prevStep() }
@@ -139,7 +139,7 @@ private fun AddTopBar(currentStep: Int, onBack: () -> Unit) {
         Spacer(Modifier.width(8.dp))
         Text("Deney Ekle", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.width(4.dp))
-        Text("+", color = FrostAccent, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text("+", color = FenGreen, fontSize = 18.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -149,7 +149,7 @@ private fun AddTopBar(currentStep: Int, onBack: () -> Unit) {
 @Composable
 private fun StepIndicator(currentStep: Int) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(Color(0xFFF8F9FB))
+        modifier = Modifier.fillMaxWidth().background(Color(0xFFFFFFF))
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -161,11 +161,11 @@ private fun StepIndicator(currentStep: Int) {
                 )
                 Box(
                     modifier = Modifier.weight(1f).height(3.dp).clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFFCFD8DC))
+                        .background(Color(0xFFDDDDDD))
                 ) {
                     Box(
                         modifier = Modifier.fillMaxHeight().fillMaxWidth(progress)
-                            .background(Brush.horizontalGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(2.dp))
+                            .background(Brush.horizontalGradient(listOf(FenGreen, FenGreenDark)), RoundedCornerShape(2.dp))
                     )
                 }
             }
@@ -175,7 +175,7 @@ private fun StepIndicator(currentStep: Int) {
             stepLabels.forEachIndexed { i, label ->
                 Text(
                     text      = label,
-                    color     = if (i <= currentStep) FrostAccent else TextSecondary,
+                    color     = if (i <= currentStep) FenGreen else TextSecondary,
                     fontSize  = 9.sp,
                     fontWeight = if (i == currentStep) FontWeight.Bold else FontWeight.Normal,
                     modifier  = Modifier.weight(1f),
@@ -212,7 +212,9 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
             Column(modifier = Modifier.weight(1f)) {
                 AddLabel("Ders")
                 DropdownSelector(
-                    label    = state.subject?.toDisplayString() ?: "Seç...",
+                    label    = if (state.subject == SubjectType.OTHER && state.customSubject.isNotBlank())
+                        state.customSubject
+                    else state.subject?.toDisplayString() ?: "Seç...",
                     items    = SubjectType.entries,
                     selected = state.subject,
                     display  = { it.toDisplayString() },
@@ -229,6 +231,15 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
                     onSelect = vm::onDifficultyChange
                 )
             }
+        }
+        // Diğer seçilince özel ders adı — tam genişlikte
+        if (state.subject == SubjectType.OTHER) {
+            Spacer(Modifier.height(8.dp))
+            AddTextField(
+                value         = state.customSubject,
+                onValueChange = vm::onCustomSubjectChange,
+                placeholder   = "Ders adını yaz..."
+            )
         }
         Spacer(Modifier.height(10.dp))
 
@@ -279,7 +290,7 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
                 modifier              = Modifier.padding(bottom = 8.dp)
             ) {
                 Box(
-                    modifier = Modifier.size(26.dp).background(Color(0xFFCFD8DC), CircleShape),
+                    modifier = Modifier.size(26.dp).background(Color(0xFFDDDDDD), CircleShape),
                     contentAlignment = Alignment.Center
                 ) { Text("${index + 1}", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
 
@@ -291,7 +302,7 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
                     modifier = Modifier.size(30.dp)
                 ) {
                     Icon(Icons.Default.Close, null,
-                        tint     = if (state.materials.size > 1) Red400 else Color(0xFFCFD8DC),
+                        tint     = if (state.materials.size > 1) Red400 else Color(0xFFDDDDDD),
                         modifier = Modifier.size(14.dp))
                 }
             }
@@ -311,7 +322,7 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
             ) {
                 Box(
                     modifier = Modifier.size(26.dp).clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark))),
+                        .background(Brush.linearGradient(listOf(FenGreen, FenGreenDark))),
                     contentAlignment = Alignment.Center
                 ) { Text("${index + 1}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
 
@@ -340,9 +351,11 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
         uri?.let { vm.uploadVideo(context, it) }
     }
 
+    // Kapak: galeri → upload (kırpma yok)
     val coverLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { vm.uploadCoverImage(context, it) }
     }
+    // Ek görsel: galeri → upload (kırpma yok)
     val additionalLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { vm.uploadAdditionalImage(context, it) }
     }
@@ -421,9 +434,9 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
                 }
                 if (state.isUploadingAdditional) {
                     item {
-                        Box(modifier = Modifier.size(110.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFECEFF1)),
+                        Box(modifier = Modifier.size(110.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFF2F4F5)),
                             contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = FrostAccent, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(color = FenGreen, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
                         }
                     }
                 }
@@ -431,15 +444,15 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
                     item {
                         Box(
                             modifier = Modifier.size(110.dp).clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFECEFF1))
-                                .border(1.dp, Brush.linearGradient(listOf(Color(0x66F06292), Color(0x4DEC407A))), RoundedCornerShape(10.dp))
+                                .background(Color(0xFFF2F4F5))
+                                .border(1.dp, Brush.linearGradient(listOf(Color(0x66418765), Color(0x4D418765))), RoundedCornerShape(10.dp))
                                 .clickable { additionalLauncher.launch("image/*") },
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.Add, null, tint = FrostAccent, modifier = Modifier.size(22.dp))
+                                Icon(Icons.Default.Add, null, tint = FenGreen, modifier = Modifier.size(22.dp))
                                 Spacer(Modifier.height(3.dp))
-                                Text("Ekle", color = FrostAccent, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                                Text("Ekle", color = FenGreen, fontSize = 10.sp, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -448,13 +461,13 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
         } else {
             Box(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                    .border(1.dp, Brush.linearGradient(listOf(Color(0xFFCFD8DC), Color(0x4DF06292))), RoundedCornerShape(12.dp))
-                    .background(Color(0xFFECEFF1)).clickable { additionalLauncher.launch("image/*") }
+                    .border(1.dp, Brush.linearGradient(listOf(Color(0xFFDDDDDD), Color(0x4D418765))), RoundedCornerShape(12.dp))
+                    .background(Color(0xFFF2F4F5)).clickable { additionalLauncher.launch("image/*") }
                     .padding(vertical = 22.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Add, null, tint = FrostAccent, modifier = Modifier.size(26.dp))
+                    Icon(Icons.Default.Add, null, tint = FenGreen, modifier = Modifier.size(26.dp))
                     Spacer(Modifier.height(5.dp))
                     Text("Ek Görsel Yükle", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     Text("Deneyin farklı aşamalarını göster", color = TextSecondary, fontSize = 10.sp)
@@ -478,18 +491,18 @@ private fun UploadBox(
     Box(
         modifier = Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Brush.linearGradient(listOf(Color(0xFFCFD8DC), Color(0x4DF06292))), RoundedCornerShape(12.dp))
-            .background(Color(0xFFECEFF1))
+            .border(1.dp, Brush.linearGradient(listOf(Color(0xFFDDDDDD), Color(0x4D418765))), RoundedCornerShape(12.dp))
+            .background(Color(0xFFF2F4F5))
             .clickable(enabled = !isUploading) { onSelect() }
             .padding(vertical = 24.dp),
         contentAlignment = Alignment.Center
     ) {
         if (isUploading) {
-            CircularProgressIndicator(color = FrostAccent, modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+            CircularProgressIndicator(color = FenGreen, modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
         } else if (doneUrl != null) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.CheckCircle, null, tint = FrostAccent, modifier = Modifier.size(18.dp))
-                Text("Yüklendi ✓", color = FrostAccent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.CheckCircle, null, tint = FenGreen, modifier = Modifier.size(18.dp))
+                Text("Yüklendi ✓", color = FenGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -501,7 +514,7 @@ private fun UploadBox(
                     Spacer(Modifier.height(10.dp))
                     Button(
                         onClick = onSelect, shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = FrostAccent),
+                        colors = ButtonDefaults.buttonColors(containerColor = FenGreen),
                         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp)
                     ) { Text(buttonText, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
                 }
@@ -517,7 +530,7 @@ private fun UploadBox(
 private fun Step3Preview(state: AddExperimentUiState) {
     Box(
         modifier = Modifier.fillMaxWidth().height(170.dp)
-            .clip(RoundedCornerShape(14.dp)).background(Color(0xFFF8F9FB))
+            .clip(RoundedCornerShape(14.dp)).background(Color(0xFFF2F4F5))
     ) {
         if (state.coverImageUrl != null) {
             AsyncImage(state.coverImageUrl, null, contentScale = ContentScale.Crop,
@@ -535,7 +548,7 @@ private fun Step3Preview(state: AddExperimentUiState) {
 
     Spacer(Modifier.height(12.dp))
 
-    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB))) {
+    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F4F5))) {
         Column(Modifier.padding(14.dp)) {
             Text(state.title.ifBlank { "Deney Başlığı" },
                 color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -551,10 +564,10 @@ private fun Step3Preview(state: AddExperimentUiState) {
 
     Spacer(Modifier.height(8.dp))
 
-    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB))) {
+    Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F4F5))) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text("📊 Özet", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFCFD8DC))
+            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFDDDDDD))
             SummaryRow("🧪", "${state.materials.count { it.name.isNotBlank() }} malzeme")
             SummaryRow("📌", "${state.steps.count { it.text.isNotBlank() }} adım")
             SummaryRow("📚", "${state.subject?.toDisplayString() ?: "—"} · ${state.difficulty.toDisplayString()} · ${state.environment?.toDisplayString() ?: "—"}")
@@ -583,7 +596,7 @@ private fun SuccessScreen(
     onNewExperiment: () -> Unit,
     onHome: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
+    Box(modifier = Modifier.fillMaxSize().background(GradientStart)) {
         // Sol üst geri
         IconButton(
             onClick  = onHome,
@@ -618,7 +631,7 @@ private fun SuccessScreen(
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize()
-                        .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(12.dp)),
+                        .background(Brush.linearGradient(listOf(FenGreen, FenGreenDark)), RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -634,8 +647,8 @@ private fun SuccessScreen(
             OutlinedButton(
                 onClick  = onNewExperiment,
                 shape    = RoundedCornerShape(12.dp),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0x80F06292)),
-                colors   = ButtonDefaults.outlinedButtonColors(contentColor = FrostAccent),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0x80418765)),
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = FenGreen),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
             ) {
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
@@ -666,7 +679,7 @@ private fun BottomButtons(
     onBack: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().background(Color(0xFFF8F9FB))
+        modifier = Modifier.fillMaxWidth().background(Color(0xFFF2F4F5))
             .padding(horizontal = 16.dp, vertical = 10.dp).navigationBarsPadding(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -675,7 +688,7 @@ private fun BottomButtons(
                 onClick = onBack,
                 modifier = Modifier.weight(1f).height(44.dp),
                 shape    = RoundedCornerShape(12.dp),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCFD8DC)),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDDDDDD)),
                 colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
             ) {
                 Icon(Icons.Default.ArrowBackIosNew, null, modifier = Modifier.size(13.dp))
@@ -694,7 +707,7 @@ private fun BottomButtons(
         ) {
             Box(
                 modifier = Modifier.fillMaxSize()
-                    .background(Brush.linearGradient(listOf(FrostAccent, FrostAccentDark)), RoundedCornerShape(12.dp)),
+                    .background(Brush.linearGradient(listOf(FenGreen, FenGreenDark)), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (isLoading) {
@@ -723,7 +736,7 @@ private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Un
     Card(
         modifier  = Modifier.fillMaxWidth(),
         shape     = RoundedCornerShape(12.dp),
-        colors    = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FB)),
+        colors    = CardDefaults.cardColors(containerColor = Color(0xFFFFFFF)),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(Modifier.padding(14.dp)) {
@@ -757,12 +770,12 @@ private fun AddTextField(
         textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
         shape = RoundedCornerShape(10.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor   = Color(0xFFECEFF1),
-            unfocusedContainerColor = Color(0xFFECEFF1),
+            focusedContainerColor   = Color(0xFFF2F4F5),
+            unfocusedContainerColor = Color(0xFFF2F4F5),
             focusedTextColor        = TextPrimary,
             unfocusedTextColor      = TextPrimary,
-            cursorColor             = FrostAccent,
-            focusedIndicatorColor   = FrostAccent,
+            cursorColor             = FenGreen,
+            focusedIndicatorColor   = FenGreen,
             unfocusedIndicatorColor = Color.Transparent
         )
     )
@@ -780,8 +793,8 @@ private fun <T> DropdownSelector(
     Box {
         Row(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFFECEFF1))
-                .border(1.dp, if (selected != null) Color(0x66F06292) else Color.Transparent, RoundedCornerShape(10.dp))
+                .background(Color(0xFFF2F4F5))
+                .border(1.dp, if (selected != null) Color(0x66418765) else Color.Transparent, RoundedCornerShape(10.dp))
                 .clickable { expanded = true }
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -791,12 +804,12 @@ private fun <T> DropdownSelector(
             Icon(Icons.Default.ExpandMore, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false },
-            modifier = Modifier.background(Color(0xFFECEFF1))) {
+            modifier = Modifier.background(Color(0xFFF2F4F5))) {
             items.forEach { item ->
                 DropdownMenuItem(
-                    text = { Text(display(item), color = if (item == selected) FrostAccent else TextPrimary, fontSize = 12.sp) },
+                    text = { Text(display(item), color = if (item == selected) FenGreen else TextPrimary, fontSize = 12.sp) },
                     onClick = { onSelect(item); expanded = false },
-                    trailingIcon = { if (item == selected) Icon(Icons.Default.Check, null, tint = FrostAccent, modifier = Modifier.size(13.dp)) }
+                    trailingIcon = { if (item == selected) Icon(Icons.Default.Check, null, tint = FenGreen, modifier = Modifier.size(13.dp)) }
                 )
             }
         }
@@ -815,12 +828,12 @@ private fun <T> ChipGroup(
             val isSel = item == selected
             Box(
                 modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                    .background(if (isSel) Color(0xFFECEFF1) else Color(0xFFECEFF1))
-                    .border(1.dp, if (isSel) FrostAccent else Color.Transparent, RoundedCornerShape(20.dp))
+                    .background(if (isSel) Color(0xFFF2F4F5) else Color(0xFFF2F4F5))
+                    .border(1.dp, if (isSel) FenGreen else Color.Transparent, RoundedCornerShape(20.dp))
                     .clickable { onSelect(if (isSel) null else item) }
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
-                Text(display(item), color = if (isSel) FrostAccent else TextSecondary, fontSize = 11.sp,
+                Text(display(item), color = if (isSel) FenGreen else TextSecondary, fontSize = 11.sp,
                     fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal)
             }
         }
@@ -834,13 +847,13 @@ private fun GradeSelector(selected: Int, onSelect: (Int) -> Unit) {
             val isSel = selected in grade until grade + 4
             Box(
                 modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
-                    .background(if (isSel) Color(0xFFECEFF1) else Color(0xFFECEFF1))
-                    .border(1.dp, if (isSel) FrostAccent else Color.Transparent, RoundedCornerShape(10.dp))
+                    .background(if (isSel) Color(0xFFF2F4F5) else Color(0xFFF2F4F5))
+                    .border(1.dp, if (isSel) FenGreen else Color.Transparent, RoundedCornerShape(10.dp))
                     .clickable { onSelect(grade) }
                     .padding(vertical = 9.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(label, color = if (isSel) FrostAccent else TextSecondary, fontSize = 12.sp,
+                Text(label, color = if (isSel) FenGreen else TextSecondary, fontSize = 12.sp,
                     fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal)
             }
         }
@@ -852,11 +865,11 @@ private fun AddOutlinedButton(text: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, Brush.linearGradient(listOf(Color(0x80F06292), Color(0x80EC407A))), RoundedCornerShape(10.dp))
+            .border(1.dp, Brush.linearGradient(listOf(Color(0x80418765), Color(0x80418765))), RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(text, color = FrostAccent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, color = FenGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }

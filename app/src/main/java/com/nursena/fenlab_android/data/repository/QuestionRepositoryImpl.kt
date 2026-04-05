@@ -11,6 +11,7 @@ import com.nursena.fenlab_android.domain.model.Question
 import com.nursena.fenlab_android.domain.repository.QuestionRepository
 import javax.inject.Inject
 
+// QuestionRepositoryImpl.kt
 class QuestionRepositoryImpl @Inject constructor(
     private val questionApi: QuestionApi
 ) : BaseRepository(), QuestionRepository {
@@ -31,11 +32,12 @@ class QuestionRepositoryImpl @Inject constructor(
         questionApi.answerQuestion(questionId, request).toDomain()
     }
 
-    override suspend fun deleteQuestion(questionId: Long): ApiResult<Unit> = safeApiCall {
+    override suspend fun deleteQuestion(questionId: Long): ApiResult<Unit> = safeApiCallUnit {
         questionApi.deleteQuestion(questionId)
     }
 
     override suspend fun getUnansweredQuestions(page: Int, size: Int): ApiResult<PaginatedData<Question>> = safeApiCall {
         questionApi.getUnansweredQuestions(page, size).toDomain { it.toDomain() }
     }
+
 }

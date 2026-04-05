@@ -30,6 +30,7 @@ data class AddExperimentUiState(
     val description: String       = "",
     val gradeLevel: Int           = 5,
     val subject: SubjectType?     = null,
+    val customSubject: String     = "",  // subject == OTHER olunca kullanıcı girer
     val environment: EnvironmentType? = null,
     val difficulty: DifficultyLevel   = DifficultyLevel.MEDIUM,
     val topic: String             = "",
@@ -66,7 +67,8 @@ class AddExperimentViewModel @Inject constructor(
     fun onTitleChange(v: String)                      = _uiState.update { it.copy(title = v) }
     fun onDescriptionChange(v: String)                = _uiState.update { it.copy(description = v) }
     fun onGradeLevelChange(v: Int)                    = _uiState.update { it.copy(gradeLevel = v) }
-    fun onSubjectChange(v: SubjectType?)              = _uiState.update { it.copy(subject = v) }
+    fun onSubjectChange(v: SubjectType?)              = _uiState.update { it.copy(subject = v, customSubject = if (v != SubjectType.OTHER) "" else it.customSubject) }
+    fun onCustomSubjectChange(v: String)              = _uiState.update { it.copy(customSubject = v) }
     fun onEnvironmentChange(v: EnvironmentType?)      = _uiState.update { it.copy(environment = v) }
     fun onDifficultyChange(v: DifficultyLevel)        = _uiState.update { it.copy(difficulty = v) }
     fun onTopicChange(v: String)                      = _uiState.update { it.copy(topic = v) }
@@ -214,7 +216,9 @@ class AddExperimentViewModel @Inject constructor(
                 title          = state.title.trim(),
                 description    = state.description.trim(),
                 gradeLevel     = state.gradeLevel,
-                subject        = state.subject?.name,
+                subject        = if (state.subject == SubjectType.OTHER && state.customSubject.isNotBlank())
+                    state.customSubject  // custom ders adı gönder
+                else state.subject?.name,
                 environment    = state.environment?.name,
                 difficulty     = state.difficulty.name,
                 topic          = state.topic.ifBlank { null },

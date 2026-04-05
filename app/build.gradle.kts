@@ -45,7 +45,8 @@ android {
 }
 
 dependencies {
-
+    implementation("com.airbnb.android:lottie-compose:6.0.0")
+    implementation("io.github.mr0xf00:easycrop:0.1.1")
     // ── Core ──────────────────────────────────────────────────────────────────
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")

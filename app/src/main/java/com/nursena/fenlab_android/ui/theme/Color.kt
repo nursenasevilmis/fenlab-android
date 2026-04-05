@@ -2,83 +2,62 @@ package com.nursena.fenlab_android.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Modern Frost — Arka Plan Gradyanı ────────────────────────────────────────
-val LightBg         = Color(0xFFF5F7FA)   // hafif gri
-val LightBg2        = Color(0xFFC3CFE2)   // soft mavi-gri
-val GradientStart   = Color(0xFFF5F7FA)
-val GradientMid     = Color(0xFFDDE4EF)
-val GradientEnd     = Color(0xFFC3CFE2)
-val DarkBg          = Color(0xFF37474F)   // metin rengiyle eşleşen koyu (compat)
+// ── Arka Plan ─────────────────────────────────────────────────────────────────
+val LightBg         = Color(0xFFFFFFFF)
+val LightBg2        = Color(0xFFF5F5F5)
+val GradientStart   = Color(0xFFFFFFFF)
+val GradientMid     = Color(0xFFFFFFFF)
+val GradientEnd     = Color(0xFFFFFFFF)
+val DarkBg          = Color(0xFF1A1A1A)
 
-// ── Frosted Glass / Cam Efekti ────────────────────────────────────────────────
-val GlassSurface    = Color(0x80FFFFFF)   // %50 beyaz — temel cam
-val GlassSurface2   = Color(0x99FFFFFF)   // %60 beyaz
-val GlassSurface3   = Color(0xB3FFFFFF)   // %70 beyaz — modal / sheet
-val GlassBg         = Color(0x66FFFFFF)   // %40 beyaz
-val GlassBorder     = Color(0xE6FFFFFF)   // %90 beyaz — keskin cam kenar
-val GlassBorder2    = Color(0x80FFFFFF)   // %50 beyaz kenar
-val DarkSurface     = Color(0x80FFFFFF)   // compat
-val DarkSurface2    = Color(0x99FFFFFF)   // compat
-val DarkSurface3    = Color(0x40B0BEC5)   // divider — blue-gray %25
+// ── Yüzey / Kart ──────────────────────────────────────────────────────────────
+val GlassSurface    = Color(0xFFFFFFFF)
+val GlassSurface2   = Color(0xFFF5F5F5)
+val GlassSurface3   = Color(0xFFFFFFFF)
+val GlassBg         = Color(0xFFF5F5F5)
+val GlassBorder     = Color(0xFFE0E0E0)
+val GlassBorder2    = Color(0xFFEEEEEE)
+val DarkSurface     = GlassSurface
+val DarkSurface2    = GlassSurface2
+val DarkSurface3    = Color(0xFFE0E0E0)
 
-// ── Bottom Bar — Tema Uyumlu Frosted ─────────────────────────────────────────
-val BottomBarBg     = Color(0xE0F5F7FA)   // %88 GradientStart tonu
-val BottomBarBorder = Color(0xE6FFFFFF)   // %90 beyaz kenar
+// ── Bottom Bar ────────────────────────────────────────────────────────────────
+val BottomBarBg     = Color(0xFFFFFFFF)
+val BottomBarBorder = Color(0xFFEEEEEE)
 
-// ── Vurgu Renkleri ────────────────────────────────────────────────────────────
-// "Fen" — gökyüzü mavisi (aksan)
-val FrostAccent     = Color(0xFF64B5F6)   // Sky Blue — güven verici
-val FrostAccentDark = Color(0xFF1E88E5)   // koyu ton (hover/pressed)
-val FrostAccentLight= Color(0xFFBBDEFB)   // açık container
-
-// "Lab" — turuncu (L büyük, sıcak kontrast)
-val LabOrange       = Color(0xFFFF8F00)   // amber-turuncu
-val LabOrangeDark   = Color(0xFFD1622D)   // koyu turuncu
-val LabOrangeLight  = Color(0xFFFFECB3)   // açık container
+// ── YEŞİL — #0d7d7c ──────────────────────────────────────────────────────────
+val FenGreen        = Color(0xFF0D7D7C)   // ana yeşil
+val FenGreenDark    = Color(0xFF095958)   // koyu (pressed)
+val FenGreenLight   = Color(0xFFE0F4F4)   // açık container
+val FenGreenMid     = Color(0xFF1A9B9A)   // hover/icon
+val SplashBg = FenGreen
+// ── TURUNCU — #f6a923 ─────────────────────────────────────────────────────────
+val LabOrangeNew     = Color(0xFFdb9951)   // ana turuncu
+val LabOrangeDarkNew = Color(0xFFD4891A)   // koyu turuncu
+val LabOrangeLightNew= Color(0xFFFFF3DB)   // açık container
 
 // ── Logo ──────────────────────────────────────────────────────────────────────
-val LogoFen         = FrostAccent         // "Fen" — gökyüzü mavisi
-val LogoLab         = LabOrange           // "Lab" — turuncu
+val LogoFen         = FenGreen
+val LogoLab         = LabOrangeNew
 
 // ── Metin ─────────────────────────────────────────────────────────────────────
-val TextPrimary     = Color(0xFF37474F)   // Blue Gray 800 — yumuşak ama net
-val TextSecondary   = Color(0xFF546E7A)   // Blue Gray 600
-val TextTertiary    = Color(0xFF78909C)   // Blue Gray 400
+val TextPrimary     = Color(0xFF111111)
+val TextSecondary   = Color(0xFF555555)
+val TextTertiary    = Color(0xFF999999)
 
-// ── Geriye dönük uyumluluk ────────────────────────────────────────────────────
-val SoftTeal        = FrostAccent
-val SoftTealDark    = FrostAccentDark
-val SoftTealLight   = FrostAccentLight
-val Teal400         = FrostAccent
-val Teal500         = FrostAccentDark
-val Teal700         = Color(0xFF1565C0)
-val Teal100         = FrostAccentLight
-val Teal50          = Color(0xFFE3F2FD)
-val SkyBlue400      = FrostAccent
-val SkyBlue500      = FrostAccentDark
-val SkyBlue700      = Color(0xFF1565C0)
-val SkyBlue100      = FrostAccentLight
-val Orange400       = LabOrange
-val Orange500       = LabOrangeDark
-val Orange100       = LabOrangeLight
-val Orange100_old   = LabOrangeLight
-val Pink400         = Color(0xFFEF9A9A)   // yumuşak pembe (eski compat, artık kullanılmıyor)
-val Pink500         = Color(0xFFE57373)
-val Pink700         = Color(0xFFE53935)
-val Pink100         = Color(0xFFFFEBEE)
-val BlueBtn         = Color(0xFF78ADD1)
-// ── Chip Renkleri ─────────────────────────────────────────────────────────────
-val ChipScience       = Color(0xFFE1F5FE)
-val ChipPhysics       = Color(0xFFE8EAF6)
-val ChipChemistry     = Color(0xFFFFF8E1)
-val ChipBiology       = Color(0xFFE8F5E9)
-val ChipOther         = Color(0xFFF5F5F5)
-val ChipScienceText   = Color(0xFF0277BD)
-val ChipPhysicsText   = Color(0xFF283593)
-val ChipChemistryText = Color(0xFFE65100)
+// ── Chip ──────────────────────────────────────────────────────────────────────
+val ChipScience       = Color(0xFFE0F4F4)
+val ChipPhysics       = Color(0xFFE8F0FB)
+val ChipChemistry     = Color(0xFFFFF3DB)
+val ChipBiology       = Color(0xFFEDF7ED)
+val ChipMath          = Color(0xFFE8F4E7)
+val ChipOther         = Color(0xFFF0F0F0)
+val ChipScienceText   = Color(0xFF095958)
+val ChipPhysicsText   = Color(0xFF1A3F7A)
+val ChipChemistryText = Color(0xFFD4891A)
 val ChipBiologyText   = Color(0xFF2E7D32)
-val ChipOtherText     = Color(0xFF546E7A)
-
+val ChipMathText      = Color(0xFFE8F4E7)
+val ChipOtherText     = Color(0xFF555555)
 
 // ── Status ────────────────────────────────────────────────────────────────────
 val Red400    = Color(0xFFE53935)
@@ -87,9 +66,41 @@ val Green400  = Color(0xFF43A047)
 val Green500  = Color(0xFF43A047)
 val Yellow400 = Color(0xFFFFB300)
 
-// ── Gray compat ───────────────────────────────────────────────────────────────
-val Gray900   = TextPrimary
-val Gray700   = TextSecondary
-val Gray400   = TextTertiary
-val Gray100   = GlassSurface2
-val Gray50    = GlassSurface
+// ── Geriye dönük uyumluluk ────────────────────────────────────────────────────
+val FrostAccent      = FenGreen
+val FrostAccentDark  = FenGreenDark
+val FrostAccentLight = FenGreenLight
+val PurpleAccent     = FenGreen
+val PurpleAccentDark = FenGreenDark
+val PurpleAccentLight = FenGreenLight
+val PurpleMid        = FenGreenMid
+val SoftTeal         = FenGreen
+val SoftTealDark     = FenGreenDark
+val SoftTealLight    = FenGreenLight
+val Teal400          = FenGreen
+val Teal500          = FenGreenDark
+val Teal700          = Color(0xFF064040)
+val Teal100          = FenGreenLight
+val Teal50           = Color(0xFFF0FAFA)
+val SkyBlue400       = FenGreen
+val SkyBlue500       = FenGreenDark
+val SkyBlue100       = FenGreenLight
+val LabOrange        = LabOrangeNew
+val LabOrangeDark    = LabOrangeDarkNew
+val LabOrangeLight   = LabOrangeLightNew
+val Orange400        = LabOrangeNew
+val Orange500        = LabOrangeDarkNew
+val Orange100        = LabOrangeLightNew
+val Orange100_old    = LabOrangeLightNew
+val Pink400          = LabOrangeNew
+val Pink500          = LabOrangeDarkNew
+val Pink700          = Color(0xFFBF6000)
+val Pink100          = LabOrangeLightNew
+val BlueBtn          = FenGreen
+val LilaAccent       = FenGreenMid
+val LilaLight        = FenGreenLight
+val Gray900          = TextPrimary
+val Gray700          = TextSecondary
+val Gray400          = TextTertiary
+val Gray100          = Color(0xFFF0F0F0)
+val Gray50           = Color(0xFFF7F7F7)

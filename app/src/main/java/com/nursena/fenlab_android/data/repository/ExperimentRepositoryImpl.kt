@@ -1,3 +1,4 @@
+// ExperimentRepositoryImpl.kt
 package com.nursena.fenlab_android.data.repository
 
 import com.nursena.fenlab_android.core.base.BaseRepository
@@ -52,11 +53,12 @@ class ExperimentRepositoryImpl @Inject constructor(
         experimentApi.updateExperiment(experimentId, request).toDomain()
     }
 
-    override suspend fun deleteExperiment(experimentId: Long): ApiResult<Unit> = safeApiCall {
+    override suspend fun deleteExperiment(experimentId: Long): ApiResult<Unit> = safeApiCallUnit {
         experimentApi.deleteExperiment(experimentId)
     }
 
     override suspend fun getUserExperiments(userId: Long, page: Int, size: Int): ApiResult<PaginatedData<Experiment>> = safeApiCall {
+        // ↑ safeApiCallUnit değil, safeApiCall!
         experimentApi.getUserExperiments(userId, page, size).toDomain { it.toDomain() }
     }
 

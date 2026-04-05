@@ -4,6 +4,7 @@ import com.nursena.fenlab_android.data.remote.dto.request.AnswerCreateRequest
 import com.nursena.fenlab_android.data.remote.dto.request.QuestionCreateRequest
 import com.nursena.fenlab_android.data.remote.dto.response.PaginatedResponse
 import com.nursena.fenlab_android.data.remote.dto.response.QuestionResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -35,7 +36,7 @@ interface QuestionApi {
     @DELETE("api/questions/{questionId}")
     suspend fun deleteQuestion(
         @Path("questionId") questionId: Long
-    )
+    ):Response<Unit>
 
     @GET("api/questions/unanswered")
     suspend fun getUnansweredQuestions(

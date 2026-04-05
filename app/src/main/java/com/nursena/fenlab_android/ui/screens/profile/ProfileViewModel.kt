@@ -162,7 +162,7 @@ class ProfileViewModel @Inject constructor(
     fun uploadProfilePhoto(context: Context, uri: Uri) {
         viewModelScope.launch {
             _uiState.update { it.copy(isUploadingPhoto = true) }
-            val file = FileUtils.uriToFile(context, uri) ?: run {
+            val file = FileUtils.uriToCompressedFile(context, uri) ?: run {
                 showSnackbar("Dosya okunamadı.")
                 _uiState.update { it.copy(isUploadingPhoto = false) }
                 return@launch
@@ -171,9 +171,19 @@ class ProfileViewModel @Inject constructor(
             when (val r = fileUploadRepository.uploadProfileImage(part)) {
                 is ApiResult.Success -> {
                     val uid = _uiState.value.user?.id ?: return@launch
-                    when (val upd = userRepository.updateUser(uid, UserUpdateRequest(profileImageUrl = r.data.fileUrl))) {
+                    // fileUrl tam URL gelmiş olabilir — backend'e sadece path gönder
+                    val imagePathForBackend = if (r.data.fileUrl.startsWith("http")) {
+                        r.data.fileUrl.substringAfter(":9000/")
+                    } else r.data.fileUrl
+                    when (val upd = userRepository.updateUser(uid, UserUpdateRequest(profileImageUrl = imagePathForBackend))) {
                         is ApiResult.Success -> {
                             _uiState.update { it.copy(user = upd.data, isUploadingPhoto = false) }
+                            // TokenManager'ı güncelle — profil resmi kalıcı olsun
+                            // Sadece path sakla — IP değişse bile toMinioUrl() doğru URL üretir
+                            val pathOnly = if (r.data.fileUrl.startsWith("http")) {
+                                r.data.fileUrl.substringAfter(":9000/")
+                            } else r.data.fileUrl
+                            tokenManager.updateProfileImageUrl(pathOnly)
                             showSnackbar("Profil fotoğrafı güncellendi.")
                         }
                         is ApiResult.Error -> {
