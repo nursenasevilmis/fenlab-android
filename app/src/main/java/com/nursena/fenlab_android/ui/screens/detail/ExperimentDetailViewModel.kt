@@ -251,23 +251,38 @@ class ExperimentDetailViewModel @Inject constructor(
     fun downloadPdf(context: Context) {
         viewModelScope.launch {
             _uiState.update { it.copy(isPdfLoading = true) }
+
             try {
                 val token = tokenManager.getToken()
+                val currentExperiment = _uiState.value.experiment
+
+                val pdfFileName = makePdfFileName(
+                    currentExperiment?.title ?: "FenLab Deney"
+                )
+
                 when (val result = pdfRepository.generatePdf(experimentId)) {
                     is ApiResult.Success -> {
                         val url = result.data.pdfUrl
+
                         if (url.isNotBlank()) {
                             val downloadId = PdfUtils.downloadPdfViaManager(
-                                context  = context,
-                                pdfUrl   = url,
-                                fileName = "deney_${experimentId}.pdf",
-                                token    = token
+                                context = context,
+                                pdfUrl = url,
+                                fileName = pdfFileName,
+                                token = token
                             )
-                            if (downloadId != -1L) showSnackbar("PDF indiriliyor...")
-                            else showSnackbar("PDF indirilemedi.")
-                        } else showSnackbar("PDF URL alınamadı.")
+
+                            if (downloadId != -1L) {
+                                showSnackbar("PDF indiriliyor...")
+                            } else {
+                                showSnackbar("PDF indirilemedi.")
+                            }
+                        } else {
+                            showSnackbar("PDF URL alınamadı.")
+                        }
                     }
-                    is ApiResult.Error   -> showSnackbar(result.message)
+
+                    is ApiResult.Error -> showSnackbar(result.message)
                     is ApiResult.Loading -> Unit
                 }
             } catch (e: Exception) {
@@ -473,5 +488,14 @@ class ExperimentDetailViewModel @Inject constructor(
                 showSnackbar("Güncelleme başarısız: ${e.message}")
             }
         }
+    }
+    private fun makePdfFileName(title: String): String {
+        val cleanTitle = title
+            .trim()
+            .replace(Regex("[\\\\/:*?\"<>|]"), "")
+            .replace(Regex("\\s+"), "_")
+            .ifBlank { "FenLab_Deney" }
+
+        return "$cleanTitle.pdf"
     }
 }

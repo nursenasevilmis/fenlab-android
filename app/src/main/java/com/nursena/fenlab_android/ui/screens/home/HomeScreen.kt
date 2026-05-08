@@ -275,6 +275,7 @@ fun FenlabTopBar(
         actions = {
             // Filtrele butonu — aktif filtre varsa badge göster
             BadgedBox(
+                modifier = Modifier.padding(end = 8.dp),
                 badge = {
                     if (activeFilterCount > 0) {
                         Badge(containerColor = FenGreen) {

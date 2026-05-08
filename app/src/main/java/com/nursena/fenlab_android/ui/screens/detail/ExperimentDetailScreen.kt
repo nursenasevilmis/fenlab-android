@@ -197,6 +197,7 @@ fun ExperimentDetailScreen(
                     }
                     item {
                         DescriptionCard(
+                            topic          = exp.topic,
                             description    = exp.description,
                             safetyNotes    = exp.safetyNotes,
                             expectedResult = exp.expectedResult
@@ -1107,10 +1108,6 @@ private fun InfoSection(
             if (exp.subject != null) MetaTag(exp.displaySubject)
             if (exp.environment != null) MetaTag(exp.displayEnvironment)
         }
-        if (!exp.topic.isNullOrBlank()) {
-            Spacer(Modifier.height(6.dp))
-            MetaTag(exp.topic!!)
-        }
 
         Spacer(Modifier.height(12.dp))
 
@@ -1190,24 +1187,84 @@ private fun DetailTabBar(selected: Int, commentCount: Int, questionCount: Int, o
         HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFDDDDDD))
     }
 }
-
 @Composable
-private fun DescriptionCard(description: String, safetyNotes: String? = null, expectedResult: String? = null) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFFF2F4F5))
-            .border(1.dp, Brush.horizontalGradient(listOf(Color(0xFFFFFFFF), Color.Transparent)), RoundedCornerShape(10.dp))
-            .padding(12.dp)) {
+private fun DescriptionCard(
+    topic: String? = null,
+    description: String,
+    safetyNotes: String? = null,
+    expectedResult: String? = null
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
+
+        if (!topic.isNullOrBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFF2F4F5))
+                    .border(
+                        1.dp,
+                        Brush.horizontalGradient(listOf(Color(0xFFFFFFFF), Color.Transparent)),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .padding(12.dp)
+            ) {
+                Column {
+                    Text(
+                        "KONU",
+                        color = FenGreen,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        topic,
+                        color = TextSecondary,
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFF2F4F5))
+                .border(
+                    1.dp,
+                    Brush.horizontalGradient(listOf(Color(0xFFFFFFFF), Color.Transparent)),
+                    RoundedCornerShape(10.dp)
+                )
+                .padding(12.dp)
+        ) {
             Column {
                 Text("AÇIKLAMA", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Spacer(Modifier.height(6.dp))
                 Text(description, color = TextSecondary, fontSize = 13.sp, lineHeight = 19.sp)
             }
         }
+
         if (!safetyNotes.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFFF2F4F5))
-                .border(1.dp, Color(0xFFFFFFFF), RoundedCornerShape(10.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFF2F4F5))
+                    .border(1.dp, Color(0xFFFFFFFF), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Column {
                     Text("GÜVENLİK NOTU", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                     Spacer(Modifier.height(3.dp))
@@ -1215,11 +1272,19 @@ private fun DescriptionCard(description: String, safetyNotes: String? = null, ex
                 }
             }
         }
+
         if (!expectedResult.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFFF2F4F5))
-                .border(1.dp, Color(0xFFFFFFFF), RoundedCornerShape(10.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFF2F4F5))
+                    .border(1.dp, Color(0xFFFFFFFF), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Column {
                     Text("BEKLENEN SONUÇ", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                     Spacer(Modifier.height(3.dp))

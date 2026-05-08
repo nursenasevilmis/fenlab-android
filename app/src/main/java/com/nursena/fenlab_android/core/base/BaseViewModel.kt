@@ -79,4 +79,12 @@ abstract class BaseViewModel : ViewModel() {
 
     protected fun navigateBack() =
         sendEvent(UiEvent.NavigateBack)
+
+    private fun sanitizeFileName(name: String): String {
+        return name
+            .trim()
+            .replace(Regex("[\\\\/:*?\"<>|]"), "")
+            .replace(Regex("\\s+"), "_")
+            .ifBlank { "FenLab_Deney" }
+    }
 }

@@ -141,7 +141,7 @@ private fun SplashPage(onLogin: () -> Unit, onRegister: () -> Unit) {
 
         // ── Slogan ────────────────────────────────────────────────────────────
         Text(
-            text = "Merakından deneye,\ndeneynden ilhama!",
+            text = "Merakından deneye,\ndeneyinden ilhama!",
             color = Color(0xFF555555),
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
