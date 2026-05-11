@@ -28,11 +28,11 @@ data class AddExperimentUiState(
     // Adım 0 — Temel
     val title: String             = "",
     val description: String       = "",
-    val gradeLevel: Int           = 5,
+    val gradeLevel: Int?          = null,   // ← null: hiçbiri seçili değil
     val subject: SubjectType?     = null,
-    val customSubject: String     = "",  // subject == OTHER olunca kullanıcı girer
+    val customSubject: String     = "",
     val environment: EnvironmentType? = null,
-    val difficulty: DifficultyLevel   = DifficultyLevel.MEDIUM,
+    val difficulty: DifficultyLevel?  = null,  // ← null: hiçbiri seçili değil
     val topic: String             = "",
     val expectedResult: String    = "",
     val safetyNotes: String       = "",
@@ -215,12 +215,12 @@ class AddExperimentViewModel @Inject constructor(
             val request = ExperimentCreateRequest(
                 title          = state.title.trim(),
                 description    = state.description.trim(),
-                gradeLevel     = state.gradeLevel,
+                gradeLevel     = state.gradeLevel ?: 5,
                 subject        = if (state.subject == SubjectType.OTHER && state.customSubject.isNotBlank())
-                    state.customSubject  // custom ders adı gönder
+                    state.customSubject
                 else state.subject?.name,
                 environment    = state.environment?.name,
-                difficulty     = state.difficulty.name,
+                difficulty     = state.difficulty?.name ?: DifficultyLevel.MEDIUM.name,
                 topic          = state.topic.ifBlank { null },
                 expectedResult = state.expectedResult.ifBlank { null },
                 safetyNotes    = state.safetyNotes.ifBlank { null },

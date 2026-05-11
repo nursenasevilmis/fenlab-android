@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -52,13 +54,25 @@ fun AddExperimentScreen(
     var showSuccess by remember { mutableStateOf(false) }
     var publishedId by remember { mutableLongStateOf(-1L) }
 
+    // Popup bildirimi state'i
+    var popupMessage by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { event ->
-            if (event is UiEvent.Navigate && event.route.startsWith("experiment/")) {
-                publishedId = event.route.removePrefix("experiment/").toLongOrNull() ?: -1L
-                showSuccess = true
+            when (event) {
+                is UiEvent.Navigate -> if (event.route.startsWith("experiment/")) {
+                    publishedId = event.route.removePrefix("experiment/").toLongOrNull() ?: -1L
+                    showSuccess = true
+                }
+                is UiEvent.ShowSnackbar -> popupMessage = event.message
+                else -> Unit
             }
         }
+    }
+
+    // Popup dialog
+    popupMessage?.let { msg ->
+        FenlabPopup(message = msg, onDismiss = { popupMessage = null })
     }
 
     if (showSuccess) {
@@ -120,6 +134,54 @@ fun AddExperimentScreen(
             onNext      = viewModel::nextStep,
             onBack      = { if (uiState.currentStep == 0) onBack() else viewModel.prevStep() }
         )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Popup Bildirim Dialog'u (Snackbar yerine)
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun FenlabPopup(message: String, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = true, dismissOnBackPress = true)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFFFFFFFF))
+                .padding(20.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(FenGreenLight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("ℹ️", fontSize = 22.sp)
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text      = message,
+                    color     = TextPrimary,
+                    fontSize  = 14.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = onDismiss,
+                    shape   = RoundedCornerShape(10.dp),
+                    colors  = ButtonDefaults.buttonColors(containerColor = FenGreen),
+                    modifier = Modifier.fillMaxWidth().height(42.dp)
+                ) {
+                    Text("Tamam", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
     }
 }
 
@@ -205,6 +267,7 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
         Spacer(Modifier.height(10.dp))
 
         AddLabel("Sınıf Seviyesi")
+        // ← null default: hiçbiri seçili gelmiyor
         GradeSelector(selected = state.gradeLevel, onSelect = vm::onGradeLevelChange)
         Spacer(Modifier.height(10.dp))
 
@@ -223,8 +286,9 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
             }
             Column(modifier = Modifier.weight(1f)) {
                 AddLabel("Seviye")
+                // ← null default: "Seç..." gösterir, hiçbiri seçili değil
                 DropdownSelector(
-                    label    = state.difficulty.toDisplayString(),
+                    label    = state.difficulty?.toDisplayString() ?: "Seç...",
                     items    = DifficultyLevel.entries,
                     selected = state.difficulty,
                     display  = { it.toDisplayString() },
@@ -232,7 +296,6 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
                 )
             }
         }
-        // Diğer seçilince özel ders adı — tam genişlikte
         if (state.subject == SubjectType.OTHER) {
             Spacer(Modifier.height(8.dp))
             AddTextField(
@@ -254,7 +317,6 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
 
     Spacer(Modifier.height(12.dp))
 
-    // Beklenen Sonuç
     SectionCard(title = "Beklenen Sonuç") {
         AddTextField(
             value         = state.expectedResult,
@@ -266,7 +328,6 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
 
     Spacer(Modifier.height(12.dp))
 
-    // Güvenlik Notları
     SectionCard(title = "Güvenlik Notları") {
         AddTextField(
             value         = state.safetyNotes,
@@ -278,7 +339,7 @@ private fun Step0Basic(state: AddExperimentUiState, vm: AddExperimentViewModel) 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADIM 1 — Malzeme & Adımlar  (eski step2)
+// ADIM 1 — Malzeme & Adımlar
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewModel) {
@@ -294,7 +355,19 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
                     contentAlignment = Alignment.Center
                 ) { Text("${index + 1}", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
 
-                AddTextField(mat.name, { vm.onMaterialNameChange(index, it) }, "Malzeme adı", modifier = Modifier.weight(1.8f))
+                // ← İlk malzeme yazılmaya başlanınca 2. satır otomatik çıksın
+                AddTextField(
+                    value         = mat.name,
+                    onValueChange = { v ->
+                        vm.onMaterialNameChange(index, v)
+                        // Son satırda yazılmaya başlandıysa yeni boş satır ekle
+                        if (v.isNotEmpty() && index == state.materials.lastIndex) {
+                            vm.addMaterial()
+                        }
+                    },
+                    placeholder = "Malzeme adı",
+                    modifier    = Modifier.weight(1.8f)
+                )
                 AddTextField(mat.quantity, { vm.onMaterialQuantityChange(index, it) }, "Miktar", modifier = Modifier.weight(1f))
 
                 IconButton(
@@ -327,7 +400,19 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
                 ) { Text("${index + 1}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    AddTextField(step.text, { vm.onStepTextChange(index, it) }, "${index + 1}. adımı açıkla...", minLines = 2, maxLines = 4)
+                    // ← İlk adım yazılmaya başlanınca 2. adım alanı otomatik çıksın
+                    AddTextField(
+                        value         = step.text,
+                        onValueChange = { v ->
+                            vm.onStepTextChange(index, v)
+                            if (v.isNotEmpty() && index == state.steps.lastIndex) {
+                                vm.addStep()
+                            }
+                        },
+                        placeholder = "${index + 1}. adımı açıkla...",
+                        minLines = 2,
+                        maxLines = 4
+                    )
                     if (state.steps.size > 1) {
                         Text("Sil", color = Red400, fontSize = 11.sp,
                             modifier = Modifier.clickable { vm.removeStep(index) }.padding(top = 4.dp))
@@ -340,27 +425,22 @@ private fun Step1Materials(state: AddExperimentUiState, vm: AddExperimentViewMod
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADIM 2 — Video & Kapak  (eski step1, şimdi önizlemeden önce)
+// ADIM 2 — Video & Kapak
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) {
     val context = LocalContext.current
 
-    // Video — kırpma yok
     val videoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { vm.uploadVideo(context, it) }
     }
-
-    // Kapak: galeri → upload (kırpma yok)
     val coverLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { vm.uploadCoverImage(context, it) }
     }
-    // Ek görsel: galeri → upload (kırpma yok)
     val additionalLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { vm.uploadAdditionalImage(context, it) }
     }
 
-    // ── Video ──────────────────────────────────────────────────────────────────
     SectionCard(title = "Deney Videosu") {
         UploadBox(
             isUploading = state.isUploadingVideo,
@@ -380,7 +460,6 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
 
     Spacer(Modifier.height(12.dp))
 
-    // ── Kapak Görseli ─────────────────────────────────────────────────────────
     SectionCard(title = "Kapak Görseli") {
         if (state.coverImageUrl != null) {
             Box(modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(10.dp))) {
@@ -408,13 +487,9 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
 
     Spacer(Modifier.height(12.dp))
 
-    // ── Ek Görseller ─────────────────────────────────────────────────────────
     SectionCard(title = "Ek Görseller (${state.additionalImages.size}/10)") {
         if (state.additionalImages.isNotEmpty() || state.isUploadingAdditional) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 itemsIndexed(items = state.additionalImages) { index: Int, url: String ->
                     Box(modifier = Modifier.size(110.dp).clip(RoundedCornerShape(10.dp))) {
                         AsyncImage(model = url, contentDescription = null,
@@ -476,7 +551,6 @@ private fun Step2Media(state: AddExperimentUiState, vm: AddExperimentViewModel) 
         }
     }
 }
-
 
 @Composable
 private fun UploadBox(
@@ -570,7 +644,7 @@ private fun Step3Preview(state: AddExperimentUiState) {
             HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFDDDDDD))
             SummaryRow("🧪", "${state.materials.count { it.name.isNotBlank() }} malzeme")
             SummaryRow("📌", "${state.steps.count { it.text.isNotBlank() }} adım")
-            SummaryRow("📚", "${state.subject?.toDisplayString() ?: "—"} · ${state.difficulty.toDisplayString()} · ${state.environment?.toDisplayString() ?: "—"}")
+            SummaryRow("📚", "${state.subject?.toDisplayString() ?: "—"} · ${state.difficulty?.toDisplayString() ?: "—"} · ${state.environment?.toDisplayString() ?: "—"}")
             if (state.videoUrl != null)      SummaryRow("🎬", "Video yüklendi ✓")
             if (state.coverImageUrl != null) SummaryRow("🖼️", "Kapak görseli yüklendi ✓")
             if (state.expectedResult.isNotBlank()) SummaryRow("🎯", "Beklenen sonuç girildi ✓")
@@ -588,7 +662,7 @@ private fun SummaryRow(icon: String, text: String) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Başarı ekranı — Geri dön + Yeni Deney + Deneyi Gör butonları
+// Başarı ekranı
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun SuccessScreen(
@@ -597,7 +671,6 @@ private fun SuccessScreen(
     onHome: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize().background(GradientStart)) {
-        // Sol üst geri
         IconButton(
             onClick  = onHome,
             modifier = Modifier.statusBarsPadding().padding(8.dp).align(Alignment.TopStart)
@@ -621,7 +694,6 @@ private fun SuccessScreen(
             )
             Spacer(Modifier.height(28.dp))
 
-            // Deneyi Gör
             Button(
                 onClick  = onViewExperiment,
                 shape    = RoundedCornerShape(12.dp),
@@ -643,7 +715,6 @@ private fun SuccessScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // Yeni Deney Ekle
             OutlinedButton(
                 onClick  = onNewExperiment,
                 shape    = RoundedCornerShape(12.dp),
@@ -658,7 +729,6 @@ private fun SuccessScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // Ana Sayfaya Dön
             TextButton(onClick = onHome, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.Home, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
@@ -828,7 +898,7 @@ private fun <T> ChipGroup(
             val isSel = item == selected
             Box(
                 modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                    .background(if (isSel) Color(0xFFF2F4F5) else Color(0xFFF2F4F5))
+                    .background(Color(0xFFF2F4F5))
                     .border(1.dp, if (isSel) FenGreen else Color.Transparent, RoundedCornerShape(20.dp))
                     .clickable { onSelect(if (isSel) null else item) }
                     .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -841,13 +911,14 @@ private fun <T> ChipGroup(
 }
 
 @Composable
-private fun GradeSelector(selected: Int, onSelect: (Int) -> Unit) {
+private fun GradeSelector(selected: Int?, onSelect: (Int) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(1 to "1-4", 5 to "5-8", 9 to "9-12").forEach { (grade, label) ->
-            val isSel = selected in grade until grade + 4
+            // ← selected null olunca hiçbiri seçili görünmez
+            val isSel = selected != null && selected in grade until grade + 4
             Box(
                 modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
-                    .background(if (isSel) Color(0xFFF2F4F5) else Color(0xFFF2F4F5))
+                    .background(Color(0xFFF2F4F5))
                     .border(1.dp, if (isSel) FenGreen else Color.Transparent, RoundedCornerShape(10.dp))
                     .clickable { onSelect(grade) }
                     .padding(vertical = 9.dp),
