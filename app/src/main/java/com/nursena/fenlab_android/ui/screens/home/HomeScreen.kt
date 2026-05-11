@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -25,8 +26,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nursena.fenlab_android.domain.model.enums.GradeGroup
@@ -42,7 +46,7 @@ import com.nursena.fenlab_android.ui.theme.*
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import kotlinx.coroutines.launch
+import com.nursena.fenlab_android.core.base.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,19 +56,18 @@ fun HomeScreen(
 ) {
     val uiState   by viewModel.uiState.collectAsStateWithLifecycle()
     val listState  = rememberLazyListState()
-    val scope      = rememberCoroutineScope()
 
-    // Sheet durumları
     var showFilterSheet by remember { mutableStateOf(false) }
     var showSortSheet   by remember { mutableStateOf(false) }
 
-    // Geçici filtre seçimleri (sheet içinde)
+    // Popup bildirimi
+    var popupMessage by remember { mutableStateOf<String?>(null) }
+
     var tempSubject     by remember { mutableStateOf(uiState.selectedSubject) }
     var tempEnvironment by remember { mutableStateOf(uiState.selectedEnvironment) }
     var tempDifficulty  by remember { mutableStateOf(uiState.selectedDifficulty) }
     var tempGradeGroup  by remember { mutableStateOf(uiState.selectedGradeGroup) }
 
-    // Sona yaklaşınca yükle
     val shouldLoadMore by remember {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
@@ -72,13 +75,11 @@ fun HomeScreen(
             last >= total - 3 && total > 0
         }
     }
-    // Detail sayfasından geri dönünce listeyi yenile
+
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshSilently()
-            }
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshSilently()
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -88,7 +89,18 @@ fun HomeScreen(
         if (shouldLoadMore) viewModel.loadNextPage()
     }
 
-    // Aktif filtre sayısı (badge)
+    // ViewModel event'lerini dinle (snackbar → popup)
+    LaunchedEffect(viewModel) {
+        viewModel.eventFlow.collect { event ->
+            if (event is UiEvent.ShowSnackbar) popupMessage = event.message
+        }
+    }
+
+    // Popup dialog
+    popupMessage?.let { msg ->
+        FenlabPopupDialog(message = msg, onDismiss = { popupMessage = null })
+    }
+
     val activeFilterCount = listOf(
         uiState.selectedSubject,
         uiState.selectedEnvironment,
@@ -96,12 +108,15 @@ fun HomeScreen(
         uiState.selectedGradeGroup
     ).count { it != null }
 
+    // Sıralama default değil mi?
+    val isSortActive = uiState.sortType != SortType.MOST_RECENT
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             FenlabTopBar(
                 activeFilterCount = activeFilterCount,
-                currentSort       = uiState.sortType,
+                isSortActive      = isSortActive,
                 onFilterClick     = {
                     tempSubject     = uiState.selectedSubject
                     tempEnvironment = uiState.selectedEnvironment
@@ -114,7 +129,6 @@ fun HomeScreen(
         }
     ) { padding ->
 
-        // ── Ana içerik ────────────────────────────────────────────────────────
         when {
             uiState.isLoading && uiState.experiments.isEmpty() -> LoadingIndicator()
 
@@ -138,28 +152,30 @@ fun HomeScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Hoş geldin banner
                 item { WelcomeBanner(fullName = uiState.fullName) }
 
-                // Aktif filtre chip'leri
                 if (activeFilterCount > 0) {
-                    item { ActiveFilterRow(uiState = uiState, onClear = viewModel::clearFilters) }
-                }
-
-                // Bölüm başlığı
-                item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier.width(3.dp).height(18.dp)
-                                .background(FenGreen, RoundedCornerShape(2.dp))
+                    item {
+                        // ← Her filtre tek tek silinebilir + "Tümünü Temizle" butonu
+                        ActiveFilterRow(
+                            uiState         = uiState,
+                            onRemoveSubject     = { viewModel.applyFilters(null, uiState.selectedEnvironment, uiState.selectedDifficulty, uiState.selectedGradeGroup) },
+                            onRemoveEnvironment = { viewModel.applyFilters(uiState.selectedSubject, null, uiState.selectedDifficulty, uiState.selectedGradeGroup) },
+                            onRemoveDifficulty  = { viewModel.applyFilters(uiState.selectedSubject, uiState.selectedEnvironment, null, uiState.selectedGradeGroup) },
+                            onRemoveGradeGroup  = { viewModel.applyFilters(uiState.selectedSubject, uiState.selectedEnvironment, uiState.selectedDifficulty, null) },
+                            onClearAll          = viewModel::clearFilters
                         )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Tüm Deneyler", fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold, color = TextPrimary)
                     }
                 }
 
-                // Kartlar
+                item {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.width(3.dp).height(18.dp).background(FenGreen, RoundedCornerShape(2.dp)))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Tüm Deneyler", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    }
+                }
+
                 items(items = uiState.experiments, key = { it.id }) { exp ->
                     ExperimentCard(
                         experiment      = exp,
@@ -168,15 +184,10 @@ fun HomeScreen(
                     )
                 }
 
-                // Daha fazla yükleniyor
                 if (uiState.isLoadingMore) {
                     item {
-                        Box(Modifier.fillMaxWidth().padding(16.dp),
-                            contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = FenGreen, strokeWidth = 2.dp
-                            )
+                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = FenGreen, strokeWidth = 2.dp)
                         }
                     }
                 }
@@ -187,13 +198,11 @@ fun HomeScreen(
     // ── Filtre Bottom Sheet ───────────────────────────────────────────────────
     if (showFilterSheet) {
         ModalBottomSheet(
-            onDismissRequest    = { showFilterSheet = false },
-            containerColor = Color(0xFFFFFFFF),
-            dragHandle          = {
-                Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
-                    contentAlignment = Alignment.Center) {
-                    Box(Modifier.size(width = 40.dp, height = 4.dp)
-                        .background(Color(0xFFDDDDDD), RoundedCornerShape(2.dp)))
+            onDismissRequest = { showFilterSheet = false },
+            containerColor   = Color(0xFFFFFFFF),
+            dragHandle = {
+                Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(width = 40.dp, height = 4.dp).background(Color(0xFFDDDDDD), RoundedCornerShape(2.dp)))
                 }
             }
         ) {
@@ -211,10 +220,8 @@ fun HomeScreen(
                     showFilterSheet = false
                 },
                 onReset = {
-                    tempSubject     = null
-                    tempEnvironment = null
-                    tempDifficulty  = null
-                    tempGradeGroup  = null
+                    tempSubject = null; tempEnvironment = null
+                    tempDifficulty = null; tempGradeGroup = null
                     viewModel.applyFilters(null, null, null, null)
                     showFilterSheet = false
                 },
@@ -227,12 +234,10 @@ fun HomeScreen(
     if (showSortSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSortSheet = false },
-            containerColor = Color(0xFFFFFFFF),
+            containerColor   = Color(0xFFFFFFFF),
             dragHandle = {
-                Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
-                    contentAlignment = Alignment.Center) {
-                    Box(Modifier.size(width = 40.dp, height = 4.dp)
-                        .background(Color(0xFFDDDDDD), RoundedCornerShape(2.dp)))
+                Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(width = 40.dp, height = 4.dp).background(Color(0xFFDDDDDD), RoundedCornerShape(2.dp)))
                 }
             }
         ) {
@@ -242,6 +247,10 @@ fun HomeScreen(
                     viewModel.applySort(sort)
                     showSortSheet = false
                 },
+                onReset = {
+                    viewModel.applySort(SortType.MOST_RECENT)
+                    showSortSheet = false
+                },
                 onDismiss = { showSortSheet = false }
             )
         }
@@ -249,13 +258,61 @@ fun HomeScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TopBar
+// Popup Bildirim (Snackbar yerine)
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun FenlabPopupDialog(message: String, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = true, dismissOnBackPress = true)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFFFFFFFF))
+                .padding(20.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(FenGreenLight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("ℹ️", fontSize = 22.sp)
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text       = message,
+                    color      = TextPrimary,
+                    fontSize   = 14.sp,
+                    textAlign  = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick  = onDismiss,
+                    shape    = RoundedCornerShape(10.dp),
+                    colors   = ButtonDefaults.buttonColors(containerColor = FenGreen),
+                    modifier = Modifier.fillMaxWidth().height(42.dp)
+                ) {
+                    Text("Tamam", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TopBar — sıralama aktifse badge göster
 // ─────────────────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FenlabTopBar(
     activeFilterCount: Int,
-    currentSort: SortType,
+    isSortActive: Boolean,
     onFilterClick: () -> Unit,
     onSortClick: () -> Unit
 ) {
@@ -266,14 +323,13 @@ fun FenlabTopBar(
         ),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-
                 Spacer(Modifier.width(8.dp))
                 Text("Fen", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = FenGreen)
                 Text("Lab", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = LabOrangeNew)
             }
         },
         actions = {
-            // Filtrele butonu — aktif filtre varsa badge göster
+            // Filtrele butonu
             BadgedBox(
                 modifier = Modifier.padding(end = 8.dp),
                 badge = {
@@ -288,7 +344,7 @@ fun FenlabTopBar(
                     onClick  = onFilterClick,
                     shape    = RoundedCornerShape(20.dp),
                     colors   = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (activeFilterCount > 0) FenGreen else Color(0xFF444444),
+                        contentColor   = if (activeFilterCount > 0) FenGreen else Color(0xFF444444),
                         containerColor = Color.Transparent
                     ),
                     border   = androidx.compose.foundation.BorderStroke(
@@ -305,19 +361,35 @@ fun FenlabTopBar(
 
             Spacer(Modifier.width(6.dp))
 
-            OutlinedButton(
-                onClick  = onSortClick,
-                shape    = RoundedCornerShape(20.dp),
-                colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDDDDDD)),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                modifier = Modifier.height(32.dp)
+            // Sırala butonu — aktifse badge "1" göster
+            BadgedBox(
+                modifier = Modifier.padding(end = 12.dp),
+                badge = {
+                    if (isSortActive) {
+                        Badge(containerColor = FenGreen) {
+                            Text("1", fontSize = 9.sp, color = Color.White)
+                        }
+                    }
+                }
             ) {
-                Icon(Icons.AutoMirrored.Filled.Sort, null, modifier = Modifier.size(13.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("Sırala", fontSize = 12.sp)
+                OutlinedButton(
+                    onClick  = onSortClick,
+                    shape    = RoundedCornerShape(20.dp),
+                    colors   = ButtonDefaults.outlinedButtonColors(
+                        contentColor   = if (isSortActive) FenGreen else TextSecondary,
+                        containerColor = Color.Transparent
+                    ),
+                    border   = androidx.compose.foundation.BorderStroke(
+                        1.dp, if (isSortActive) FenGreen else Color(0xFFDDDDDD)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Sort, null, modifier = Modifier.size(13.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Sırala", fontSize = 12.sp)
+                }
             }
-            Spacer(Modifier.width(12.dp))
         }
     )
 }
@@ -329,9 +401,7 @@ fun FenlabTopBar(
 fun WelcomeBanner(fullName: String) {
     Box(
         modifier = Modifier.fillMaxWidth()
-            .background(FenGreen,
-                RoundedCornerShape(16.dp)
-            )
+            .background(FenGreen, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Row(
@@ -341,8 +411,8 @@ fun WelcomeBanner(fullName: String) {
         ) {
             Column {
                 Text(
-                    text       = "Merhaba${if (fullName.isNotBlank()) ", ${fullName.split(" ").first()}" else ""}! 👋",
-                    color      = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
+                    text  = "Merhaba${if (fullName.isNotBlank()) ", ${fullName.split(" ").first()}" else ""}! 👋",
+                    color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(4.dp))
                 val greetingMessages = remember {
@@ -366,25 +436,48 @@ fun WelcomeBanner(fullName: String) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Aktif filtre satırı
+// Aktif filtre satırı — HER FİLTRE TEK TEK SİLİNEBİLİR + Tümünü Temizle
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun ActiveFilterRow(uiState: HomeUiState, onClear: () -> Unit) {
+private fun ActiveFilterRow(
+    uiState: HomeUiState,
+    onRemoveSubject: () -> Unit,
+    onRemoveEnvironment: () -> Unit,
+    onRemoveDifficulty: () -> Unit,
+    onRemoveGradeGroup: () -> Unit,
+    onClearAll: () -> Unit
+) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding        = PaddingValues(vertical = 2.dp)
     ) {
         uiState.selectedGradeGroup?.let {
-            item { ActiveChip(label = it.toDisplayString(), onRemove = onClear) }
+            item { ActiveChip(label = it.toDisplayString(), onRemove = onRemoveGradeGroup) }
         }
         uiState.selectedSubject?.let {
-            item { ActiveChip(label = it.toDisplayString(), onRemove = onClear) }
+            item { ActiveChip(label = it.toDisplayString(), onRemove = onRemoveSubject) }
         }
         uiState.selectedDifficulty?.let {
-            item { ActiveChip(label = it.toDisplayString(), onRemove = onClear) }
+            item { ActiveChip(label = it.toDisplayString(), onRemove = onRemoveDifficulty) }
         }
         uiState.selectedEnvironment?.let {
-            item { ActiveChip(label = it.toDisplayString(), onRemove = onClear) }
+            item { ActiveChip(label = it.toDisplayString(), onRemove = onRemoveEnvironment) }
+        }
+        // ← Birden fazla filtre varsa "Tümünü Temizle" butonu göster
+        val filterCount = listOf(uiState.selectedGradeGroup, uiState.selectedSubject, uiState.selectedDifficulty, uiState.selectedEnvironment).count { it != null }
+        if (filterCount > 1) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0x1AEF5350))
+                        .border(1.dp, Color(0x60EF5350), RoundedCornerShape(20.dp))
+                        .clickable(onClick = onClearAll)
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text("Tümünü Temizle", color = Red400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                }
+            }
         }
     }
 }
@@ -424,12 +517,8 @@ private fun FilterSheetContent(
     onDismiss: () -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 32.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 32.dp)
     ) {
-        // Başlık
         Row(
             modifier              = Modifier.fillMaxWidth(),
             verticalAlignment     = Alignment.CenterVertically,
@@ -443,55 +532,23 @@ private fun FilterSheetContent(
 
         Spacer(Modifier.height(16.dp))
 
-        // Sınıf Düzeyi
         FilterSection(title = "SINIF DÜZEYİ") {
-            FilterChipRow(
-                items    = GradeGroup.entries,
-                selected = selectedGradeGroup,
-                label    = { it.toDisplayString() },
-                onClick  = onGradeGroupChange
-            )
+            FilterChipRow(items = GradeGroup.entries, selected = selectedGradeGroup, label = { it.toDisplayString() }, onClick = onGradeGroupChange)
         }
-
         Spacer(Modifier.height(16.dp))
-
-        // Ders
         FilterSection(title = "DERS") {
-            FilterChipRow(
-                items    = SubjectType.entries,
-                selected = selectedSubject,
-                label    = { it.toDisplayString() },
-                onClick  = onSubjectChange
-            )
+            FilterChipRow(items = SubjectType.entries, selected = selectedSubject, label = { it.toDisplayString() }, onClick = onSubjectChange)
         }
-
         Spacer(Modifier.height(16.dp))
-
-        // Seviye
         FilterSection(title = "SEVİYE") {
-            FilterChipRow(
-                items    = DifficultyLevel.entries,
-                selected = selectedDifficulty,
-                label    = { it.toDisplayString() },
-                onClick  = onDifficultyChange
-            )
+            FilterChipRow(items = DifficultyLevel.entries, selected = selectedDifficulty, label = { it.toDisplayString() }, onClick = onDifficultyChange)
         }
-
         Spacer(Modifier.height(16.dp))
-
-        // Mekan
         FilterSection(title = "MEKAN") {
-            FilterChipRow(
-                items    = EnvironmentType.entries,
-                selected = selectedEnvironment,
-                label    = { it.toDisplayString() },
-                onClick  = onEnvironmentChange
-            )
+            FilterChipRow(items = EnvironmentType.entries, selected = selectedEnvironment, label = { it.toDisplayString() }, onClick = onEnvironmentChange)
         }
-
         Spacer(Modifier.height(24.dp))
 
-        // Butonlar
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
                 onClick  = onReset,
@@ -513,8 +570,7 @@ private fun FilterSheetContent(
 
 @Composable
 private fun FilterSection(title: String, content: @Composable () -> Unit) {
-    Text(title, color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-        letterSpacing = 1.sp)
+    Text(title, color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
     Spacer(Modifier.height(10.dp))
     content()
 }
@@ -533,18 +589,9 @@ private fun <T> FilterChipRow(
     ) {
         items.forEach { item ->
             val isSelected = selected == item
-            val bgColor by animateColorAsState(
-                if (isSelected) FenGreenLight else Color(0xFFFFFFFF),
-                label = "chip_bg"
-            )
-            val borderColor by animateColorAsState(
-                if (isSelected) FenGreen else Color(0xFFCCCCCC),
-                label = "chip_border"
-            )
-            val textColor by animateColorAsState(
-                if (isSelected) FenGreen else TextSecondary,
-                label = "chip_text"
-            )
+            val bgColor by animateColorAsState(if (isSelected) FenGreenLight else Color(0xFFFFFFFF), label = "chip_bg")
+            val borderColor by animateColorAsState(if (isSelected) FenGreen else Color(0xFFCCCCCC), label = "chip_border")
+            val textColor by animateColorAsState(if (isSelected) FenGreen else TextSecondary, label = "chip_text")
 
             Box(
                 modifier = Modifier
@@ -561,32 +608,26 @@ private fun <T> FilterChipRow(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sıralama Sheet içeriği
+// Sıralama Sheet — Sıfırla butonu eklendi
 // ─────────────────────────────────────────────────────────────────────────────
-private data class SortOption(
-    val type: SortType,
-    val label: String,
-    val emoji: String
-)
+private data class SortOption(val type: SortType, val label: String)
 
 private val sortOptions = listOf(
-    SortOption(SortType.MOST_RECENT,    "En Yeni",          ""),
-    SortOption(SortType.MOST_FAVORITED, "En Popüler",       ""),
-    SortOption(SortType.HIGHEST_RATED,  "En Beğenilen",     ""),
-    SortOption(SortType.OLDEST,         "En Çok Yorumlanan","")
+    SortOption(SortType.MOST_RECENT,    "En Yeni"),
+    SortOption(SortType.MOST_FAVORITED, "En Popüler"),
+    SortOption(SortType.HIGHEST_RATED,  "En Beğenilen"),
+    SortOption(SortType.OLDEST,         "En Çok Yorumlanan")
 )
 
 @Composable
 private fun SortSheetContent(
     currentSort: SortType,
     onSelect: (SortType) -> Unit,
+    onReset: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 36.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 36.dp)
     ) {
         Row(
             modifier              = Modifier.fillMaxWidth(),
@@ -604,24 +645,15 @@ private fun SortSheetContent(
         sortOptions.forEach { option ->
             val isSelected = currentSort == option.type
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (isSelected) FenGreenLight else Color.Transparent
-                    )
-                    .border(
-                        1.dp,
-                        if (isSelected) FenGreenLight else Color.Transparent,
-                        RoundedCornerShape(12.dp)
-                    )
+                    .background(if (isSelected) FenGreenLight else Color.Transparent)
+                    .border(1.dp, if (isSelected) FenGreenLight else Color.Transparent, RoundedCornerShape(12.dp))
                     .clickable { onSelect(option.type) }
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Text(option.emoji, fontSize = 18.sp)
                 Text(
                     text       = option.label,
                     color      = if (isSelected) FenGreen else TextPrimary,
@@ -632,6 +664,20 @@ private fun SortSheetContent(
                 if (isSelected) {
                     Icon(Icons.Default.Check, null, tint = FenGreen, modifier = Modifier.size(18.dp))
                 }
+            }
+        }
+
+        // ← Sıfırla butonu — default dışındaysa göster
+        if (currentSort != SortType.MOST_RECENT) {
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick  = onReset,
+                modifier = Modifier.fillMaxWidth().height(44.dp),
+                shape    = RoundedCornerShape(12.dp),
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDDDDDD))
+            ) {
+                Text("Sıralamayı Sıfırla", fontSize = 13.sp)
             }
         }
     }
