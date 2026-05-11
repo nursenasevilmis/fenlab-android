@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.ClipData
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -17,8 +16,11 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.FileProvider
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
 
 object PdfUtils {
 
@@ -94,14 +96,14 @@ object PdfUtils {
                     MediaStore.Files.getContentUri("external")
                 }
 
-                val fileUri = resolver.insert(collectionUri, values)
+                val downloadUri = resolver.insert(collectionUri, values)
 
-                if (fileUri == null) {
+                if (downloadUri == null) {
                     Log.e("PdfUtils", "MediaStore URI oluşturulamadı!")
                     return@Thread
                 }
 
-                resolver.openOutputStream(fileUri)?.use { output ->
+                resolver.openOutputStream(downloadUri)?.use { output ->
                     output.write(bytes)
                     output.flush()
                 }
@@ -110,13 +112,21 @@ object PdfUtils {
                     val updateValues = ContentValues().apply {
                         put(MediaStore.MediaColumns.IS_PENDING, 0)
                     }
-                    resolver.update(fileUri, updateValues, null, null)
+                    resolver.update(downloadUri, updateValues, null, null)
                 }
 
-                Log.d("PdfUtils", "PDF başarıyla kaydedildi: $fileUri")
+                Log.d("PdfUtils", "PDF Downloads klasörüne kaydedildi: $downloadUri")
+
+                val openableCacheUri = savePdfToCacheForOpening(
+                    context = context,
+                    bytes = bytes,
+                    fileName = fileName
+                )
+
+                Log.d("PdfUtils", "PDF bildirim için cache URI: $openableCacheUri")
 
                 @SuppressLint("MissingPermission")
-                showPdfDownloadedNotification(context, fileUri, fileName)
+                showPdfDownloadedNotification(context, openableCacheUri, fileName)
 
             } catch (e: Exception) {
                 Log.e("PdfUtils", "PDF indirme hatası", e)
@@ -124,6 +134,35 @@ object PdfUtils {
         }.start()
 
         return System.currentTimeMillis()
+    }
+
+    private fun savePdfToCacheForOpening(
+        context: Context,
+        bytes: ByteArray,
+        fileName: String
+    ): Uri {
+        val pdfDir = File(context.cacheDir, "pdf_open")
+
+        if (!pdfDir.exists()) {
+            pdfDir.mkdirs()
+        }
+
+        val safeFileName = fileName
+            .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+            .ifBlank { "FenLab_Deney.pdf" }
+
+        val pdfFile = File(pdfDir, safeFileName)
+
+        FileOutputStream(pdfFile).use { output ->
+            output.write(bytes)
+            output.flush()
+        }
+
+        return FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            pdfFile
+        )
     }
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -147,32 +186,24 @@ object PdfUtils {
             manager.createNotificationChannel(channel)
         }
 
-        val openIntent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(fileUri, "application/pdf")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-
-            clipData = ClipData.newUri(
-                context.contentResolver,
-                fileName,
-                fileUri
-            )
+        val openActivityIntent = Intent(context, PdfOpenActivity::class.java).apply {
+            putExtra("pdf_uri", fileUri.toString())
+            putExtra("file_name", fileName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        context.packageManager.queryIntentActivities(openIntent, 0).forEach { resolveInfo ->
-            context.grantUriPermission(
-                resolveInfo.activityInfo.packageName,
-                fileUri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
+        val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
         }
 
         val pendingIntent = PendingIntent.getActivity(
             context,
             System.currentTimeMillis().toInt(),
-            openIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            openActivityIntent,
+            pendingIntentFlags
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
