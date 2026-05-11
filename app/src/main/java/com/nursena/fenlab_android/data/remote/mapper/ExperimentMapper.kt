@@ -9,20 +9,17 @@ import com.nursena.fenlab_android.domain.model.enums.DifficultyLevel
 import com.nursena.fenlab_android.domain.model.enums.EnvironmentType
 import com.nursena.fenlab_android.domain.model.enums.SubjectType
 
-private val ipPattern = Regex(
-    """(10\.0\.[23]\.2|localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+)"""
-)
-
-private fun String.fixMinioUrl(): String =
-    ipPattern.replace(this, Constants.SERVER_IP)
-
-// Subject string'i enum'a çevirir, olmazsa null döner (customSubject olarak saklanır)
 private fun parseSubject(raw: String?): SubjectType? =
     raw?.let { runCatching { SubjectType.valueOf(it.uppercase()) }.getOrNull() }
 
-// Enum'a çevrilemiyorsa raw string'i customSubject olarak tut
 private fun customSubjectOf(raw: String?, parsed: SubjectType?): String? =
     if (raw != null && parsed == null) raw else null
+
+private fun String?.toMediaUrl(): String? {
+    if (this.isNullOrBlank()) return null
+    return if (this.startsWith("http")) this
+    else "${Constants.MINIO_URL}/${this.trimStart('/')}"
+}
 
 fun ExperimentSummaryResponse.toDomain(): Experiment {
     val parsedSubject = parseSubject(subject)
@@ -38,8 +35,8 @@ fun ExperimentSummaryResponse.toDomain(): Experiment {
         topic                    = topic,
         difficulty               = runCatching { DifficultyLevel.valueOf(difficulty) }.getOrDefault(DifficultyLevel.MEDIUM),
         createdAt                = createdAt,
-        thumbnailUrl             = thumbnailUrl?.fixMinioUrl(),
-        videoUrl                 = videoUrl?.fixMinioUrl(),
+        thumbnailUrl             = thumbnailUrl.toMediaUrl(),
+        videoUrl                 = videoUrl.toMediaUrl(),
         favoriteCount            = favoriteCount,
         averageRating            = averageRating,
         commentCount             = commentCount,

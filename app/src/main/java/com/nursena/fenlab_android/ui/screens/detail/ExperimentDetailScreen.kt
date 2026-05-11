@@ -222,7 +222,11 @@ fun ExperimentDetailScreen(
                                 )
                             }
                             items(uiState.comments, key = { "c${it.id}" }) { comment ->
-                                CommentItem(comment = comment, onDelete = { viewModel.deleteComment(comment.id) })
+                                CommentItem(
+                                    comment = comment,
+                                    canDelete = comment.isOwner || uiState.isOwner,
+                                    onDelete = { viewModel.deleteComment(comment.id) }
+                                )
                             }
                             items(uiState.questions, key = { "q${it.id}" }) { question ->
                                 QuestionItem(
@@ -1371,7 +1375,9 @@ private fun CommentQuestionInput(
 }
 
 @Composable
-private fun CommentItem(comment: Comment, onDelete: () -> Unit) {
+private fun CommentItem(comment: Comment,
+                        canDelete: Boolean,
+                        onDelete: () -> Unit) {
     var showConfirm by remember { mutableStateOf(false) }
     if (showConfirm) {
         AlertDialog(onDismissRequest = { showConfirm = false }, containerColor = Color(0xFFFFFFFF),
@@ -1386,12 +1392,28 @@ private fun CommentItem(comment: Comment, onDelete: () -> Unit) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(comment.author.displayName, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                Text(comment.createdAt.take(10), color = TextSecondary, fontSize = 12.sp)
+                val formattedDate = remember(comment.createdAt) {
+                    try {
+                        java.time.LocalDateTime
+                            .parse(comment.createdAt)
+                            .format(
+                                java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")
+                            )
+                    } catch (e: Exception) {
+                        comment.createdAt.take(10)
+                    }
+                }
+
+                Text(
+                    text = formattedDate,
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
             }
             Spacer(Modifier.height(3.dp))
             Text(comment.content, color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
         }
-        if (comment.isOwner) {
+        if (canDelete) {
             IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(28.dp)) {
                 Icon(Icons.Default.DeleteOutline, null, tint = Color(0xB3EF5350), modifier = Modifier.size(15.dp))
             }

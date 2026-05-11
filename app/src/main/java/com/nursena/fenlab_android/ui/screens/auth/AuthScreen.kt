@@ -124,14 +124,14 @@ private fun SplashPage(onLogin: () -> Unit, onRegister: () -> Unit) {
             Text(
                 text = "Fen",
                 color = Color(0xFF0D7D7C),
-                fontSize = 40.sp,
+                fontSize = 50.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.5).sp
             )
             Text(
                 text = "Lab",
                 color = Color(0xCCF99930),
-                fontSize = 40.sp,
+                fontSize = 50.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.5).sp
             )
@@ -141,9 +141,9 @@ private fun SplashPage(onLogin: () -> Unit, onRegister: () -> Unit) {
 
         // ── Slogan ────────────────────────────────────────────────────────────
         Text(
-            text = "Merakından deneye,\ndeneyinden ilhama!",
+            text = "Keşfet, Dene, Paylaş",
             color = Color(0xFF555555),
-            fontSize = 16.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
             lineHeight = 24.sp

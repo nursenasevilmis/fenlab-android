@@ -1,6 +1,7 @@
 package com.nursena.fenlab_android.core.util
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -114,6 +115,7 @@ object PdfUtils {
 
                 Log.d("PdfUtils", "PDF başarıyla kaydedildi: $fileUri")
 
+                @SuppressLint("MissingPermission")
                 showPdfDownloadedNotification(context, fileUri, fileName)
 
             } catch (e: Exception) {

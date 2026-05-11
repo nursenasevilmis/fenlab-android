@@ -73,6 +73,7 @@ class AuthViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
+            tokenManager.clearSession()
             when (val r = authRepository.login(LoginRequest(s.loginUsernameOrEmail.trim(), s.loginPassword))) {
                 is ApiResult.Success -> {
                     val (token, user) = r.data
