@@ -1219,7 +1219,7 @@ private fun DescriptionCard(
             ) {
                 Column {
                     Text(
-                        "KONU",
+                        "📌 KONU",
                         color = FenGreen,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -1251,7 +1251,7 @@ private fun DescriptionCard(
                 .padding(12.dp)
         ) {
             Column {
-                Text("AÇIKLAMA", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("📖 AÇIKLAMA", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Spacer(Modifier.height(6.dp))
                 Text(description, color = TextSecondary, fontSize = 13.sp, lineHeight = 19.sp)
             }
@@ -1270,7 +1270,7 @@ private fun DescriptionCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Column {
-                    Text("GÜVENLİK NOTU", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                    Text("⚠️ GÜVENLİK NOTU", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                     Spacer(Modifier.height(3.dp))
                     Text(safetyNotes, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
                 }
@@ -1290,7 +1290,7 @@ private fun DescriptionCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Column {
-                    Text("BEKLENEN SONUÇ", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                    Text("🎯 BEKLENEN SONUÇ", color = FenGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                     Spacer(Modifier.height(3.dp))
                     Text(expectedResult, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
                 }
