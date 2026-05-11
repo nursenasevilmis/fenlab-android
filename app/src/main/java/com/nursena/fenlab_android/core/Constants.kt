@@ -6,4 +6,5 @@ object Constants {
 
     const val BASE_URL  = "https://fenlab-backend-railway-production.up.railway.app"
     const val MINIO_URL = "https://exciting-light-production.up.railway.app"
+    const val MEDIA_BASE_URL = "$BASE_URL/api/files/public"
 }

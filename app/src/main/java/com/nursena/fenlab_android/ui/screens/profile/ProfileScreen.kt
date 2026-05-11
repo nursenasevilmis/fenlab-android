@@ -96,7 +96,15 @@ fun ProfileScreen(
     }
     LaunchedEffect(uiState.unreadCount) { onUnreadCountChange(uiState.unreadCount) }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = Color.Transparent) { pad ->
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbar,
+                modifier = Modifier.padding(bottom = 120.dp)
+            )
+        },
+        containerColor = Color.Transparent
+    ) { pad ->
         when {
             uiState.isLoading && uiState.user == null -> LoadingIndicator()
             uiState.error != null && uiState.user == null ->

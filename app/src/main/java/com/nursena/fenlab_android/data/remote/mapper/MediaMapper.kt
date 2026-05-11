@@ -6,9 +6,28 @@ import com.nursena.fenlab_android.domain.model.Media
 import com.nursena.fenlab_android.domain.model.enums.MediaType
 
 private fun String.toMediaUrl(): String {
-    if (this.isBlank()) return this
-    return if (this.startsWith("http")) this
-    else "${Constants.MINIO_URL}/${this.trimStart('/')}"
+    val value = this.trim()
+    if (value.isBlank()) return value
+
+    val buckets = listOf(
+        "fenlab-images/",
+        "fenlab-videos/",
+        "fenlab-profiles/",
+        "fenlab-pdfs/"
+    )
+
+    val path = buckets.firstNotNullOfOrNull { bucket ->
+        val index = value.indexOf(bucket)
+        if (index != -1) value.substring(index) else null
+    }
+
+    return if (path != null) {
+        "${Constants.MEDIA_BASE_URL}/${path.trimStart('/')}"
+    } else if (value.startsWith("http")) {
+        value
+    } else {
+        "${Constants.MEDIA_BASE_URL}/${value.trimStart('/')}"
+    }
 }
 
 fun MediaResponse.toDomain(): Media = Media(
