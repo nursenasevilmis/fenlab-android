@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.ui.theme.*
-
+import com.nursena.fenlab_android.ui.components.AnimatedFavoriteButton
 @Composable
 fun ExperimentCard(
     experiment: Experiment,
@@ -100,21 +100,12 @@ fun ExperimentCard(
                     }
 
                     // Favori butonu
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(Color(0xCC000000), CircleShape)
-                            .clickable(onClick = onFavoriteClick),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (experiment.isFavoritedByCurrentUser)
-                                Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = null,
-                            tint     = if (experiment.isFavoritedByCurrentUser) Red400 else Color.White,
-                            modifier = Modifier.size(15.dp)
-                        )
-                    }
+                    AnimatedFavoriteButton(
+                        isFavorited = experiment.isFavoritedByCurrentUser,
+                        backgroundColor = Color(0x73000000),
+                        iconWhenNotFavorited = Color.White,
+                        onClick = onFavoriteClick
+                    )
                 }
 
                 // Alt sol — sadece başlık

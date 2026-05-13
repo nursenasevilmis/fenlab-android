@@ -36,7 +36,10 @@ import com.nursena.fenlab_android.domain.model.enums.SubjectType
 import com.nursena.fenlab_android.ui.components.EmptyState
 import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
+import com.nursena.fenlab_android.ui.components.LottieLoadingIndicator
 import com.nursena.fenlab_android.ui.theme.*
+import com.airbnb.lottie.compose.*
+import com.nursena.fenlab_android.ui.components.AnimatedFavoriteButton
 
 @Composable
 fun SearchScreen(
@@ -91,7 +94,7 @@ fun SearchScreen(
 
         // ── İçerik ──────────────────────────────────────────────────────────
         when {
-            uiState.isLoading -> LoadingIndicator()
+            uiState.isLoading -> LottieLoadingIndicator()
             uiState.error != null -> ErrorMessage(message = uiState.error!!, onRetry = { viewModel.onQueryChange(uiState.query) })
             uiState.query.isBlank() -> HintContent(
                 recentSearches = uiState.recentSearches,
@@ -123,19 +126,7 @@ private fun HintContent(
     onTrendClick: (String) -> Unit
 ) {
     if (recentSearches.isEmpty()) {
-        // Henüz arama yok
-        Box(modifier = Modifier.fillMaxSize().padding(40.dp), contentAlignment = Alignment.Center) {
-            androidx.compose.foundation.layout.Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("🔍", fontSize = 40.sp)
-                Spacer(Modifier.height(12.dp))
-                Text("Aramaya başla", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(6.dp))
-                Text("Deney, konu veya kullanıcı ara", color = TextSecondary, fontSize = 13.sp,
-                    textAlign = TextAlign.Center)
-            }
-        }
+        SearchStartAnimation()
         return
     }
 
@@ -171,6 +162,46 @@ private fun HintContent(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp),
                 thickness = 0.5.dp, color = Color(0xFFFFFFFF))
         }
+    }
+}
+
+@Composable
+private fun SearchStartAnimation() {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("not-data-animation.json")
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(40.dp)
+            .offset(y = (-45).dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        LottieAnimation(
+            composition = composition,
+            iterations = LottieConstants.IterateForever,
+            modifier = Modifier.size(145.dp)
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            "Aramaya başla",
+            color = TextPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            "Deney, konu veya kullanıcı ara",
+            color = TextSecondary,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -327,13 +358,17 @@ private fun ExperimentRow(
             }
         }
 
-        IconButton(onClick = onFavoriteClick, modifier = Modifier.size(36.dp)) {
-            Icon(
-                if (experiment.isFavoritedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                null,
-                tint = if (experiment.isFavoritedByCurrentUser) Red400 else TextSecondary,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+        AnimatedFavoriteButton(
+            isFavorited = experiment.isFavoritedByCurrentUser,
+            backgroundColor = Color.Transparent,
+            iconWhenNotFavorited = TextSecondary,
+            modifier = Modifier.size(34.dp),
+            onClick = onFavoriteClick
+        )
+
+
+
+
     }
+
 }

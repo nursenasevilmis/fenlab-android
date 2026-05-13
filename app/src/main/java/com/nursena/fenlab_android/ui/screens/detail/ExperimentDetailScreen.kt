@@ -54,8 +54,10 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.nursena.fenlab_android.domain.model.enums.*
 import com.nursena.fenlab_android.domain.model.*
+import com.nursena.fenlab_android.ui.components.AnimatedFavoriteButton
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
 import com.nursena.fenlab_android.ui.components.ErrorMessage
+import com.nursena.fenlab_android.ui.components.LottieLoadingIndicator
 import com.nursena.fenlab_android.ui.theme.*
 
 
@@ -153,7 +155,7 @@ fun ExperimentDetailScreen(
         containerColor = Color.Transparent
     ) { padding ->
         when {
-            uiState.isLoading && uiState.experiment == null -> LoadingIndicator()
+            uiState.isLoading && uiState.experiment == null -> LottieLoadingIndicator()
             uiState.error != null && uiState.experiment == null ->
                 ErrorMessage(message = uiState.error!!, onRetry = viewModel::loadExperiment)
             uiState.experiment != null -> {
@@ -919,23 +921,13 @@ private fun MediaSection(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 // Favori butonu — owner ise soluk göster
-                Box(
-                    modifier = Modifier.size(38.dp).clip(CircleShape)
-                        .background(Color(0x73000000))
-                        .clickable(onClick = onFavorite),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        if (isFavorited) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
-                        null,
-                        tint     = when {
-                            isOwner    -> Color(0x66FFFFFF)   // soluk — kullanamaz
-                            isFavorited -> Red400
-                            else        -> Color.White
-                        },
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                AnimatedFavoriteButton(
+                    isFavorited = isFavorited,
+                    enabled = !isOwner,
+                    backgroundColor = Color(0x73000000),
+                    iconWhenNotFavorited = if (isOwner) Color(0x66FFFFFF) else Color.White,
+                    onClick = onFavorite
+                )
 
                 Box {
                     Box(

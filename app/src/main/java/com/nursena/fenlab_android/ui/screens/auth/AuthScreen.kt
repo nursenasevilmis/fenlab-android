@@ -40,7 +40,7 @@ import coil.compose.AsyncImage
 import com.nursena.fenlab_android.core.base.UiEvent
 import com.nursena.fenlab_android.domain.model.enums.UserRole
 import com.nursena.fenlab_android.ui.theme.*
-
+import androidx.compose.foundation.Image
 // ─── Yeni renk sabitleri (ikinci tasarım için) ───────────────────────────────
 private val SplashBg        = Color(0xFFFFFFFF)
 private val FenGreen    = Color(0xFF0D7D7C)   // ana mor (buton, başlık)
@@ -409,14 +409,16 @@ private fun RoleStep(uiState: AuthUiState, viewModel: AuthViewModel, onGoLogin: 
         Spacer(Modifier.height(20.dp))
 
         RoleCard(
-            emoji = "🎓", title = "Öğrenci",
+            iconRes = R.drawable.student_icon,
+            title = "Öğrenci",
             bullets = listOf("Deneyleri keşfet ve favorile", "Öğretmenlere soru sor", "Yorum yap ve değerlendir"),
             selected = uiState.registerRole == UserRole.USER,
             onClick = { viewModel.onRegisterRoleChange(UserRole.USER) }
         )
-        Spacer(Modifier.height(10.dp))
+
         RoleCard(
-            emoji = "👨‍🏫", title = "Öğretmen",
+            iconRes = R.drawable.teacher_icon,
+            title = "Öğretmen",
             bullets = listOf("Deney ekle ve yönet", "Öğrenci sorularını yanıtla", "Sınıf düzeyine göre içerik"),
             selected = uiState.registerRole == UserRole.TEACHER,
             onClick = { viewModel.onRegisterRoleChange(UserRole.TEACHER) }
@@ -433,47 +435,92 @@ private fun RoleStep(uiState: AuthUiState, viewModel: AuthViewModel, onGoLogin: 
 }
 
 @Composable
-private fun RoleCard(emoji: String, title: String, bullets: List<String>, selected: Boolean, onClick: () -> Unit) {
+private fun RoleCard(
+    iconRes: Int,
+    title: String,
+    bullets: List<String>,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
     val borderColor = if (selected) FenGreenDark else Color(0xFFDDDDDD)
-    val bgColor     = if (selected) Color(0xFFF0FAF4) else Color(0xFFF8F8F8)
+    val bgColor = if (selected) Color(0xFFF0FAF4) else Color(0xFFF8F8F8)
 
     Box(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(bgColor)
             .border(1.5.dp, borderColor, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Box(
-                modifier = Modifier.size(42.dp).clip(RoundedCornerShape(10.dp))
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(if (selected) Color(0xFFE0F4F4) else Color.White),
                 contentAlignment = Alignment.Center
-            ) { Text(emoji, fontSize = 20.sp) }
+            ) {
+                Image(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = title,
+                    modifier = Modifier.size(28.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = if (selected) FenGreen else Color(0xFF444444),
-                    fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    title,
+                    color = if (selected) FenGreen else Color(0xFF444444),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
                 Spacer(Modifier.height(4.dp))
+
                 bullets.forEach { b ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                         modifier = Modifier.padding(vertical = 1.dp)
                     ) {
-                        Box(modifier = Modifier.size(3.dp).clip(CircleShape)
-                            .background(if (selected) FenGreen else Color(0xFFAAAAAA)))
-                        Text(b, color = Color(0xFF888888), fontSize = 11.sp, lineHeight = 15.sp)
+                        Box(
+                            modifier = Modifier
+                                .size(3.dp)
+                                .clip(CircleShape)
+                                .background(if (selected) FenGreen else Color(0xFFAAAAAA))
+                        )
+
+                        Text(
+                            b,
+                            color = Color(0xFF888888),
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        )
                     }
                 }
             }
 
-            if (selected) Box(
-                modifier = Modifier.size(20.dp).clip(CircleShape).background(FenGreen),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(FenGreen),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
             }
         }
     }

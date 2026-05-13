@@ -1,5 +1,6 @@
 package com.nursena.fenlab_android.ui.screens.home
 
+import com.airbnb.lottie.compose.*
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,7 +39,6 @@ import com.nursena.fenlab_android.domain.model.enums.DifficultyLevel
 import com.nursena.fenlab_android.domain.model.enums.EnvironmentType
 import com.nursena.fenlab_android.domain.model.enums.SortType
 import com.nursena.fenlab_android.domain.model.enums.SubjectType
-import com.nursena.fenlab_android.ui.components.EmptyState
 import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.components.ExperimentCard
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
@@ -47,6 +47,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.nursena.fenlab_android.core.base.UiEvent
+import com.nursena.fenlab_android.ui.components.LottieLoadingIndicator
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,16 +132,15 @@ fun HomeScreen(
     ) { padding ->
 
         when {
-            uiState.isLoading && uiState.experiments.isEmpty() -> LoadingIndicator()
+            uiState.isLoading && uiState.experiments.isEmpty() -> LottieLoadingIndicator()
 
             uiState.error != null && uiState.experiments.isEmpty() -> ErrorMessage(
                 message = uiState.error!!,
                 onRetry = { viewModel.loadExperiments() }
             )
 
-            uiState.experiments.isEmpty() -> EmptyState(
-                emoji    = "🔬",
-                title    = "Henüz deney yok",
+            uiState.experiments.isEmpty() -> EmptyDataAnimation(
+                title = "Henüz deney yok",
                 subtitle = "Filtreleri temizlemeyi dene"
             )
 
@@ -257,6 +258,50 @@ fun HomeScreen(
     }
 }
 
+@Composable
+fun EmptyDataAnimation(
+    title: String,
+    subtitle: String
+) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("not-data-animaton.json")
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        LottieAnimation(
+            composition = composition,
+            iterations = LottieConstants.IterateForever,
+            modifier = Modifier.size(150.dp)
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = title,
+            color = TextPrimary,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = subtitle,
+            color = TextSecondary,
+            fontSize = 14.sp,
+            lineHeight = 21.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Popup Bildirim (Snackbar yerine)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -331,7 +376,7 @@ fun FenlabTopBar(
         actions = {
             // Filtrele butonu
             BadgedBox(
-                modifier = Modifier.padding(end = 8.dp),
+                modifier = Modifier.padding(end = 5.dp),
                 badge = {
                     if (activeFilterCount > 0) {
                         Badge(containerColor = FenGreen) {
@@ -399,38 +444,43 @@ fun FenlabTopBar(
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun WelcomeBanner(fullName: String) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("animation1.json")
+    )
+
     Box(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .background(FenGreen, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Row(
-            modifier              = Modifier.fillMaxWidth(),
-            verticalAlignment     = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
                 Text(
-                    text  = "Merhaba${if (fullName.isNotBlank()) ", ${fullName.split(" ").first()}" else ""}! 👋",
-                    color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
+                    text = "Merhaba${if (fullName.isNotBlank()) ", ${fullName.split(" ").first()}" else ""}!",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
+
                 Spacer(Modifier.height(4.dp))
-                val greetingMessages = remember {
-                    listOf(
-                        "Bugün ne keşfedeceksin? 🔬",
-                        "Bilim seni bekliyor! ⚗️",
-                        "Yeni bir deney zamanı! 🚀",
-                        "Merakını keşfe dönüştür! 💡",
-                        "Bugün ne öğreneceksin? 🌟",
-                        "Keşfetmeye hazır mısın? 🧬",
-                        "Fen bilimleri burada! 🔭",
-                        "Bugün hangi soruyu çözeceksin? 🧪"
-                    )
-                }
-                val greetingMsg = remember { greetingMessages.random() }
-                Text(greetingMsg, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
+
+                Text(
+                    text = "Merakını keşfe dönüştür!",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 12.sp
+                )
             }
-            Text("🔬", fontSize = 34.sp)
+
+            LottieAnimation(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier.size(70.dp)
+            )
         }
     }
 }
@@ -616,7 +666,7 @@ private val sortOptions = listOf(
     SortOption(SortType.MOST_RECENT,    "En Yeni"),
     SortOption(SortType.MOST_FAVORITED, "En Popüler"),
     SortOption(SortType.HIGHEST_RATED,  "En Beğenilen"),
-    SortOption(SortType.OLDEST,         "En Çok Yorumlanan")
+    SortOption(SortType.OLDEST,         "En Eski")
 )
 
 @Composable
@@ -657,7 +707,7 @@ private fun SortSheetContent(
                 Text(
                     text       = option.label,
                     color      = if (isSelected) FenGreen else TextPrimary,
-                    fontSize   = 15.sp,
+                    fontSize   = 13.sp,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier   = Modifier.weight(1f)
                 )
@@ -681,4 +731,5 @@ private fun SortSheetContent(
             }
         }
     }
+
 }

@@ -33,6 +33,8 @@ import com.nursena.fenlab_android.domain.model.Experiment
 import com.nursena.fenlab_android.ui.components.ErrorMessage
 import com.nursena.fenlab_android.ui.components.LoadingIndicator
 import com.nursena.fenlab_android.ui.theme.*
+import com.airbnb.lottie.compose.*
+import com.nursena.fenlab_android.ui.components.LottieLoadingIndicator
 
 @Composable
 fun FavoritesScreen(
@@ -90,7 +92,7 @@ fun FavoritesScreen(
 
         // ── İçerik ─────────────────────────────
         when {
-            uiState.isLoading -> LoadingIndicator()
+            uiState.isLoading -> LottieLoadingIndicator()
             uiState.error != null -> ErrorMessage(message = uiState.error!!, onRetry = viewModel::loadFavorites)
             uiState.favorites.isEmpty() -> EmptyFavorites()
             else -> LazyColumn(
@@ -115,30 +117,39 @@ fun FavoritesScreen(
 // ── Boş durum ─────────────────────────────
 @Composable
 private fun EmptyFavorites() {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("not-data-animation.json")
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(40.dp),
+            .padding(40.dp)
+            .offset(y = (-60).dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(
+            0.dp,
+            Alignment.CenterVertically
+        )
     ) {
-        Box(
-            modifier = Modifier
-                .size(90.dp)
-                .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(Color(0x26EF5350), Color(0xFFFFFFFF)))),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("❤️", fontSize = 40.sp)
-        }
-        Spacer(Modifier.height(20.dp))
+        LottieAnimation(
+            composition = composition,
+            iterations = LottieConstants.IterateForever,
+            modifier = Modifier.size(150.dp)
+        )
+
+        Spacer(Modifier.height(14.dp))
+
         Text(
             "Henüz favori yok",
             color = TextPrimary,
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
+
         Spacer(Modifier.height(8.dp))
+
         Text(
             "Beğendiğin deneyleri favorilere\nekleyerek buradan ulaşabilirsin",
             color = TextSecondary,
