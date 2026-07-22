@@ -152,8 +152,12 @@ Splash → Auth (Login/Register) → Main
 | Sort | `MOST_RECENT`, `MOST_POPULAR`, `HIGHEST_RATED` |
 
 ---
+## Demo Video
+[![Fenlab Demo](https://img.youtube.com/vi/o-wnNHWU20A/0.jpg)](https://youtube.com/shorts/o-wnNHWU20A)
+
+---
 
 ## 👩‍💻 Developer
 
-**Nursena Sevilmiş**  
+**Nur Sena Sevilmiş**  
 Computer Engineering — Aydın Adnan Menderes University
